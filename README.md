@@ -1,5 +1,11 @@
 # 🏗️ LGU Tracker
 ### *Bantay Proyekto, Gabay sa Progreso.* 🇵🇭
+<img width="1897" height="899" alt="image" src="https://github.com/user-attachments/assets/f17dfa2c-c6a3-4457-a79b-756b07536620" />
+<img width="1343" height="810" alt="image" src="https://github.com/user-attachments/assets/8b7e1cb9-bbe9-421a-ac4a-f509da825367" />
+![Uploading image.png…]()
+
+
+
 
 **LGU Tracker** is a web-based infrastructure project monitoring platform designed to improve public access to project information through interactive maps, searchable project directories, and centralized project data.
 
