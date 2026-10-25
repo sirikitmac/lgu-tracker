@@ -18,7 +18,7 @@ export function Navbar() {
   }, [mobileMenuOpen]);
 
   return (
-    <header className="sticky top-0 z-40 civic-glass-nav border-b border-[#E2E8F0] shadow-2xs">
+    <header className="sticky top-0 z-40 civic-glass-nav shadow-2xs">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-8 px-4 sm:px-6 py-3.5">
         {/* Zone 1: Single text element wordmark */}
         <Link
@@ -31,19 +31,19 @@ export function Navbar() {
         {/* Zone 2: concise single-line text navigation links */}
         <nav
           aria-label="Primary Navigation"
-          className="hidden md:flex items-center gap-8 text-sm font-medium text-[#64748B]"
+          className="hidden md:flex items-center gap-5 lg:gap-8 text-sm font-medium text-[#64748B]"
         >
           <a
-            href="/#features"
+            href="/#coverage"
             className="py-1 hover:text-[#0F172A] hover:underline underline-offset-8 decoration-[#2563EB] decoration-2 transition-colors whitespace-nowrap shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2563EB]"
           >
-            Capabilities
+            Coverage
           </a>
           <a
-            href="/#lifecycle"
+            href="/#how-it-works"
             className="py-1 hover:text-[#0F172A] hover:underline underline-offset-8 decoration-[#2563EB] decoration-2 transition-colors whitespace-nowrap shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2563EB]"
           >
-            Lifecycle
+            How it works
           </a>
           <Link
             href="/projects"
@@ -104,18 +104,18 @@ export function Navbar() {
             className="flex flex-col space-y-1 text-sm font-medium text-[#0F172A]"
           >
             <a
-              href="/#features"
+              href="/#coverage"
               onClick={() => setMobileMenuOpen(false)}
               className="px-3 py-2.5 rounded-lg hover:bg-[#F1F5F9] hover:text-[#2563EB] transition-colors"
             >
-              Capabilities
+              Coverage
             </a>
             <a
-              href="/#lifecycle"
+              href="/#how-it-works"
               onClick={() => setMobileMenuOpen(false)}
               className="px-3 py-2.5 rounded-lg hover:bg-[#F1F5F9] hover:text-[#2563EB] transition-colors"
             >
-              Project Lifecycle
+              How it works
             </a>
             <Link
               href="/projects"

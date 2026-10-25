@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import {
+  Instrument_Serif,
   Plus_Jakarta_Sans,
   Public_Sans,
   JetBrains_Mono,
@@ -20,6 +21,13 @@ const publicSans = Public_Sans({
   display: 'swap',
 });
 
+const instrumentSerif = Instrument_Serif({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-instrument-serif',
+  display: 'swap',
+});
+
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
@@ -30,11 +38,11 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'LGU Tracker — Bantay Proyekto, Gabay sa Progreso',
   description:
-    'Web-based Local Government Unit Project Monitoring System for tracking public infrastructure, budgets, procurement, and civic project lifecycles.',
+    'A public directory and map of DPWH infrastructure contracts in the Visayas and Mindanao: what was built, where, by whom, for how much, and how far along.',
   openGraph: {
     title: 'LGU Tracker — Bantay Proyekto, Gabay sa Progreso',
     description:
-      'Web-based Local Government Unit Project Monitoring System for tracking public infrastructure, budgets, procurement, and civic project lifecycles.',
+      'A public directory and map of DPWH infrastructure contracts in the Visayas and Mindanao: what was built, where, by whom, for how much, and how far along.',
     type: 'website',
   },
 };
@@ -47,7 +55,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${plusJakartaSans.variable} ${publicSans.variable} ${jetbrainsMono.variable}`}
+      className={`${plusJakartaSans.variable} ${publicSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable}`}
     >
       <body className="min-h-screen flex flex-col bg-[#F8FAFC] text-[#172B4D]">
         {children}

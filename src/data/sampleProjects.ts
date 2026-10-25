@@ -1,5 +1,4 @@
 import {
-  FeatureCardItem,
   LGUProject,
   LifecycleStageInfo,
   ProjectCategory,
@@ -25,57 +24,6 @@ export const PROJECT_STATUSES: ProjectStatus[] = [
   'Procurement',
   'Planned',
   'Delayed',
-];
-
-export const CORE_FEATURES: FeatureCardItem[] = [
-  {
-    id: 'project-planning',
-    title: 'Project Planning',
-    description:
-      'Submit proposals, feasibility studies, and documents for review and prioritization in the Annual Investment Program (AIP).',
-    iconName: 'file-text',
-    iconBgClass: 'bg-[#2563EB]',
-  },
-  {
-    id: 'budget-management',
-    title: 'Budget Management',
-    description:
-      'Track approved budgets, disbursements, and fund sources with complete visibility across all projects.',
-    iconName: 'dollar-sign',
-    iconBgClass: 'bg-[#172B4D]',
-  },
-  {
-    id: 'procurement-automation',
-    title: 'Procurement Automation',
-    description:
-      'Publish bids, manage submissions, and award contracts with full audit trails and public transparency.',
-    iconName: 'zap',
-    iconBgClass: 'bg-[#F59E0B]',
-  },
-  {
-    id: 'real-time-monitoring',
-    title: 'Real-Time Monitoring',
-    description:
-      'Track project progress with milestone management, contractor reports, and approval workflows.',
-    iconName: 'trending-up',
-    iconBgClass: 'bg-[#16A34A]',
-  },
-  {
-    id: 'public-transparency',
-    title: 'Public Transparency',
-    description:
-      'Citizens can view all projects on an interactive map, track status, budget, and contractor information.',
-    iconName: 'map-pin',
-    iconBgClass: 'bg-[#F59E0B]',
-  },
-  {
-    id: 'role-based-access',
-    title: 'Role-Based Access',
-    description:
-      '9 distinct roles with tailored permissions for administrators, planners, councils, contractors, and the public.',
-    iconName: 'users',
-    iconBgClass: 'bg-[#2563EB]',
-  },
 ];
 
 export const LIFECYCLE_STAGES: LifecycleStageInfo[] = [

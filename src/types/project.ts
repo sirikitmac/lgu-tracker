@@ -89,20 +89,6 @@ export interface LifecycleStageInfo {
   responsibleUnit: string;
 }
 
-export interface FeatureCardItem {
-  id: string;
-  title: string;
-  description: string;
-  iconName:
-    | 'file-text'
-    | 'dollar-sign'
-    | 'zap'
-    | 'trending-up'
-    | 'map-pin'
-    | 'users';
-  iconBgClass: string;
-}
-
 export function hasValidCoordinates(
   project: LGUProject
 ): project is LGUProject & { latitude: number; longitude: number } {
