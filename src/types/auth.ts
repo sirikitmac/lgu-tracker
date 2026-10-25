@@ -30,3 +30,28 @@ export interface CurrentProfile {
   role: AppRole;
   organizationId: string | null;
 }
+
+/**
+ * Roles selectable on the public Sign Up page, as a requested role only —
+ * choosing one never grants it (see supabase/migrations/..._profile_requested_role.sql
+ * and private.handle_new_user). super_admin is never offered here; it is
+ * bootstrapped out of band, not requested through the public form.
+ *
+ * "Project Engineer / Inspector" and "Project Monitoring Officer" both map to
+ * the single `project_engineer` role: inspector/monitor is a per-project
+ * assignment (public.assignment_role), not a separate top-level app_role.
+ */
+export const ROLE_REQUEST_OPTIONS: ReadonlyArray<{
+  value: AppRole;
+  label: string;
+}> = [
+  { value: 'planning_officer', label: 'Planner' },
+  { value: 'council_member', label: 'Development Council' },
+  { value: 'budget_officer', label: 'Budget Officer' },
+  { value: 'bac_member', label: 'Procurement Officer' },
+  { value: 'contractor', label: 'Contractor' },
+  { value: 'project_engineer', label: 'Project Engineer / Inspector' },
+  { value: 'project_engineer', label: 'Project Monitoring Officer' },
+  { value: 'lgu_admin', label: 'LGU Administrator' },
+  { value: 'citizen', label: 'Public Viewer' },
+];

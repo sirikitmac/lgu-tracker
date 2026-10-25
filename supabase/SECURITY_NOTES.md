@@ -127,3 +127,23 @@ Supabase's default privileges still grant new `public` tables to `anon` and
 `authenticated`. Every new table needs, in the same migration:
 `enable row level security`, an explicit `revoke all ... from anon,
 authenticated`, then only the grants its policies need, mirroring migration 4.
+
+## 4. Nationwide DPWH sync (migration 20261026000100)
+
+- `dpwh_contracts` and `dpwh_directory_stats` are publicly readable: they hold
+  CC0 public-sector records (BetterGov.ph's snapshot of the DPWH Transparency
+  Portal). `dpwh_sync_runs` is admin-only; `dpwh_contract_reviews` (LGU-entered
+  verification) is staff-only and writable by admins, planning officers, and
+  project engineers. The sync never writes the reviews table.
+- No end-user role can write the source tables. The only write path is the
+  `dpwh_sync_*` SECURITY DEFINER functions, which admit an active
+  super_admin / lgu_admin or the service role. Inside SECURITY DEFINER,
+  `current_user` is the owner, so `private.is_end_user_request()` must not be
+  used as a gate there; `private.can_run_dpwh_sync()` checks the verified JWT.
+- The service-role key (`SUPABASE_SECRET_KEY`) is used only by
+  `src/lib/supabase/admin.ts` (`server-only`) for `/api/cron/dpwh-sync`, which
+  first checks `Authorization: Bearer $CRON_SECRET` in constant time and fails
+  closed when the secret is missing. The manual sync route runs as the
+  signed-in admin and needs no service key.
+- Nothing in the sync deletes contracts. A failed or partial run leaves every
+  previously stored record in place.

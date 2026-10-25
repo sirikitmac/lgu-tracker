@@ -7,7 +7,12 @@
     "build": "next build",
     "start": "next start -p 3000 -H 0.0.0.0",
     "clean": "rm -rf .next dist",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "dpwh:iligan-export": "tsx --conditions=react-server scripts/dpwh-iligan-export.ts",
+    "dpwh:sync": "tsx --conditions=react-server --max-old-space-size=4096 scripts/dpwh-sync.ts",
+    "test": "tsx --conditions=react-server --test \"tests/dpwh/*.test.ts\"",
+    "test:db": "tsx --conditions=react-server --test \"tests/db/*.test.ts\"",
+    "test:db:full": "tsx --conditions=react-server --max-old-space-size=6144 tests/db/full-import.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -16,6 +21,7 @@
     "@tailwindcss/postcss": "^4.3.3",
     "@types/leaflet": "^1.9.22",
     "dotenv": "^17.2.3",
+    "hyparquet": "1.31.5",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
@@ -26,11 +32,13 @@
     "server-only": "^0.0.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.3.7",
     "@types/node": "^22.14.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.4.21",
     "tailwindcss": "^4.3.3",
+    "tsx": "4.20.6",
     "typescript": "^7.0.2"
   }
 }

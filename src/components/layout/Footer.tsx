@@ -33,10 +33,18 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/dashboard?mode=public"
+                  href="/projects"
                   className="hover:text-white hover:underline underline-offset-4 transition-colors"
                 >
                   Explore Public Projects
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/projects/map"
+                  className="hover:text-white hover:underline underline-offset-4 transition-colors"
+                >
+                  Public Project Map
                 </Link>
               </li>
               <li>

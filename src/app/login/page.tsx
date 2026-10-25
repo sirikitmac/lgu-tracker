@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Eye,
   EyeOff,
@@ -24,6 +25,7 @@ interface FormErrors {
 }
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -80,6 +82,11 @@ export default function LoginPage() {
           type: 'success',
           message: result.message,
         });
+        // Only navigate once Supabase Auth has actually confirmed the
+        // session; router.refresh() makes the next /dashboard render pick
+        // up the new session cookie in Server Components.
+        router.push('/dashboard');
+        router.refresh();
       } else if (!result.configured) {
         setStatusNotice({
           type: 'info',
@@ -334,6 +341,16 @@ export default function LoginPage() {
                 >
                   {isSubmitting ? 'Verifying Credentials...' : 'Sign In'}
                 </button>
+
+                <p className="text-center text-xs text-[#64748B]">
+                  Don&apos;t have an account?{' '}
+                  <Link
+                    href="/register"
+                    className="font-semibold text-[#2563EB] hover:text-[#172B4D] hover:underline transition-colors"
+                  >
+                    Sign Up
+                  </Link>
+                </p>
               </form>
             ) : (
               /* Forgot Password Form */
