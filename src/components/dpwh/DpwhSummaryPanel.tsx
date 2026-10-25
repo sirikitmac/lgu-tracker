@@ -3,7 +3,7 @@
 import React from 'react';
 import { Database, FileText, Info, RefreshCw } from 'lucide-react';
 import type { DpwhCount, DpwhSummary } from '@/types/dpwh';
-import { categoryLabel, formatCount, formatDate, formatPesoCompact, statusLabel } from './format';
+import { categoryLabel, formatCount, formatDate, formatPesoCompact, statusColor, statusLabel } from './format';
 
 /**
  * Nationwide totals and simple bar lists. Each list is a single series, so
@@ -18,12 +18,17 @@ function BarList({
   label,
   onSelect,
   selected,
+  swatch,
+  note,
 }: {
   title: string;
   rows: DpwhCount<string | null>[];
   label: (value: string | null) => string;
   onSelect?: (value: string | null) => void;
   selected?: string | null;
+  /** Key color shown beside each label (status lists match the map legend). */
+  swatch?: (value: string | null) => string;
+  note?: string;
 }) {
   const max = Math.max(1, ...rows.map((r) => r.count));
   return (
@@ -44,7 +49,10 @@ function BarList({
                   onSelect && row.value !== null ? 'hover:bg-[#F1F5F9] cursor-pointer' : 'cursor-default'
                 } ${isSelected ? 'bg-[#EFF6FF] ring-1 ring-[#2563EB]' : ''}`}
               >
-                <span className="truncate text-[#0F172A]">{name}</span>
+                <span className="truncate text-[#0F172A]">
+                  {swatch && <span className="inline-block w-2 h-2 rounded-full mr-1.5 align-middle" style={{ backgroundColor: swatch(row.value) }} aria-hidden="true" />}
+                  {name}
+                </span>
                 <span className="tabular-nums text-[#64748B]">{formatCount(row.count)}</span>
                 <span className="col-span-2 h-2 rounded-r bg-[#F1F5F9]" aria-hidden="true">
                   <span className="block h-2 rounded-r bg-[#2563EB]" style={{ width: `${Math.max(1, (row.count / max) * 100)}%` }} />
@@ -54,6 +62,7 @@ function BarList({
           );
         })}
       </ul>
+      {note && <p className="mt-2 text-[11px] text-[#64748B] leading-relaxed">{note}</p>}
     </section>
   );
 }
@@ -84,9 +93,19 @@ export function DpwhSummaryPanel({
       <div className="flex items-start gap-2.5 p-3.5 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] text-xs text-[#1E3A8A] leading-relaxed">
         <Info className="w-4 h-4 shrink-0 mt-0.5" />
         <p>
-          <strong>Scope:</strong> all DPWH infrastructure contracts in BetterGov.ph&apos;s published snapshot of the DPWH
-          Transparency Portal (CC0), snapshot of{' '}
-          <strong>{formatDate(summary.source_snapshot_at)}</strong>. Values are as reported by DPWH and have not been
+          {summary.source_snapshot_at ? (
+            <>
+              <strong>Scope:</strong> all DPWH infrastructure contracts in BetterGov.ph&apos;s published snapshot of the DPWH
+              Transparency Portal (CC0), snapshot of <strong>{formatDate(summary.source_snapshot_at)}</strong>.
+            </>
+          ) : (
+            // No sync has finished: the stored contracts are a partial import.
+            <>
+              <strong>Scope:</strong> the DPWH contracts imported so far from BetterGov.ph&apos;s published snapshot of the
+              DPWH Transparency Portal (CC0). The import has not completed, so this is not the full snapshot.
+            </>
+          )}{' '}
+          Values are as reported by DPWH and have not been
           verified by the LGU. Location comes from the contract components DPWH reports, not from the implementing office.
         </p>
       </div>
@@ -119,7 +138,8 @@ export function DpwhSummaryPanel({
         <BarList title="Contracts by category" rows={stats.by_category} label={categoryLabel}
           onSelect={onSelectCategory} selected={selectedCategory} />
         <BarList title="Contracts by status" rows={stats.by_status} label={statusLabel}
-          onSelect={onSelectStatus} selected={selectedStatus} />
+          onSelect={onSelectStatus} selected={selectedStatus} swatch={statusColor}
+          note="Status as reported by DPWH for each contract. FY 2027 NEP budget proposals are not contracts and are not counted here; filter by status “Proposed (budget)” to list them." />
       </div>
     </div>
   );

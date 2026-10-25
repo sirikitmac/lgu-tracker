@@ -1,4 +1,5 @@
 import { DPWH_CATEGORIES, DPWH_STATUSES, type DpwhCategory, type DpwhStatus } from '@/types/dpwh';
+import { isProjectSource, type ProjectSource } from '@/lib/integrations/bettergov/sources';
 
 /**
  * Parses and validates directory query parameters, and applies them to a
@@ -37,6 +38,8 @@ export interface DirectoryQuery {
   status: DpwhStatus | null;
   contractor: string | null;
   office: string | null;
+  /** project_directory only: limit to one source. */
+  source: ProjectSource | null;
   sort: DpwhSort;
   page: number;
   pageSize: number;
@@ -54,7 +57,7 @@ function cleanParam(value: string | null, max = 200): string | null {
 export function parseDirectoryQuery(params: URLSearchParams): { ok: true; query: DirectoryQuery } | { ok: false; error: string } {
   const query: DirectoryQuery = {
     q: null, region: null, province: null, municipality: null, category: null, status: null,
-    contractor: null, office: null, sort: 'contract_amount-desc', page: 1, pageSize: DEFAULT_PAGE_SIZE,
+    contractor: null, office: null, source: null, sort: 'contract_amount-desc', page: 1, pageSize: DEFAULT_PAGE_SIZE,
   };
 
   const q = params.get('q');
@@ -77,6 +80,11 @@ export function parseDirectoryQuery(params: URLSearchParams): { ok: true; query:
   if (status) {
     if (!(DPWH_STATUSES as readonly string[]).includes(status)) return { ok: false, error: 'Unknown status.' };
     query.status = status as DpwhStatus;
+  }
+  const source = params.get('source');
+  if (source) {
+    if (!isProjectSource(source)) return { ok: false, error: 'Unknown source.' };
+    query.source = source;
   }
   const sort = params.get('sort');
   if (sort) {
@@ -137,6 +145,7 @@ export function applyDirectoryFilters<T extends FilterBuilder<T>>(builder: T, qu
   if (query.category) b = b.eq('category', query.category);
   if (query.status) b = b.eq('status', query.status);
   if (query.office) b = b.eq('implementing_office', query.office);
+  if (query.source) b = b.eq('source', query.source);
   if (query.contractor) {
     const pattern = toContractorPrefix(query.contractor);
     if (pattern) b = b.ilike('contractor', pattern);
@@ -144,13 +153,21 @@ export function applyDirectoryFilters<T extends FilterBuilder<T>>(builder: T, qu
   return b;
 }
 
-export function applyDirectoryQuery<T extends FilterBuilder<T>>(builder: T, query: DirectoryQuery): T {
+/**
+ * `keyColumns` must identify a row uniquely: ['contract_id'] for
+ * dpwh_contracts_directory, ['source', 'record_id'] for project_directory.
+ */
+export function applyDirectoryQuery<T extends FilterBuilder<T>>(
+  builder: T,
+  query: DirectoryQuery,
+  keyColumns: readonly string[] = ['contract_id']
+): T {
   let b = applyDirectoryFilters(builder, query);
   for (const [column, ascending] of DPWH_SORTS[query.sort]) {
     b = b.order(column, { ascending, nullsFirst: false });
   }
   // Tie-breaker keeps pagination stable.
-  b = b.order('contract_id', { ascending: true, nullsFirst: false });
+  for (const column of keyColumns) b = b.order(column, { ascending: true, nullsFirst: false });
   const from = (query.page - 1) * query.pageSize;
   return b.range(from, from + query.pageSize - 1);
 }
@@ -159,8 +176,12 @@ export function applyDirectoryQuery<T extends FilterBuilder<T>>(builder: T, quer
 // Map: contracts with coordinates inside a viewport
 // -----------------------------------------------------------------------------
 
-/** Most markers one map request returns; the largest contracts win when more match. */
-export const MAP_POINT_LIMIT = 1500;
+/**
+ * Most markers one map request returns; the largest contracts win when more
+ * match. Must not exceed PostgREST's max_rows (1000, supabase/config.toml),
+ * which silently truncates larger responses.
+ */
+export const MAP_POINT_LIMIT = 1000;
 
 export interface MapBounds {
   west: number;
@@ -190,13 +211,18 @@ export interface MapBuilder<T> extends FilterBuilder<T> {
   limit(count: number): T;
 }
 
-export function applyMapQuery<T extends MapBuilder<T>>(builder: T, query: DirectoryQuery, bounds: MapBounds | null): T {
+/** WHERE clauses of the map: directory filters, mapped contracts only, inside the viewport. */
+export function applyMapFilters<T extends MapBuilder<T>>(builder: T, query: DirectoryQuery, bounds: MapBounds | null): T {
   let b = applyDirectoryFilters(builder, query).not('latitude', 'is', null).not('longitude', 'is', null);
   if (bounds) {
     b = b.gte('latitude', bounds.south).lte('latitude', bounds.north)
       .gte('longitude', bounds.west).lte('longitude', bounds.east);
   }
-  return b
+  return b;
+}
+
+export function applyMapQuery<T extends MapBuilder<T>>(builder: T, query: DirectoryQuery, bounds: MapBounds | null): T {
+  return applyMapFilters(builder, query, bounds)
     .order('contract_amount', { ascending: false, nullsFirst: false })
     .order('contract_id', { ascending: true, nullsFirst: false })
     .limit(MAP_POINT_LIMIT);

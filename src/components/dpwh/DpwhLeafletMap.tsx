@@ -5,7 +5,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { DpwhMapPoint } from '@/types/dpwh';
 import type { MapBounds } from '@/lib/integrations/dpwh/nationwide/query';
-import { STATUS_COLORS, formatPeso, formatProgress, statusLabel } from './format';
+import { statusColor, statusTextColor, formatPeso, formatProgress, statusLabel } from './format';
 
 /** Whole Philippines. */
 const PH_CENTER: L.LatLngExpression = [12.3, 122.5];
@@ -22,13 +22,13 @@ function escapeHtml(text: string): string {
 }
 
 function popupHtml(p: DpwhMapPoint): string {
-  const color = STATUS_COLORS[p.status] ?? STATUS_COLORS.unknown;
+  const color = statusColor(p.status);
   const location = [p.province, p.region].filter(Boolean).join(', ') || 'Location not reported';
   return `
     <div style="min-width:230px;max-width:280px;font-family:inherit;color:#0F172A">
       <div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;margin-bottom:4px">
         <span style="font-family:monospace;font-weight:600;color:#172B4D">${escapeHtml(p.contract_id)}</span>
-        <span style="font-weight:700;color:${color}">${escapeHtml(statusLabel(p.status))}</span>
+        <span style="font-weight:700;color:${statusTextColor(p.status)}">${escapeHtml(statusLabel(p.status))}</span>
       </div>
       <div style="font-weight:700;font-size:13px;line-height:1.35;margin-bottom:4px">${escapeHtml(p.contract_name ?? p.title)}</div>
       <div style="font-size:12px;color:#64748B;margin-bottom:6px">${escapeHtml(location)}</div>
@@ -118,7 +118,7 @@ export default function DpwhLeafletMap({ points, focus, selectedId, onBoundsChan
     }
     for (const p of points) {
       if (markersRef.current.has(p.contract_id)) continue;
-      const color = STATUS_COLORS[p.status] ?? STATUS_COLORS.unknown;
+      const color = statusColor(p.status);
       const marker = L.circleMarker([p.latitude, p.longitude], {
         radius: 6,
         color: '#FFFFFF',

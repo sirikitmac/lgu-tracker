@@ -31,6 +31,7 @@ export const DPWH_STATUSES = [
   'not_yet_started',
   'terminated',
   'unknown',
+  'proposed',
 ] as const;
 export type DpwhStatus = (typeof DPWH_STATUSES)[number];
 
@@ -41,6 +42,7 @@ export const DPWH_STATUS_LABELS: Record<DpwhStatus, string> = {
   not_yet_started: 'Not yet started',
   terminated: 'Terminated',
   unknown: 'Unknown',
+  proposed: 'Proposed (budget)',
 };
 
 export type DpwhCategoryMethod =
@@ -65,6 +67,8 @@ export const DPWH_WARNING_LABELS: Record<string, string> = {
   funding_label_as_category: 'Source category is a funding label, not a work type.',
   unknown_status: 'Source status is not recognized.',
   amount_paid_exceeds_contract: 'Reported amount paid exceeds the contract amount.',
+  nationwide_program: 'Source lists this as a nationwide program; no single region.',
+  amount_mismatch: 'Source amount in pesos does not match its amount in thousands.',
 };
 
 /** Prefix for per-field parse failures, e.g. "invalid_number:abc". */
@@ -159,6 +163,14 @@ export const DPWH_LIST_COLUMNS = [
   'completion_date', 'infra_year', 'latitude', 'longitude', 'contract_effectivity_date',
 ] as const;
 export type DpwhContractListItem = Pick<DpwhContract, (typeof DPWH_LIST_COLUMNS)[number]>;
+
+/** Columns of public.project_directory returned by the directory list endpoint (every source). */
+export const PROJECT_LIST_COLUMNS = ['source', 'record_id', 'amount_label', ...DPWH_LIST_COLUMNS.filter((c) => c !== 'contract_id')] as const;
+export type ProjectListItem = Omit<DpwhContractListItem, 'contract_id'> & {
+  source: string;
+  record_id: string;
+  amount_label: string;
+};
 
 /** Columns returned by the map endpoint (contracts with coordinates). */
 export const DPWH_MAP_COLUMNS = [

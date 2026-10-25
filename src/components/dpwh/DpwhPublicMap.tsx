@@ -7,13 +7,12 @@ import { AlertTriangle, List, Loader2, MapPin, RotateCcw, Search } from 'lucide-
 import {
   DPWH_CATEGORIES,
   DPWH_CATEGORY_LABELS,
-  DPWH_STATUSES,
   DPWH_STATUS_LABELS,
   type DpwhMapPoint,
   type DpwhSummary,
 } from '@/types/dpwh';
 import type { MapBounds } from '@/lib/integrations/dpwh/nationwide/query';
-import { STATUS_COLORS, formatCount, formatPeso, statusLabel } from './format';
+import { MAP_STATUSES, STATUS_COLORS, formatCount, formatPeso, statusColor, statusLabel, statusTextColor } from './format';
 
 const DpwhLeafletMap = dynamic(() => import('./DpwhLeafletMap'), {
   ssr: false,
@@ -153,7 +152,7 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
           <select aria-label="Status" className={`${selectClass} lg:col-span-2`} value={filters.status}
             onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}>
             <option value="">All statuses</option>
-            {DPWH_STATUSES.map((s) => <option key={s} value={s}>{DPWH_STATUS_LABELS[s]}</option>)}
+            {MAP_STATUSES.map((s) => <option key={s} value={s}>{DPWH_STATUS_LABELS[s]}</option>)}
           </select>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#64748B]">
@@ -182,13 +181,17 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
             <DpwhLeafletMap points={points} focus={focus} selectedId={selectedId} onBoundsChange={setBounds} />
           </div>
           <ul aria-label="Marker legend" className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#64748B]">
-            {DPWH_STATUSES.map((s) => (
+            {MAP_STATUSES.map((s) => (
               <li key={s} className="inline-flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full border border-white shadow" style={{ backgroundColor: STATUS_COLORS[s] }} />
                 {DPWH_STATUS_LABELS[s]}
               </li>
             ))}
           </ul>
+          <p className="text-[11px] text-[#94A3B8]">
+            The map shows DPWH contracts with reported coordinates. FY 2027 NEP budget proposals are not mapped: the source
+            gives no coordinates for them. They are listed in the <Link href="/projects?source=dpwh_nep_2027" className="underline hover:text-[#2563EB]">directory</Link>.
+          </p>
         </div>
 
         <section aria-label="Contracts in view" className="lg:col-span-4 bg-white border border-[#E2E8F0] rounded-xl shadow-2xs overflow-hidden">
@@ -210,8 +213,8 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
                     className={`w-full text-left px-4 py-3 hover:bg-[#F8FAFC] ${selectedId === p.contract_id ? 'bg-[#F1F5F9]' : ''}`}>
                     <span className="flex items-center justify-between gap-2 text-[11px]">
                       <span className="font-mono font-semibold text-[#172B4D]">{p.contract_id}</span>
-                      <span className="inline-flex items-center gap-1 font-semibold" style={{ color: STATUS_COLORS[p.status] }}>
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_COLORS[p.status] }} />
+                      <span className="inline-flex items-center gap-1 font-semibold" style={{ color: statusTextColor(p.status) }}>
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: statusColor(p.status) }} />
                         {statusLabel(p.status)}
                       </span>
                     </span>

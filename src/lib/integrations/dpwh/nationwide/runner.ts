@@ -4,6 +4,7 @@ import { after } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabaseSyncStore } from './store';
 import { runDpwhSync, type SyncOutcome, type SyncTrigger } from './sync';
+import { scopeFromEnv, storageBudgetFromEnv } from './scope';
 
 /**
  * Shared glue for the scheduled and manual sync routes: secret checking,
@@ -42,6 +43,8 @@ export async function runSyncInvocation(
     deadline: Date.now() + INVOCATION_BUDGET_MS,
     resumeRunId: options.resumeRunId ?? null,
     force: options.force ?? false,
+    scopeRegions: scopeFromEnv(process.env.DPWH_SYNC_REGIONS),
+    storageBudgetBytes: storageBudgetFromEnv(process.env.SYNC_STORAGE_BUDGET_MB),
     log: (message) => console.log(`[DPWH sync] ${message}`),
   });
 }

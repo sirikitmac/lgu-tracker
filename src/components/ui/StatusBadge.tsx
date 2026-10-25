@@ -5,54 +5,38 @@ import {
   AlertTriangle,
   FileSearch,
   CalendarClock,
+  type LucideIcon,
 } from 'lucide-react';
 import { ProjectStatus } from '@/types/project';
+import { lguStatusTone } from '@/lib/statusPalette';
 
 interface StatusBadgeProps {
   status: ProjectStatus;
 }
 
+const ICONS: Record<ProjectStatus, LucideIcon> = {
+  Completed: CheckCircle2,
+  'In Progress': Clock,
+  Procurement: FileSearch,
+  Delayed: AlertTriangle,
+  Planned: CalendarClock,
+};
+
 /**
  * Accessible status indicator pairing semantic color with an explicit icon and text label
- * so state is never communicated by hue alone.
+ * so state is never communicated by hue alone. Colors come from the shared status palette.
  */
 export function StatusBadge({ status }: StatusBadgeProps) {
-  switch (status) {
-    case 'Completed':
-      return (
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#16A34A] whitespace-nowrap">
-          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-          <span>Completed</span>
-        </span>
-      );
-    case 'In Progress':
-      return (
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0284C7] whitespace-nowrap">
-          <Clock className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-          <span>In Progress</span>
-        </span>
-      );
-    case 'Procurement':
-      return (
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#D97706] whitespace-nowrap">
-          <FileSearch className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-          <span>Procurement</span>
-        </span>
-      );
-    case 'Delayed':
-      return (
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#DC2626] whitespace-nowrap">
-          <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-          <span>Delayed</span>
-        </span>
-      );
-    case 'Planned':
-    default:
-      return (
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#64748B] whitespace-nowrap">
-          <CalendarClock className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-          <span>Planned</span>
-        </span>
-      );
-  }
+  const known = status in ICONS;
+  const label = known ? status : 'Planned';
+  const Icon = ICONS[label];
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap"
+      style={{ color: lguStatusTone(label).text }}
+    >
+      <Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+      <span>{label}</span>
+    </span>
+  );
 }

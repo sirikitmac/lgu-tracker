@@ -1,5 +1,6 @@
 import {
   DPWH_CATEGORY_LABELS,
+  DPWH_STATUSES,
   DPWH_STATUS_LABELS,
   DPWH_WARNING_LABELS,
   INVALID_DATE,
@@ -7,6 +8,7 @@ import {
   type DpwhCategory,
   type DpwhStatus,
 } from '@/types/dpwh';
+import { STATUS_TONES, type StatusTone } from '@/lib/statusPalette';
 
 const peso = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 0 });
 const count = new Intl.NumberFormat('en-US');
@@ -69,21 +71,41 @@ export function contractMapHref(c: { contract_id: string; latitude: number | nul
   return `/projects/map?focus=${encodeURIComponent(c.contract_id)}&lat=${c.latitude}&lng=${c.longitude}`;
 }
 
-/** Marker colors per status (also used for the map legend). */
-export const STATUS_COLORS: Record<string, string> = {
-  completed: '#16A34A',
-  ongoing: '#2563EB',
-  for_procurement: '#F59E0B',
-  not_yet_started: '#64748B',
-  terminated: '#DC2626',
-  unknown: '#94A3B8',
+/**
+ * Color of each status, shared by markers, legends, badges, and lists.
+ * 'proposed' is only ever set on budget proposals (NEP), never on contracts.
+ */
+export const STATUS_TONE: Record<DpwhStatus, StatusTone> = {
+  completed: 'green',
+  ongoing: 'blue',
+  for_procurement: 'orange',
+  not_yet_started: 'gray',
+  terminated: 'red',
+  unknown: 'lightGray',
+  proposed: 'purple',
 };
 
-export const STATUS_STYLES: Record<string, string> = {
-  completed: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-  ongoing: 'bg-blue-50 text-blue-800 border-blue-200',
-  for_procurement: 'bg-amber-50 text-amber-800 border-amber-200',
-  not_yet_started: 'bg-slate-50 text-slate-700 border-slate-200',
-  terminated: 'bg-red-50 text-red-800 border-red-200',
-  unknown: 'bg-slate-50 text-slate-600 border-slate-200',
-};
+function byStatus(pick: (tone: (typeof STATUS_TONES)[StatusTone]) => string): Record<DpwhStatus, string> {
+  return Object.fromEntries(DPWH_STATUSES.map((s) => [s, pick(STATUS_TONES[STATUS_TONE[s]])])) as Record<DpwhStatus, string>;
+}
+
+/** Marker and legend fill per status. */
+export const STATUS_COLORS = byStatus((t) => t.fill);
+/** Status text on white. */
+export const STATUS_TEXT_COLORS = byStatus((t) => t.text);
+/** Pill badge classes per status. */
+export const STATUS_STYLES = byStatus((t) => t.badge);
+
+function toneOf(value: string | null): StatusTone {
+  return value && value in STATUS_TONE ? STATUS_TONE[value as DpwhStatus] : 'lightGray';
+}
+export const statusColor = (value: string | null) => STATUS_TONES[toneOf(value)].fill;
+export const statusTextColor = (value: string | null) => STATUS_TONES[toneOf(value)].text;
+export const statusBadgeClass = (value: string | null) => STATUS_TONES[toneOf(value)].badge;
+
+/**
+ * Statuses the contract map can show. The map reads DPWH contracts only;
+ * NEP proposals have no coordinates in the source, so 'proposed' would only
+ * ever be an empty legend entry and an always-empty filter.
+ */
+export const MAP_STATUSES = DPWH_STATUSES.filter((s) => s !== 'proposed');

@@ -10,6 +10,7 @@ import {
 import { LGUProject } from '@/types/project';
 import { formatPHP } from '@/data/sampleProjects';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { lguStatusTone } from '@/lib/statusPalette';
 
 interface ProjectCardGridProps {
   projects: LGUProject[];
@@ -51,14 +52,7 @@ export function ProjectCardGrid({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
       {projects.map((project) => {
-        const progressBarColor =
-          project.status === 'Completed'
-            ? 'bg-[#16A34A]'
-            : project.status === 'Delayed'
-            ? 'bg-[#DC2626]'
-            : project.status === 'Procurement' || project.status === 'Planned'
-            ? 'bg-[#D97706]'
-            : 'bg-[#2563EB]';
+        const progressBarColor = lguStatusTone(project.status).fill;
 
         return (
           <article
@@ -117,8 +111,8 @@ export function ProjectCardGrid({
                 </div>
                 <div className="w-full h-1.5 bg-[#E2E8F0] rounded-full overflow-hidden">
                   <div
-                    className={`h-full ${progressBarColor} transition-all`}
-                    style={{ width: `${project.progressPercentage}%` }}
+                    className="h-full transition-all"
+                    style={{ width: `${project.progressPercentage}%`, backgroundColor: progressBarColor }}
                   />
                 </div>
               </div>

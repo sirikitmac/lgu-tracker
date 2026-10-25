@@ -10,9 +10,10 @@
     "lint": "tsc --noEmit",
     "dpwh:iligan-export": "tsx --conditions=react-server scripts/dpwh-iligan-export.ts",
     "dpwh:sync": "tsx --conditions=react-server --max-old-space-size=4096 scripts/dpwh-sync.ts",
-    "test": "tsx --conditions=react-server --test \"tests/dpwh/*.test.ts\"",
+    "test": "tsx --conditions=react-server --test \"tests/dpwh/*.test.ts\" \"tests/bettergov/*.test.ts\"",
     "test:db": "tsx --conditions=react-server --test \"tests/db/*.test.ts\"",
-    "test:db:full": "tsx --conditions=react-server --max-old-space-size=6144 tests/db/full-import.ts"
+    "test:db:full": "tsx --conditions=react-server --max-old-space-size=6144 tests/db/full-import.ts",
+    "bettergov:sync": "tsx --conditions=react-server scripts/bettergov-sync.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

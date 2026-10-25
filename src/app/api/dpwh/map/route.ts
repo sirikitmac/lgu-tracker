@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import {
   MAP_POINT_LIMIT,
+  applyMapFilters,
   applyMapQuery,
   parseBounds,
   parseDirectoryQuery,
@@ -32,10 +33,18 @@ export async function GET(request: NextRequest) {
     PromiseLike<{ data: unknown[] | null; error: { message: string } | null; count: number | null }>;
   const builder = supabase
     .from('dpwh_contracts_directory')
-    .select(DPWH_MAP_COLUMNS.join(','), { count: 'exact' }) as unknown as PointBuilder;
-  const { data, error, count } = await applyMapQuery(builder, parsed.query, bounds.bounds);
-  if (error) {
-    console.error('[LGU Tracker] DPWH map query failed:', error);
+    .select(DPWH_MAP_COLUMNS.join(',')) as unknown as PointBuilder;
+  // Counted in a separate request: PostgREST's combined count + ordered page
+  // plans far worse than either alone and hits the anon statement timeout.
+  const countBuilder = supabase
+    .from('dpwh_contracts_directory')
+    .select('contract_id', { count: 'exact', head: true }) as unknown as PointBuilder;
+  const [{ data, error }, { count, error: countError }] = await Promise.all([
+    applyMapQuery(builder, parsed.query, bounds.bounds),
+    applyMapFilters(countBuilder, parsed.query, bounds.bounds),
+  ]);
+  if (error || countError) {
+    console.error('[LGU Tracker] DPWH map query failed:', error ?? countError);
     return Response.json({ error: 'Could not load DPWH map markers.' }, { status: 502 });
   }
   const points = (data ?? []) as unknown as DpwhMapPoint[];

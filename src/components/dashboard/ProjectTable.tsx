@@ -5,6 +5,7 @@ import { Eye, FolderSearch } from 'lucide-react';
 import { LGUProject } from '@/types/project';
 import { formatPHP } from '@/data/sampleProjects';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { lguStatusTone } from '@/lib/statusPalette';
 
 interface ProjectTableProps {
   projects: LGUProject[];
@@ -80,15 +81,7 @@ export function ProjectTable({
           </thead>
           <tbody className="divide-y divide-[#E2E8F0] text-sm">
             {projects.map((project) => {
-              const progressBarColor =
-                project.status === 'Completed'
-                  ? 'bg-[#16A34A]'
-                  : project.status === 'Delayed'
-                  ? 'bg-[#DC2626]'
-                  : project.status === 'Procurement' ||
-                    project.status === 'Planned'
-                  ? 'bg-[#D97706]'
-                  : 'bg-[#2563EB]';
+              const progressBarColor = lguStatusTone(project.status).fill;
 
               return (
                 <tr
@@ -140,8 +133,8 @@ export function ProjectTable({
                     <div className="flex items-center gap-2.5">
                       <div className="w-24 h-2 bg-[#E2E8F0] rounded-full overflow-hidden">
                         <div
-                          className={`h-full ${progressBarColor} transition-all`}
-                          style={{ width: `${project.progressPercentage}%` }}
+                          className="h-full transition-all"
+                          style={{ width: `${project.progressPercentage}%`, backgroundColor: progressBarColor }}
                         />
                       </div>
                       <span className="font-mono text-xs font-semibold text-[#0F172A] tabular-nums w-9 text-right">

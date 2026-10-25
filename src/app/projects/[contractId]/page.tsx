@@ -5,7 +5,7 @@ import { AlertTriangle, ArrowLeft, MapPin, MapPinOff } from 'lucide-react';
 import { loadDpwhContractDetail } from '@/lib/integrations/dpwh/nationwide/detail';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { DpwhContractDetails } from '@/components/dpwh/DpwhContractDetails';
-import { STATUS_STYLES, contractMapHref, formatPeso, formatProgress, statusLabel } from '@/components/dpwh/format';
+import { statusBadgeClass, contractMapHref, formatPeso, formatProgress, statusLabel } from '@/components/dpwh/format';
 
 export async function generateMetadata({ params }: PageProps<'/projects/[contractId]'>): Promise<Metadata> {
   const { contractId } = await params;
@@ -47,7 +47,7 @@ export default async function PublicContractPage({ params }: PageProps<'/project
       <header className="bg-white border border-[#E2E8F0] rounded-xl p-5 sm:p-6 shadow-2xs space-y-3">
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="font-mono font-semibold text-[#172B4D]">{c.contract_id}</span>
-          <span className={`px-2 py-0.5 rounded-full border ${STATUS_STYLES[c.status] ?? STATUS_STYLES.unknown}`}>{statusLabel(c.status)}</span>
+          <span className={`px-2 py-0.5 rounded-full border ${statusBadgeClass(c.status)}`}>{statusLabel(c.status)}</span>
         </div>
         <h1 className="font-display text-xl sm:text-2xl font-bold text-[#172B4D] leading-snug">{c.contract_name ?? c.title}</h1>
         <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-[#64748B]">

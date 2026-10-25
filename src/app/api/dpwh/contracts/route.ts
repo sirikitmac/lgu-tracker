@@ -1,13 +1,14 @@
 import type { NextRequest } from 'next/server';
-import { applyDirectoryQuery, parseDirectoryQuery, type FilterBuilder } from '@/lib/integrations/dpwh/nationwide/query';
+import { applyDirectoryFilters, applyDirectoryQuery, parseDirectoryQuery, type FilterBuilder } from '@/lib/integrations/dpwh/nationwide/query';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { DPWH_LIST_COLUMNS, type DpwhContractListItem } from '@/types/dpwh';
+import { PROJECT_LIST_COLUMNS, type ProjectListItem } from '@/types/dpwh';
 
 /**
  * GET /api/dpwh/contracts?q=&region=&province=&municipality=&category=&status=
- *                         &contractor=&office=&sort=&page=&pageSize=
+ *                         &contractor=&office=&source=&sort=&page=&pageSize=
  *
- * One page of the nationwide DPWH directory. Filtering, sorting, and
+ * One page of the project directory (public.project_directory: DPWH
+ * contracts plus the other BetterGov.ph sources, each row with its `source`). Filtering, sorting, and
  * pagination run in Postgres (indexed); the browser never receives the
  * full dataset. Public data: RLS allows reads for everyone.
  */
@@ -23,15 +24,23 @@ export async function GET(request: NextRequest) {
   type ListBuilder = FilterBuilder<ListBuilder> &
     PromiseLike<{ data: unknown[] | null; error: { message: string } | null; count: number | null }>;
   const builder = supabase
-    .from('dpwh_contracts_directory')
-    .select(DPWH_LIST_COLUMNS.join(','), { count: 'exact' }) as unknown as ListBuilder;
-  const { data, error, count } = await applyDirectoryQuery(builder, parsed.query);
-  if (error) {
-    console.error('[LGU Tracker] DPWH directory query failed:', error);
-    return Response.json({ error: 'Could not load DPWH contracts.' }, { status: 502 });
+    .from('project_directory')
+    .select(PROJECT_LIST_COLUMNS.join(',')) as unknown as ListBuilder;
+  // Counted in a separate request: PostgREST's combined count + ordered page
+  // plans far worse than either alone and hits the anon statement timeout.
+  const countBuilder = supabase
+    .from('project_directory')
+    .select('record_id', { count: 'exact', head: true }) as unknown as ListBuilder;
+  const [{ data, error }, { count, error: countError }] = await Promise.all([
+    applyDirectoryQuery(builder, parsed.query, ['source', 'record_id']),
+    applyDirectoryFilters(countBuilder, parsed.query),
+  ]);
+  if (error || countError) {
+    console.error('[LGU Tracker] DPWH directory query failed:', error ?? countError);
+    return Response.json({ error: 'Could not load projects.' }, { status: 502 });
   }
   return Response.json({
-    items: (data ?? []) as unknown as DpwhContractListItem[],
+    items: (data ?? []) as unknown as ProjectListItem[],
     total: count ?? 0,
     page: parsed.query.page,
     pageSize: parsed.query.pageSize,

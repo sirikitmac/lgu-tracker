@@ -10,6 +10,7 @@ import {
   hasValidCoordinates,
 } from '@/types/project';
 import { ILIGAN_CITY_CENTER, formatPHP } from '@/data/sampleProjects';
+import { lguStatusTone } from '@/lib/statusPalette';
 
 interface IliganProjectMapProps {
   projects: LGUProject[];
@@ -18,51 +19,24 @@ interface IliganProjectMapProps {
   onInspectFullDetails: (project: LGUProject) => void;
 }
 
-/**
- * Maps LGU project status values to presentation marker colors and labels:
- * - Green (#16A34A): Completed
- * - Blue (#2563EB): Ongoing / In Progress
- * - Orange (#F59E0B): Planned / Procurement
- * - Red (#DC2626): Delayed
- */
+/** Legend order and labels; colors come from the shared status palette. */
+const LEGEND: { status: ProjectStatus; label: string }[] = [
+  { status: 'Completed', label: 'Completed' },
+  { status: 'In Progress', label: 'Ongoing (In Progress)' },
+  { status: 'Procurement', label: 'Procurement' },
+  { status: 'Planned', label: 'Planned' },
+  { status: 'Delayed', label: 'Delayed' },
+];
+
+/** Marker fill, selection ring, and label for an LGU project status. */
 export function getMarkerStyleForStatus(status: ProjectStatus): {
   color: string;
   ringColor: string;
   label: string;
 } {
-  switch (status) {
-    case 'Completed':
-      return {
-        color: '#16A34A',
-        ringColor: 'rgba(22, 163, 74, 0.25)',
-        label: 'Completed',
-      };
-    case 'In Progress':
-      return {
-        color: '#2563EB',
-        ringColor: 'rgba(37, 99, 235, 0.25)',
-        label: 'Ongoing (In Progress)',
-      };
-    case 'Delayed':
-      return {
-        color: '#DC2626',
-        ringColor: 'rgba(220, 38, 38, 0.25)',
-        label: 'Delayed',
-      };
-    case 'Procurement':
-      return {
-        color: '#F59E0B',
-        ringColor: 'rgba(245, 158, 11, 0.25)',
-        label: 'Planned (Procurement)',
-      };
-    case 'Planned':
-    default:
-      return {
-        color: '#F59E0B',
-        ringColor: 'rgba(245, 158, 11, 0.25)',
-        label: 'Planned',
-      };
-  }
+  const entry = LEGEND.find((l) => l.status === status) ?? LEGEND[3];
+  const color = lguStatusTone(entry.status).fill;
+  return { color, ringColor: `${color}40`, label: entry.label };
 }
 
 function createStatusDivIcon(status: ProjectStatus, isSelected: boolean): L.DivIcon {
@@ -322,34 +296,16 @@ export default function IliganProjectMap({
           Project Status Markers
         </p>
         <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-xs text-[#0F172A]">
-          <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-            <span
-              className="w-2.5 h-2.5 rounded-full bg-[#16A34A] shrink-0"
-              aria-hidden="true"
-            />
-            <span>Completed</span>
-          </span>
-          <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-            <span
-              className="w-2.5 h-2.5 rounded-full bg-[#2563EB] shrink-0"
-              aria-hidden="true"
-            />
-            <span>Ongoing</span>
-          </span>
-          <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-            <span
-              className="w-2.5 h-2.5 rounded-full bg-[#F59E0B] shrink-0"
-              aria-hidden="true"
-            />
-            <span>Planned / Procurement</span>
-          </span>
-          <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-            <span
-              className="w-2.5 h-2.5 rounded-full bg-[#DC2626] shrink-0"
-              aria-hidden="true"
-            />
-            <span>Delayed</span>
-          </span>
+          {LEGEND.map(({ status, label }) => (
+            <span key={status} className="inline-flex items-center gap-1.5 whitespace-nowrap">
+              <span
+                className="w-2.5 h-2.5 rounded-full shrink-0"
+                style={{ backgroundColor: lguStatusTone(status).fill }}
+                aria-hidden="true"
+              />
+              <span>{label}</span>
+            </span>
+          ))}
         </div>
       </div>
     </div>

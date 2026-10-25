@@ -8,12 +8,13 @@ import {
   DPWH_CATEGORY_LABELS,
   DPWH_STATUSES,
   DPWH_STATUS_LABELS,
-  type DpwhContractListItem,
   type DpwhSummary,
+  type ProjectListItem,
 } from '@/types/dpwh';
+import { PROJECT_SOURCES, PROJECT_SOURCE_IDS, projectHref, sourceLabel } from '@/lib/integrations/bettergov/sources';
 import { DpwhSummaryPanel } from './DpwhSummaryPanel';
 import { DpwhContractDrawer } from './DpwhContractDrawer';
-import { STATUS_STYLES, categoryLabel, contractMapHref, formatCount, formatDate, formatPeso, formatProgress, statusLabel } from './format';
+import { statusBadgeClass, categoryLabel, contractMapHref, formatCount, formatDate, formatPeso, formatProgress, statusLabel } from './format';
 
 const SORT_OPTIONS = [
   ['contract_amount-desc', 'Contract amount: high to low'],
@@ -41,11 +42,12 @@ export interface Filters {
   status: string;
   office: string;
   contractor: string;
+  source: string;
   sort: string;
 }
 
 const EMPTY_FILTERS: Filters = {
-  q: '', region: '', province: '', municipality: '', category: '', status: '', office: '', contractor: '',
+  q: '', region: '', province: '', municipality: '', category: '', status: '', office: '', contractor: '', source: '',
   sort: 'contract_amount-desc',
 };
 const PAGE_SIZE = 25;
@@ -67,7 +69,7 @@ export function DpwhDirectory({ initialFilters }: { initialFilters?: Partial<Fil
   const [summaryState, setSummaryState] = useState<'loading' | 'ready' | 'empty' | 'error'>('loading');
   const [filters, setFilters] = useState<Filters>(() => ({ ...EMPTY_FILTERS, ...initialFilters }));
   const [page, setPage] = useState(1);
-  const [items, setItems] = useState<DpwhContractListItem[]>([]);
+  const [items, setItems] = useState<ProjectListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [listState, setListState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [listError, setListError] = useState<string | null>(null);
@@ -105,11 +107,12 @@ export function DpwhDirectory({ initialFilters }: { initialFilters?: Partial<Fil
     set('category', filters.category);
     set('status', filters.status);
     set('office', filters.office);
+    set('source', filters.source);
     p.set('sort', filters.sort);
     p.set('page', String(page));
     p.set('pageSize', String(PAGE_SIZE));
     return p.toString();
-  }, [q, contractor, filters.region, filters.province, filters.municipality, filters.category, filters.status, filters.office, filters.sort, page]);
+  }, [q, contractor, filters.region, filters.province, filters.municipality, filters.category, filters.status, filters.office, filters.source, filters.sort, page]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -208,8 +211,8 @@ export function DpwhDirectory({ initialFilters }: { initialFilters?: Partial<Fil
             type="search"
             value={filters.q}
             onChange={(e) => update({ q: e.target.value })}
-            placeholder="Search project name, contract ID, contractor, description, or implementing office"
-            aria-label="Search DPWH contracts"
+            placeholder="Search project name, contract or project ID, contractor, description, or implementing office"
+            aria-label="Search projects"
             maxLength={200}
             className="w-full min-h-[44px] pl-9 pr-3 py-2 rounded-lg border border-[#E2E8F0] text-sm focus:outline-2 focus:outline-[#2563EB]"
           />
@@ -278,6 +281,13 @@ export function DpwhDirectory({ initialFilters }: { initialFilters?: Partial<Fil
             />
           </label>
           <label className="text-xs font-medium text-[#64748B] space-y-1">
+            <span>Source</span>
+            <select className={selectClass} value={filters.source} onChange={(e) => update({ source: e.target.value })}>
+              <option value="">All sources</option>
+              {PROJECT_SOURCE_IDS.map((s) => <option key={s} value={s}>{PROJECT_SOURCES[s].label}</option>)}
+            </select>
+          </label>
+          <label className="text-xs font-medium text-[#64748B] space-y-1">
             <span>Sort by</span>
             <select className={selectClass} value={filters.sort} onChange={(e) => update({ sort: e.target.value })}>
               {SORT_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
@@ -286,7 +296,7 @@ export function DpwhDirectory({ initialFilters }: { initialFilters?: Partial<Fil
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#64748B]">
           <span aria-live="polite">
-            {listState === 'ready' ? `${formatCount(total)} contract${total === 1 ? '' : 's'} match` : listState === 'loading' ? 'Searching…' : ''}
+            {listState === 'ready' ? `${formatCount(total)} project${total === 1 ? '' : 's'} match` : listState === 'loading' ? 'Searching…' : ''}
           </span>
           <button
             type="button"
@@ -303,7 +313,7 @@ export function DpwhDirectory({ initialFilters }: { initialFilters?: Partial<Fil
         {listState === 'error' ? (
           <div role="alert" className="p-8 text-center text-sm text-red-800 space-y-3">
             <AlertTriangle className="w-6 h-6 mx-auto" />
-            <p>Could not load contracts ({listError}).</p>
+            <p>Could not load projects ({listError}).</p>
             <button type="button" onClick={() => setReload((n) => n + 1)} className="px-3 py-2 rounded-lg border border-red-200 font-medium hover:bg-red-50">
               Try again
             </button>
@@ -311,7 +321,7 @@ export function DpwhDirectory({ initialFilters }: { initialFilters?: Partial<Fil
         ) : listState === 'ready' && items.length === 0 ? (
           <div className="p-10 text-center space-y-3">
             <SearchX className="w-7 h-7 mx-auto text-[#94A3B8]" />
-            <p className="text-sm font-semibold text-[#172B4D]">No contracts match these filters.</p>
+            <p className="text-sm font-semibold text-[#172B4D]">No projects match these filters.</p>
             {isFiltered && (
               <button type="button" onClick={resetFilters} className="text-sm font-medium text-[#2563EB] hover:underline">Reset filters</button>
             )}
@@ -324,7 +334,7 @@ export function DpwhDirectory({ initialFilters }: { initialFilters?: Partial<Fil
                   <th scope="col" className="px-4 py-3 font-semibold">Project</th>
                   <th scope="col" className="px-4 py-3 font-semibold">Location (reported)</th>
                   <th scope="col" className="px-4 py-3 font-semibold">Category / status</th>
-                  <th scope="col" className="px-4 py-3 font-semibold text-right">Contract amount</th>
+                  <th scope="col" className="px-4 py-3 font-semibold text-right">Amount</th>
                   <th scope="col" className="px-4 py-3 font-semibold text-right">Progress</th>
                 </tr>
               </thead>
@@ -333,42 +343,59 @@ export function DpwhDirectory({ initialFilters }: { initialFilters?: Partial<Fil
                   ? Array.from({ length: 6 }, (_, i) => (
                       <tr key={i}><td colSpan={5} className="px-4 py-4"><div className="h-4 rounded bg-[#F1F5F9] animate-pulse" /></td></tr>
                     ))
-                  : items.map((item) => (
-                      <tr key={item.contract_id} className="hover:bg-[#F8FAFC]">
+                  : items.map((item) => {
+                      const isContract = item.source === 'dpwh_contracts';
+                      const mapHref = isContract ? contractMapHref({ ...item, contract_id: item.record_id }) : null;
+                      const label = (
+                        <>
+                          <span className="block font-medium text-[#172B4D] group-hover:text-[#2563EB] group-hover:underline line-clamp-2">
+                            {item.contract_name ?? item.title}
+                          </span>
+                          <span className="block text-xs text-[#64748B] mt-0.5">
+                            {item.record_id} · {item.implementing_office ?? 'Office not reported'}
+                            {item.start_date ? ` · started ${formatDate(item.start_date)}` : ''}
+                          </span>
+                          <span className="inline-block mt-1 px-1.5 py-0.5 rounded border border-[#E2E8F0] bg-[#F8FAFC] text-[10px] font-medium text-[#475569]">
+                            Source: {sourceLabel(item.source)}
+                          </span>
+                        </>
+                      );
+                      return (
+                      <tr key={`${item.source}:${item.record_id}`} className="hover:bg-[#F8FAFC]">
                         <td className="px-4 py-3 max-w-md">
-                          <button type="button" onClick={() => setSelectedId(item.contract_id)} className="text-left group">
-                            <span className="block font-medium text-[#172B4D] group-hover:text-[#2563EB] group-hover:underline line-clamp-2">
-                              {item.contract_name ?? item.title}
-                            </span>
-                            <span className="block text-xs text-[#64748B] mt-0.5">
-                              {item.contract_id} · {item.implementing_office ?? 'Office not reported'}
-                              {item.start_date ? ` · started ${formatDate(item.start_date)}` : ''}
-                            </span>
-                          </button>
+                          {isContract ? (
+                            <button type="button" onClick={() => setSelectedId(item.record_id)} className="text-left group">{label}</button>
+                          ) : (
+                            <Link href={projectHref(item.source, item.record_id)} className="block text-left group">{label}</Link>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-xs text-[#0F172A]">
                           {item.province ?? (item.provinces.length > 1 ? `${item.provinces.length} provinces` : 'Not reported')}
                           <span className="block text-[#64748B]">{item.region ?? '—'}</span>
-                          {contractMapHref(item) ? (
-                            <Link href={contractMapHref(item)!} className="inline-flex items-center gap-0.5 mt-1 text-[#2563EB] hover:underline">
+                          {mapHref ? (
+                            <Link href={mapHref} className="inline-flex items-center gap-0.5 mt-1 text-[#2563EB] hover:underline">
                               <MapPin className="w-3 h-3" aria-hidden="true" /> Map
                             </Link>
                           ) : (
-                            <span className="inline-flex items-center gap-0.5 mt-1 text-[#94A3B8]" title="The source reports no coordinates for this contract.">
+                            <span className="inline-flex items-center gap-0.5 mt-1 text-[#94A3B8]" title="The source reports no coordinates for this project.">
                               <MapPinOff className="w-3 h-3" aria-hidden="true" /> No coordinates
                             </span>
                           )}
                         </td>
                         <td className="px-4 py-3 text-xs">
                           <span className="block text-[#0F172A]">{categoryLabel(item.category)}</span>
-                          <span className={`inline-block mt-1 px-2 py-0.5 rounded-full border ${STATUS_STYLES[item.status] ?? STATUS_STYLES.unknown}`}>
+                          <span className={`inline-block mt-1 px-2 py-0.5 rounded-full border ${statusBadgeClass(item.status)}`}>
                             {statusLabel(item.status)}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-right tabular-nums whitespace-nowrap">{formatPeso(item.contract_amount)}</td>
-                        <td className="px-4 py-3 text-right tabular-nums">{formatProgress(item.progress)}</td>
+                        <td className="px-4 py-3 text-right tabular-nums whitespace-nowrap">
+                          {formatPeso(isContract ? item.contract_amount : item.budget)}
+                          {!isContract && <span className="block text-[10px] text-[#64748B]">{item.amount_label}</span>}
+                        </td>
+                        <td className="px-4 py-3 text-right tabular-nums">{isContract ? formatProgress(item.progress) : 'Not applicable'}</td>
                       </tr>
-                    ))}
+                      );
+                    })}
               </tbody>
             </table>
           </div>

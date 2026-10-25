@@ -10,6 +10,8 @@
  *   --force                                 re-run even if this snapshot already succeeded
  *   --resume <run id>                       continue a paused run
  *   --out <dir>                             where to write plan.json (default exports/dpwh-nationwide)
+ *   --regions <list|all>                    project regions to store (default: DPWH_SYNC_REGIONS, else Visayas + Mindanao; see scope.ts)
+ *   --budget-mb <n|off>                     stop before the database reaches n MB (default: SYNC_STORAGE_BUDGET_MB, else 400)
  *
  * Database access (only needed for --apply, optional for the plan):
  *   DPWH_SYNC_ADMIN_EMAIL + DPWH_SYNC_ADMIN_PASSWORD   sign in as super_admin / lgu_admin (preferred), or
@@ -24,9 +26,10 @@ import { planDpwhSync } from '@/lib/integrations/dpwh/nationwide/plan';
 import { openSnapshot, resolveLatestSnapshot, snapshotFor, DPWH_REVIEWED_SNAPSHOT } from '@/lib/integrations/dpwh/nationwide/source';
 import { supabaseSyncStore } from '@/lib/integrations/dpwh/nationwide/store';
 import { runDpwhSync } from '@/lib/integrations/dpwh/nationwide/sync';
+import { scopeFromEnv, storageBudgetFromEnv } from '@/lib/integrations/dpwh/nationwide/scope';
 
 function parseArgs(argv: string[]) {
-  const args = { apply: false, force: false, revision: null as string | null, snapshotDate: null as string | null, resume: null as string | null, out: 'exports/dpwh-nationwide' };
+  const args = { apply: false, force: false, revision: null as string | null, snapshotDate: null as string | null, resume: null as string | null, out: 'exports/dpwh-nationwide', regions: undefined as string | undefined, budgetMb: undefined as string | undefined };
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i];
     const value = () => {
@@ -40,6 +43,8 @@ function parseArgs(argv: string[]) {
     else if (flag === '--snapshot-date') args.snapshotDate = value();
     else if (flag === '--resume') args.resume = value();
     else if (flag === '--out') args.out = value();
+    else if (flag === '--regions') args.regions = value();
+    else if (flag === '--budget-mb') args.budgetMb = value();
     else throw new Error(`Unknown option "${flag}".`);
   }
   if (args.revision && !/^[0-9a-f]{40}$/.test(args.revision)) throw new Error('--revision must be a 40-character commit SHA.');
@@ -121,6 +126,9 @@ async function main() {
   }
 
   if (!db) throw new Error('--apply needs DPWH_SYNC_ADMIN_EMAIL/DPWH_SYNC_ADMIN_PASSWORD or SUPABASE_SECRET_KEY.');
+  const scopeRegions = scopeFromEnv(args.regions ?? process.env.DPWH_SYNC_REGIONS);
+  const storageBudgetBytes = storageBudgetFromEnv(args.budgetMb ?? process.env.SYNC_STORAGE_BUDGET_MB);
+  console.log(`Storage:   ${storageBudgetBytes === null ? 'no budget' : `stop at ${storageBudgetBytes / 1e6} MB`}`);
   const outcome = await runDpwhSync({
     store: supabaseSyncStore(db.client),
     trigger: 'cli',
@@ -128,6 +136,8 @@ async function main() {
     snapshot,
     force: args.force,
     resumeRunId: args.resume,
+    scopeRegions,
+    storageBudgetBytes,
     log: (message) => console.log(message),
   });
   console.log(JSON.stringify({ status: outcome.status, runId: outcome.runId, sourceRows: outcome.sourceRows, totals: outcome.totals, error: outcome.error ?? null }, null, 2));

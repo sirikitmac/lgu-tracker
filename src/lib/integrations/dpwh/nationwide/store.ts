@@ -17,7 +17,8 @@ import {
  */
 
 const RUN_COLUMNS =
-  'id, status, source_revision, source_rows, next_row, inserted_count, updated_count, unchanged_count, rejected_count, heartbeat_at';
+  'id, status, source_revision, source_rows, next_row, inserted_count, updated_count, unchanged_count, rejected_count, ' +
+  'out_of_scope_count, scope_regions, heartbeat_at';
 
 interface PgError {
   message: string;
@@ -82,6 +83,12 @@ export function supabaseSyncStore(client: SupabaseClient): DpwhSyncStore {
       });
       if (rpcError) fail('Recording sync failure', rpcError);
       return data as SyncRun;
+    },
+
+    async databaseBytes() {
+      const { data, error } = await client.rpc('sync_storage_usage');
+      if (error) fail('Reading database size', error);
+      return Number(data);
     },
   };
 }

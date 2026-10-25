@@ -63,7 +63,7 @@ test('admin sync imports through the real SQL with source values intact', async 
     snapshot: SNAP_A, openSnapshot: open(data), sliceSize: 50, batchSize: 20, minRows: 1,
   });
   assert.equal(outcome.status, 'succeeded', outcome.error);
-  assert.deepEqual(outcome.totals, { inserted: 120, updated: 0, unchanged: 0, rejected: 0 });
+  assert.deepEqual(outcome.totals, { inserted: 120, updated: 0, unchanged: 0, rejected: 0, outOfScope: 0 });
 
   const c = (await db.query<Record<string, unknown>>(`select * from public.dpwh_contracts where contract_id = '20N00065'`)).rows[0];
   assert.equal(c.implementing_office, 'Region XIII');
@@ -145,7 +145,7 @@ test('LGU review fields: reviewers can write, the public cannot read, syncs neve
     snapshot: SNAP_B, openSnapshot: open(changed), sliceSize: 50, batchSize: 20, minRows: 1,
   });
   assert.equal(outcome.status, 'succeeded', outcome.error);
-  assert.deepEqual(outcome.totals, { inserted: 0, updated: 1, unchanged: 119, rejected: 0 });
+  assert.deepEqual(outcome.totals, { inserted: 0, updated: 1, unchanged: 119, rejected: 0, outOfScope: 0 });
 
   const contract = (await db.query<{ progress: string; status: string; first: string; last: string }>(
     `select progress::text, status, first_seen_run_id::text first, last_changed_run_id::text last from public.dpwh_contracts where contract_id = '20N00065'`)).rows[0];
@@ -171,7 +171,7 @@ test('re-running the same snapshot writes nothing new', async () => {
     minRows: 1, batchSize: 30,
   });
   assert.equal(forced.status, 'succeeded', forced.error);
-  assert.deepEqual(forced.totals, { inserted: 0, updated: 0, unchanged: 120, rejected: 0 });
+  assert.deepEqual(forced.totals, { inserted: 0, updated: 0, unchanged: 120, rejected: 0, outOfScope: 0 });
   assert.equal(await count(`select count(*)::int n from public.dpwh_contracts`), before);
   assert.equal((await db.query<{ t: string }>(`select max(updated_at)::text t from public.dpwh_contracts`)).rows[0].t, updatedBefore);
 });

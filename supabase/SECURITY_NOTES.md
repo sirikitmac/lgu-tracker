@@ -147,3 +147,19 @@ authenticated`, then only the grants its policies need, mirroring migration 4.
   signed-in admin and needs no service key.
 - Nothing in the sync deletes contracts. A failed or partial run leaves every
   previously stored record in place.
+
+## 5. Other BetterGov.ph sources (migration 20261028000100)
+
+- `infrastructure_projects` and the `project_directory` view are publicly
+  readable (public budget / project records). `source_sync_runs` is admin-only.
+  No end-user role can write them; the only write path is the `source_sync_*`
+  SECURITY DEFINER functions, gated by the same `private.can_run_dpwh_sync()`
+  check as the DPWH sync (active super_admin / lgu_admin, or the service role).
+- `sync_storage_usage()` returns the database size to admins and the service
+  role only, for the sync's storage guard.
+- `project_directory` is `security_invoker`, so callers see only what RLS on
+  `dpwh_contracts` and `infrastructure_projects` allows. It never exposes
+  `dpwh_contract_reviews`.
+- `/api/cron/bettergov-sync` uses the same `CRON_SECRET` check as the DPWH cron.
+- Nothing here deletes records; a narrower DPWH scope leaves already-stored
+  contracts in place.

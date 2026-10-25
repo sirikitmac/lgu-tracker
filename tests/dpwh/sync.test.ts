@@ -9,7 +9,7 @@ import {
   type SyncRun,
 } from '@/lib/integrations/dpwh/nationwide/sync';
 import type { DpwhContractRecord } from '@/types/dpwh';
-import { rowWithId } from './fixtures';
+import { realRow, rowWithId } from './fixtures';
 
 const SNAP_A = snapshotFor('a'.repeat(40), '2026-01-16T00:00:00.000Z');
 const SNAP_B = snapshotFor('b'.repeat(40), '2026-02-16T00:00:00.000Z');
@@ -22,13 +22,15 @@ class MemoryStore implements DpwhSyncStore {
   runs: (SyncRun & { error: string | null })[] = [];
   failures: string[] = [];
   busy = false;
+  /** Reported database size for the storage guard; null = not supported. */
+  bytes: number | null = null;
   private seq = 0;
 
   async state() {
     const success = [...this.runs].reverse().find((r) => r.status === 'succeeded') ?? null;
     return { lastSuccess: success, running: this.runs.find((r) => r.status === 'running') ?? null };
   }
-  async begin(_trigger: string, source: { source_revision: string; source_rows: number }, resumeRunId: string | null) {
+  async begin(_trigger: string, source: { source_revision: string; source_rows: number; scope_regions?: string[] | null }, resumeRunId: string | null) {
     if (this.busy) throw new SyncBusyError('already running');
     const running = this.runs.find((r) => r.status === 'running');
     if (running) {
@@ -38,10 +40,15 @@ class MemoryStore implements DpwhSyncStore {
     const run = {
       id: `run-${++this.seq}`, status: 'running' as const, source_revision: source.source_revision,
       source_rows: source.source_rows, next_row: 0, inserted_count: 0, updated_count: 0, unchanged_count: 0,
-      rejected_count: 0, heartbeat_at: new Date().toISOString(), error: null,
+      rejected_count: 0, out_of_scope_count: 0, scope_regions: source.scope_regions ?? null,
+      heartbeat_at: new Date().toISOString(), error: null,
     };
     this.runs.push(run);
     return { ...run };
+  }
+  async databaseBytes() {
+    if (this.bytes === null) throw new Error('not supported');
+    return this.bytes;
   }
   async applyBatch(runId: string, start: number, end: number, contracts: DpwhContractRecord[], rejected: unknown[]) {
     const run = this.runs.find((r) => r.id === runId)!;
@@ -61,14 +68,16 @@ class MemoryStore implements DpwhSyncStore {
       }
     }
     const unchanged = contracts.length - inserted - updated;
+    const outOfScope = end - start - contracts.length - rejected.length;
     Object.assign(run, {
+      out_of_scope_count: (run.out_of_scope_count ?? 0) + outOfScope,
       next_row: end,
       inserted_count: run.inserted_count + inserted,
       updated_count: run.updated_count + updated,
       unchanged_count: run.unchanged_count + unchanged,
       rejected_count: run.rejected_count + rejected.length,
     });
-    return { already_applied: false, inserted, updated, unchanged, rejected: rejected.length, next_row: end };
+    return { already_applied: false, inserted, updated, unchanged, rejected: rejected.length, out_of_scope: outOfScope, next_row: end };
   }
   async finish(runId: string, status: 'succeeded' | 'failed' | 'no_new_snapshot', error: string | null) {
     const run = this.runs.find((r) => r.id === runId)!;
@@ -111,7 +120,7 @@ test('imports a full snapshot, then recognises it as already synced', async () =
   const data = rows(100);
   const first = await runDpwhSync(options(store, data));
   assert.equal(first.status, 'succeeded');
-  assert.deepEqual(first.totals, { inserted: 100, updated: 0, unchanged: 0, rejected: 0 });
+  assert.deepEqual(first.totals, { inserted: 100, updated: 0, unchanged: 0, rejected: 0, outOfScope: 0 });
   assert.equal(store.contracts.size, 100);
 
   const again = await runDpwhSync(options(store, data));
@@ -126,7 +135,7 @@ test('re-running is idempotent and only changed rows are updated', async () => {
   changed[7] = rowWithId('T00007', { progress: 55 });
   const rerun = await runDpwhSync(options(store, changed, { snapshot: SNAP_B }));
   assert.equal(rerun.status, 'succeeded');
-  assert.deepEqual(rerun.totals, { inserted: 0, updated: 1, unchanged: 59, rejected: 0 });
+  assert.deepEqual(rerun.totals, { inserted: 0, updated: 1, unchanged: 59, rejected: 0, outOfScope: 0 });
   assert.equal(store.contracts.size, 60);
   const updated = store.contracts.get('T00007')!;
   assert.equal(updated.progress, 55);
@@ -229,4 +238,51 @@ test('another active sync: reports busy and changes nothing', async () => {
   const outcome = await runDpwhSync(options(store, rows(10)));
   assert.equal(outcome.status, 'busy');
   assert.equal(store.contracts.size, 0);
+});
+
+/** A synthetic row whose only component is in `region` (test-only). */
+const inRegion = (id: string, region: string) =>
+  rowWithId(id, { components: [{ ...(realRow.components as Record<string, unknown>[])[0], region }] });
+const mixed = () => [
+  ...Array.from({ length: 30 }, (_, i) => inRegion(`X${String(i).padStart(5, '0')}`, 'Region X')),
+  ...Array.from({ length: 20 }, (_, i) => inRegion(`L${String(i).padStart(5, '0')}`, 'Region I')),
+  rowWithId('NOLOC0001', { components: [] }),
+];
+
+test('a scoped run stores only contracts in its regions and counts the rest', async () => {
+  const store = new MemoryStore();
+  const outcome = await runDpwhSync(options(store, mixed(), { scopeRegions: ['Region X'] }));
+  assert.equal(outcome.status, 'succeeded', outcome.error);
+  assert.deepEqual(outcome.totals, { inserted: 30, updated: 0, unchanged: 0, rejected: 0, outOfScope: 21 });
+  assert.equal(store.contracts.size, 30);
+  assert.ok([...store.contracts.values()].every((c) => c.region === 'Region X'));
+  assert.deepEqual(store.runs[0].scope_regions, ['Region X']);
+});
+
+test('the same snapshot with a wider scope runs again and adds only the new rows', async () => {
+  const store = new MemoryStore();
+  await runDpwhSync(options(store, mixed(), { scopeRegions: ['Region X'] }));
+  const same = await runDpwhSync(options(store, mixed(), { scopeRegions: ['Region X'] }));
+  assert.equal(same.status, 'no_new_snapshot');
+  const wider = await runDpwhSync(options(store, mixed(), { scopeRegions: ['Region I', 'Region X'] }));
+  assert.equal(wider.status, 'succeeded', wider.error);
+  assert.deepEqual(wider.totals, { inserted: 20, updated: 0, unchanged: 30, rejected: 0, outOfScope: 1 });
+  assert.equal(store.contracts.size, 50);
+});
+
+test('the storage guard stops the run before the budget and keeps what was imported', async () => {
+  const store = new MemoryStore();
+  store.bytes = 100;
+  const data = rows(100);
+  let slices = 0;
+  const outcome = await runDpwhSync(options(store, data, {
+    storageBudgetBytes: 300,
+    log: (m) => {
+      if (/^Rows \d/.test(m)) store.bytes = 100 + 120 * ++slices;
+    },
+  }));
+  assert.equal(outcome.status, 'failed');
+  assert.match(outcome.error ?? '', /Storage budget reached at row 80/);
+  assert.equal(store.contracts.size, 80);
+  assert.equal(store.runs[0].status, 'failed');
 });
