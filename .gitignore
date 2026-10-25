@@ -2,7 +2,14 @@ node_modules/
 build/
 dist/
 coverage/
+.next/
+out/
 .DS_Store
 *.log
+*.tsbuildinfo
 .env*
 !.env.example
+
+# Supabase CLI local state
+supabase/.branches/
+supabase/.temp/

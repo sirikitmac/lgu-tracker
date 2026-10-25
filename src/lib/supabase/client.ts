@@ -1,58 +1,19 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { LGUProject } from '@/types/project';
 import { SAMPLE_LGU_PROJECTS } from '@/data/sampleProjects';
+import { getSupabaseBrowserClient } from './browser';
+import { isSupabaseConfigured } from './env';
+import { mapProjectRow, PROJECT_SELECT, type ProjectRow } from './projectMapper';
 
 /**
- * Supabase client configuration prepared for LGU Tracker backend and Auth connectivity.
- * Reads standard Next.js public environment variables without hardcoding any credentials.
+ * Client-side Supabase helpers used by the existing UI (Client Components).
+ * The database schema lives in supabase/migrations; server-side code uses
+ * ./server.ts and @/lib/auth/authorize instead of this module.
  */
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() || '';
-
-export const isSupabaseConfigured = Boolean(
-  supabaseUrl &&
-    supabaseAnonKey &&
-    supabaseUrl.startsWith('http') &&
-    supabaseAnonKey.length > 20
-);
-
-/**
- * Required PostgreSQL schema migration for storing project coordinates in Supabase.
- * If the existing `projects` table does not yet include geographic coordinates,
- * run this migration in the Supabase SQL Editor.
- */
-export const SUPABASE_PROJECT_MAP_SCHEMA_SQL = `
--- Add nullable geographic coordinates (WGS84) to the projects table for Project Map markers
-ALTER TABLE public.projects
-  ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION,
-  ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION;
-
--- Optional: Add a check constraint ensuring valid latitude/longitude bounds when present
-ALTER TABLE public.projects
-  ADD CONSTRAINT projects_valid_coordinates_check
-  CHECK (
-    (latitude IS NULL AND longitude IS NULL)
-    OR (latitude BETWEEN -90 AND 90 AND longitude BETWEEN -180 AND 180)
-  );
-`.trim();
-
-let supabaseInstance: SupabaseClient | null = null;
+export { isSupabaseConfigured };
 
 export function getSupabaseClient(): SupabaseClient | null {
-  if (!isSupabaseConfigured) {
-    return null;
-  }
-
-  if (!supabaseInstance) {
-    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-      },
-    });
-  }
-
-  return supabaseInstance;
+  return getSupabaseBrowserClient();
 }
 
 export interface ProjectsDataResult {
@@ -76,12 +37,16 @@ export async function fetchLGUProjects(): Promise<ProjectsDataResult> {
   }
 
   try {
+    // RLS limits results to published projects (plus drafts for staff/assignees).
     const { data, error } = await client
       .from('projects')
-      .select('*')
-      .order('targetCompletionDate', { ascending: true });
+      .select(PROJECT_SELECT)
+      .order('target_completion_date', { ascending: true, nullsFirst: false });
 
     if (error || !data || data.length === 0) {
+      if (error) {
+        console.error('[LGU Tracker] Failed to load projects from Supabase:', error.message);
+      }
       return {
         projects: SAMPLE_LGU_PROJECTS,
         isSampleData: true,
@@ -90,7 +55,7 @@ export async function fetchLGUProjects(): Promise<ProjectsDataResult> {
     }
 
     return {
-      projects: data as LGUProject[],
+      projects: (data as unknown as ProjectRow[]).map(mapProjectRow),
       isSampleData: false,
     };
   } catch (err) {
@@ -125,7 +90,7 @@ export async function signInWithLGUCredentials(
       configured: false,
       success: false,
       message:
-        'Supabase Auth is not yet connected in this environment. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to enable live LGU account authentication.',
+        'Supabase Auth is not yet connected in this environment. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (or NEXT_PUBLIC_SUPABASE_ANON_KEY) to enable live LGU account authentication.',
     };
   }
 
@@ -164,7 +129,7 @@ export async function requestLGUPasswordReset(
       configured: false,
       success: false,
       message:
-        'Supabase Auth password recovery requires NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to be configured.',
+        'Supabase Auth password recovery requires NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (or NEXT_PUBLIC_SUPABASE_ANON_KEY) to be configured.',
     };
   }
 
