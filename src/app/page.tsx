@@ -65,11 +65,18 @@ export default function LandingPage() {
             {/* Primary & Secondary CTAs */}
             <div className="mt-10 sm:mt-12 flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4 w-full sm:w-auto">
               <Link
-                href="/dashboard?mode=public"
+                href="/projects"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 min-h-[46px] px-7 py-3 text-sm font-semibold text-white bg-[#2563EB] hover:bg-[#172B4D] rounded-lg shadow-xs transition-all duration-150 whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
               >
                 <span>Explore Public Projects</span>
                 <ArrowRight className="w-4 h-4" />
+              </Link>
+
+              <Link
+                href="/projects/map"
+                className="w-full sm:w-auto inline-flex items-center justify-center min-h-[46px] px-7 py-3 text-sm font-semibold text-[#172B4D] bg-white/90 hover:bg-[#F1F5F9] border border-[#E2E8F0] hover:border-[#64748B]/40 rounded-lg shadow-2xs transition-all duration-150 whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#172B4D]"
+              >
+                View Project Map
               </Link>
 
               <Link

@@ -2,7 +2,7 @@
 
 import React, { Suspense, useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Info } from 'lucide-react';
+import { AlertTriangle, Loader2 } from 'lucide-react';
 import {
   LGUProject,
   ProjectCategory,
@@ -10,11 +10,11 @@ import {
   ProjectStatus,
 } from '@/types/project';
 import {
-  SAMPLE_LGU_PROJECTS,
   computeSummaryMetrics,
   formatPHP,
   PROJECT_CATEGORIES,
 } from '@/data/sampleProjects';
+import { fetchLGUProjects, isSupabaseConfigured } from '@/lib/supabase/client';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { DashboardTopbar } from '@/components/dashboard/DashboardTopbar';
 import { SummaryCards } from '@/components/dashboard/SummaryCards';
@@ -60,6 +60,32 @@ function DashboardContent() {
     null
   );
 
+  // Live project data from Supabase (RLS-filtered for the current session).
+  // Starts empty/loading rather than pre-seeded with sample data, so the
+  // bundled demo dataset is never shown without the disclosure banner below.
+  const [projects, setProjects] = useState<LGUProject[]>([]);
+  const [isSampleData, setIsSampleData] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [dataError, setDataError] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    let active = true;
+    setIsLoadingData(true);
+    fetchLGUProjects()
+      .then((result) => {
+        if (!active) return;
+        setProjects(result.projects);
+        setIsSampleData(result.isSampleData);
+        setDataError(result.errorMessage);
+      })
+      .finally(() => {
+        if (active) setIsLoadingData(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   useEffect(() => {
     if (initialModeParam === 'public') {
       setIsPublicMode(true);
@@ -75,17 +101,15 @@ function DashboardContent() {
 
   useEffect(() => {
     if (initialProjectParam) {
-      const matched = SAMPLE_LGU_PROJECTS.find(
-        (p) => p.id === initialProjectParam
-      );
+      const matched = projects.find((p) => p.id === initialProjectParam);
       if (matched) {
         setSelectedProject(matched);
       }
     }
-  }, [initialProjectParam]);
+  }, [initialProjectParam, projects]);
 
   const filteredProjects = useMemo(() => {
-    const filtered = SAMPLE_LGU_PROJECTS.filter((project) => {
+    const filtered = projects.filter((project) => {
       const matchesCategory =
         filters.category === 'All' || project.category === filters.category;
       const matchesStatus =
@@ -119,7 +143,7 @@ function DashboardContent() {
           return 0;
       }
     });
-  }, [filters, sortBy]);
+  }, [projects, filters, sortBy]);
 
   const summaryMetrics = useMemo(
     () => computeSummaryMetrics(filteredProjects),
@@ -128,7 +152,7 @@ function DashboardContent() {
 
   const sectorBudgetBreakdown = useMemo(() => {
     return PROJECT_CATEGORIES.map((category) => {
-      const categoryProjects = SAMPLE_LGU_PROJECTS.filter(
+      const categoryProjects = projects.filter(
         (p) => p.category === category
       );
       const allocated = categoryProjects.reduce(
@@ -148,7 +172,7 @@ function DashboardContent() {
           allocated > 0 ? Math.round((disbursed / allocated) * 100) : 0,
       };
     });
-  }, []);
+  }, [projects]);
 
   const handleResetFilters = () => {
     setFilters({
@@ -236,109 +260,136 @@ function DashboardContent() {
             </div>
           </div>
 
-          {/* KPI Summary Cards */}
-          <SummaryCards metrics={summaryMetrics} />
-
-          {/* Optional Sector Budget Breakdown when on Budget Section */}
-          {activeSection === 'budget' && (
-            <section
-              aria-label="Sector Budget Breakdown"
-              className="bg-white border border-[#E2E8F0] rounded-xl p-5 sm:p-6 shadow-2xs space-y-4"
+          {/* Live-Data Disclosure: never blend sample/demo data in silently */}
+          {!isLoadingData && isSampleData && (
+            <div
+              role="status"
+              className="flex items-start gap-2.5 p-3.5 rounded-lg border border-amber-200 bg-amber-50 text-xs text-[#92400E] leading-relaxed"
             >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                <h2 className="font-display text-base font-bold text-[#172B4D]">
-                  Sector Appropriation &amp; Disbursement Breakdown (Sample Data)
-                </h2>
-                <span className="text-xs text-[#64748B]">
-                  Click any sector to filter projects below
-                </span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {sectorBudgetBreakdown.map((item) => {
-                  const isActive = filters.category === item.category;
-                  return (
-                    <button
-                      key={item.category}
-                      type="button"
-                      onClick={() =>
-                        setFilters((prev) => ({
-                          ...prev,
-                          category:
-                            prev.category === item.category
-                              ? 'All'
-                              : item.category,
-                        }))
-                      }
-                      className={`text-left p-4 rounded-lg border transition-all cursor-pointer ${
-                        isActive
-                          ? 'bg-[#F8FAFC] border-[#2563EB] shadow-2xs'
-                          : 'bg-white border-[#E2E8F0] hover:border-[#64748B]'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-2 text-xs text-[#64748B]">
-                        <span className="font-semibold text-[#0F172A]">
-                          {item.category}
-                        </span>
-                        <span className="font-mono tabular-nums">
-                          {item.projectCount} projects
-                        </span>
-                      </div>
-                      <div className="mt-2 flex items-baseline justify-between gap-2 font-mono tabular-nums">
-                        <span className="text-sm font-bold text-[#0F172A]">
-                          {formatPHP(item.allocated)}
-                        </span>
-                        <span className="text-xs text-[#16A34A] font-semibold">
-                          {item.utilization}% disbursed (
-                          {formatPHP(item.disbursed, true)})
-                        </span>
-                      </div>
-                      <div className="mt-2.5 w-full h-1.5 bg-[#E2E8F0] rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-[#2563EB]"
-                          style={{ width: `${item.utilization}%` }}
-                        />
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-[#B45309]" />
+              <span>
+                {!isSupabaseConfigured
+                  ? 'Supabase is not connected in this environment — displaying bundled sample/demo data, not live LGU records.'
+                  : dataError
+                  ? `Unable to load live data from Supabase (${dataError}) — displaying bundled sample/demo data instead.`
+                  : 'Displaying bundled sample/demo data, not live LGU records.'}
+              </span>
+            </div>
           )}
 
-          {/* Search, Category/Status Filters, Sorting & View Switcher */}
-          <ProjectFilters
-            filters={filters}
-            onSearchChange={(searchQuery) =>
-              setFilters((prev) => ({ ...prev, searchQuery }))
-            }
-            onCategoryChange={(category) =>
-              setFilters((prev) => ({ ...prev, category }))
-            }
-            onStatusChange={(status: ProjectStatus | 'All') =>
-              setFilters((prev) => ({ ...prev, status }))
-            }
-            onResetFilters={handleResetFilters}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            resultCount={filteredProjects.length}
-            totalCount={SAMPLE_LGU_PROJECTS.length}
-          />
-
-          {/* Project Display: Structured Table or Project Cards Grid */}
-          {viewMode === 'table' ? (
-            <ProjectTable
-              projects={filteredProjects}
-              onSelectProject={(project) => setSelectedProject(project)}
-              onResetFilters={handleResetFilters}
-            />
+          {isLoadingData ? (
+            <div className="flex items-center justify-center gap-2.5 py-20 text-sm font-medium text-[#64748B]">
+              <Loader2 className="w-4 h-4 animate-spin text-[#2563EB]" />
+              <span>Loading project records from Supabase...</span>
+            </div>
           ) : (
-            <ProjectCardGrid
-              projects={filteredProjects}
-              onSelectProject={(project) => setSelectedProject(project)}
-              onResetFilters={handleResetFilters}
-            />
+            <>
+              {/* KPI Summary Cards */}
+              <SummaryCards metrics={summaryMetrics} />
+
+              {/* Optional Sector Budget Breakdown when on Budget Section */}
+              {activeSection === 'budget' && (
+                <section
+                  aria-label="Sector Budget Breakdown"
+                  className="bg-white border border-[#E2E8F0] rounded-xl p-5 sm:p-6 shadow-2xs space-y-4"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <h2 className="font-display text-base font-bold text-[#172B4D]">
+                      Sector Appropriation &amp; Disbursement Breakdown
+                      {isSampleData ? ' (Sample Data)' : ''}
+                    </h2>
+                    <span className="text-xs text-[#64748B]">
+                      Click any sector to filter projects below
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {sectorBudgetBreakdown.map((item) => {
+                      const isActive = filters.category === item.category;
+                      return (
+                        <button
+                          key={item.category}
+                          type="button"
+                          onClick={() =>
+                            setFilters((prev) => ({
+                              ...prev,
+                              category:
+                                prev.category === item.category
+                                  ? 'All'
+                                  : item.category,
+                            }))
+                          }
+                          className={`text-left p-4 rounded-lg border transition-all cursor-pointer ${
+                            isActive
+                              ? 'bg-[#F8FAFC] border-[#2563EB] shadow-2xs'
+                              : 'bg-white border-[#E2E8F0] hover:border-[#64748B]'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2 text-xs text-[#64748B]">
+                            <span className="font-semibold text-[#0F172A]">
+                              {item.category}
+                            </span>
+                            <span className="font-mono tabular-nums">
+                              {item.projectCount} projects
+                            </span>
+                          </div>
+                          <div className="mt-2 flex items-baseline justify-between gap-2 font-mono tabular-nums">
+                            <span className="text-sm font-bold text-[#0F172A]">
+                              {formatPHP(item.allocated)}
+                            </span>
+                            <span className="text-xs text-[#16A34A] font-semibold">
+                              {item.utilization}% disbursed (
+                              {formatPHP(item.disbursed, true)})
+                            </span>
+                          </div>
+                          <div className="mt-2.5 w-full h-1.5 bg-[#E2E8F0] rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-[#2563EB]"
+                              style={{ width: `${item.utilization}%` }}
+                            />
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
+
+              {/* Search, Category/Status Filters, Sorting & View Switcher */}
+              <ProjectFilters
+                filters={filters}
+                onSearchChange={(searchQuery) =>
+                  setFilters((prev) => ({ ...prev, searchQuery }))
+                }
+                onCategoryChange={(category) =>
+                  setFilters((prev) => ({ ...prev, category }))
+                }
+                onStatusChange={(status: ProjectStatus | 'All') =>
+                  setFilters((prev) => ({ ...prev, status }))
+                }
+                onResetFilters={handleResetFilters}
+                sortBy={sortBy}
+                onSortChange={setSortBy}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                resultCount={filteredProjects.length}
+                totalCount={projects.length}
+              />
+
+              {/* Project Display: Structured Table or Project Cards Grid */}
+              {viewMode === 'table' ? (
+                <ProjectTable
+                  projects={filteredProjects}
+                  onSelectProject={(project) => setSelectedProject(project)}
+                  onResetFilters={handleResetFilters}
+                />
+              ) : (
+                <ProjectCardGrid
+                  projects={filteredProjects}
+                  onSelectProject={(project) => setSelectedProject(project)}
+                  onResetFilters={handleResetFilters}
+                />
+              )}
+            </>
           )}
         </main>
       </div>

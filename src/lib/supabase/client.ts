@@ -43,10 +43,8 @@ export async function fetchLGUProjects(): Promise<ProjectsDataResult> {
       .select(PROJECT_SELECT)
       .order('target_completion_date', { ascending: true, nullsFirst: false });
 
-    if (error || !data || data.length === 0) {
-      if (error) {
-        console.error('[LGU Tracker] Failed to load projects from Supabase:', error.message);
-      }
+    if (error || !data) {
+      console.error('[LGU Tracker] Failed to load projects from Supabase:', error?.message);
       return {
         projects: SAMPLE_LGU_PROJECTS,
         isSampleData: true,
@@ -54,6 +52,9 @@ export async function fetchLGUProjects(): Promise<ProjectsDataResult> {
       };
     }
 
+    // An empty table is a real, legitimate result (not a failure): report it
+    // as live data so the UI never mislabels a genuinely empty database as
+    // the bundled sample dataset.
     return {
       projects: (data as unknown as ProjectRow[]).map(mapProjectRow),
       isSampleData: false,
@@ -113,6 +114,94 @@ export async function signInWithLGUCredentials(
     configured: true,
     success: true,
     message: 'Successfully authenticated with LGU Tracker.',
+  };
+}
+
+export interface RegistrationAttemptResult {
+  configured: boolean;
+  success: boolean;
+  /** True once Supabase Auth returned an active session (no email confirmation pending). */
+  signedIn: boolean;
+  message: string;
+  errorDetails?: string;
+}
+
+/**
+ * Prepared account creation helper for Supabase Auth.
+ *
+ * `requestedRole` is sent only as Auth user metadata, never written to
+ * public.profiles.role directly: the sign-up trigger (private.handle_new_user)
+ * records it in the informational public.profiles.requested_role column and
+ * always creates the profile with role = 'citizen'. Selecting a role here
+ * cannot grant it — only an administrator changing `role` later can.
+ */
+export async function registerLGUAccount(
+  fullName: string,
+  email: string,
+  password: string,
+  requestedRole: string
+): Promise<RegistrationAttemptResult> {
+  const client = getSupabaseClient();
+
+  if (!client) {
+    return {
+      configured: false,
+      success: false,
+      signedIn: false,
+      message:
+        'Supabase Auth is not yet connected in this environment. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (or NEXT_PUBLIC_SUPABASE_ANON_KEY) to enable live LGU account registration.',
+    };
+  }
+
+  const { data, error } = await client.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name: fullName,
+        requested_role: requestedRole,
+      },
+    },
+  });
+
+  if (error) {
+    return {
+      configured: true,
+      success: false,
+      signedIn: false,
+      message: error.message || 'Unable to create your LGU Tracker account.',
+      errorDetails: error.code,
+    };
+  }
+
+  if (!data.user) {
+    return {
+      configured: true,
+      success: false,
+      signedIn: false,
+      message: 'Unable to create your LGU Tracker account. Please try again.',
+    };
+  }
+
+  // Supabase returns a user with no identities when the email is already
+  // registered (to avoid leaking which emails exist) rather than an error.
+  if (Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+    return {
+      configured: true,
+      success: false,
+      signedIn: false,
+      message:
+        'An account with that email already exists. Try signing in instead, or use "Forgot password?" to recover access.',
+    };
+  }
+
+  return {
+    configured: true,
+    success: true,
+    signedIn: data.session !== null,
+    message: data.session
+      ? 'Your account has been created and you are signed in.'
+      : 'Your account has been created. Check your institutional email to confirm your address before signing in.',
   };
 }
 

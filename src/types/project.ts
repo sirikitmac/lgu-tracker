@@ -22,7 +22,8 @@ export type DashboardSectionId =
   | 'projects'
   | 'budget'
   | 'transparency'
-  | 'map';
+  | 'map'
+  | 'dpwh';
 
 export interface ProjectMilestone {
   id: string;

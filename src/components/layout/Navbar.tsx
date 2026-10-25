@@ -28,28 +28,34 @@ export function Navbar() {
           LGU Tracker
         </Link>
 
-        {/* Zone 2: 4 concise single-line text navigation links */}
+        {/* Zone 2: concise single-line text navigation links */}
         <nav
           aria-label="Primary Navigation"
           className="hidden md:flex items-center gap-8 text-sm font-medium text-[#64748B]"
         >
           <a
-            href="#features"
+            href="/#features"
             className="py-1 hover:text-[#0F172A] hover:underline underline-offset-8 decoration-[#2563EB] decoration-2 transition-colors whitespace-nowrap shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2563EB]"
           >
             Capabilities
           </a>
           <a
-            href="#lifecycle"
+            href="/#lifecycle"
             className="py-1 hover:text-[#0F172A] hover:underline underline-offset-8 decoration-[#2563EB] decoration-2 transition-colors whitespace-nowrap shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2563EB]"
           >
             Lifecycle
           </a>
           <Link
-            href="/dashboard?mode=public"
+            href="/projects"
             className="py-1 hover:text-[#0F172A] hover:underline underline-offset-8 decoration-[#2563EB] decoration-2 transition-colors whitespace-nowrap shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2563EB]"
           >
-            Public Portal
+            Projects
+          </Link>
+          <Link
+            href="/projects/map"
+            className="py-1 hover:text-[#0F172A] hover:underline underline-offset-8 decoration-[#2563EB] decoration-2 transition-colors whitespace-nowrap shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2563EB]"
+          >
+            Project Map
           </Link>
           <Link
             href="/dashboard"
@@ -98,25 +104,32 @@ export function Navbar() {
             className="flex flex-col space-y-1 text-sm font-medium text-[#0F172A]"
           >
             <a
-              href="#features"
+              href="/#features"
               onClick={() => setMobileMenuOpen(false)}
               className="px-3 py-2.5 rounded-lg hover:bg-[#F1F5F9] hover:text-[#2563EB] transition-colors"
             >
               Capabilities
             </a>
             <a
-              href="#lifecycle"
+              href="/#lifecycle"
               onClick={() => setMobileMenuOpen(false)}
               className="px-3 py-2.5 rounded-lg hover:bg-[#F1F5F9] hover:text-[#2563EB] transition-colors"
             >
               Project Lifecycle
             </a>
             <Link
-              href="/dashboard?mode=public"
+              href="/projects"
               onClick={() => setMobileMenuOpen(false)}
               className="px-3 py-2.5 rounded-lg hover:bg-[#F1F5F9] hover:text-[#2563EB] transition-colors"
             >
-              Public Transparency Portal
+              DPWH Project Directory
+            </Link>
+            <Link
+              href="/projects/map"
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-3 py-2.5 rounded-lg hover:bg-[#F1F5F9] hover:text-[#2563EB] transition-colors"
+            >
+              DPWH Project Map
             </Link>
             <Link
               href="/dashboard"

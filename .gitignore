@@ -13,3 +13,6 @@ out/
 # Supabase CLI local state
 supabase/.branches/
 supabase/.temp/
+
+# Local DPWH review exports (regenerate with npm run dpwh:iligan-export)
+/exports/
