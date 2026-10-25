@@ -1,129 +1,92 @@
-# LGU Tracker
+# 🏗️ LGU Tracker
+### *Bantay Proyekto, Gabay sa Progreso.* 🇵🇭
 
-**Bantay Proyekto, Gabay sa Progreso.**
+**LGU Tracker** is a web-based infrastructure project monitoring platform designed to improve public access to project information through interactive maps, searchable project directories, and centralized project data.
 
-LGU Tracker is a web-based infrastructure project monitoring platform designed to improve public access to infrastructure project information through interactive maps, searchable project directories, and centralized project data.
+Our goal is to make infrastructure projects easier to find, monitor, and understand—promoting transparency, accessibility, and public participation in local development. 💙
 
-The project aims to make infrastructure information more accessible and easier to explore by providing a platform where users can browse projects, view available project details, and explore geographic locations.
+---
 
-## Overview
+## ✨ Key Features
 
-LGU Tracker is being developed to support transparency and accessibility in infrastructure project monitoring.
+- 🗺️ **Interactive Project Map** — Explore infrastructure projects through a map-based interface.
+- 🔎 **Project Directory** — Search, browse, and filter infrastructure project records.
+- 📋 **Project Details** — View available information about individual infrastructure projects.
+- 📱 **Responsive Interface** — Access the platform through a modern web interface.
+- 🏛️ **Public Transparency** — Make infrastructure project information more accessible to communities.
 
-The platform is designed to provide a centralized interface for exploring infrastructure projects and their available information.
+> 🚧 Some features depend on backend integration, database configuration, and data availability. The project is currently under active development.
 
-## Key Features
+---
 
-- **Public Project Directory** — Browse and search infrastructure project records.
-- **Interactive Project Map** — Explore project locations using an interactive map.
-- **Project Search and Filtering** — Find projects using available identifiers, descriptions, locations, and categories.
-- **Project Details** — View available project information and source references.
-- **DPWH Data Integration** — Planned integration with publicly available DPWH project data through BetterGov.ph.
-- **Database Integration** — Supabase integration for project data and authentication.
-- **Responsive Interface** — A web interface designed for accessibility across different screen sizes.
+## 🚀 Upcoming Features
 
-*Feature availability depends on the current implementation and data integration status.*
+We're working toward making LGU Tracker more interactive, reliable, and useful for both the public and authorized project members.
 
-## Technology Stack
+- 📍 **Map Markers & Project Locations** — Display infrastructure projects as markers on the map, allowing users to explore projects by location.
+- 💬 **Public Feedback System** — Allow users to submit feedback, observations, and concerns about infrastructure projects.
+- 🔄 **Automated Weekly Data Synchronization** — Synchronize available DPWH project data from [BetterGov.ph](https://bettergov.ph/) on a weekly schedule.
+- 📝 **Project Reporting System** — Enable registered members to submit reports about project progress, issues, and other relevant observations.
+- 🔐 **Authentication & Role-Based Access Control** — Implement secure login and permissions for different user roles.
+- 👥 **Member Dashboard** — Provide authorized members with a dedicated space to manage their project-related activities.
+- 🗄️ **Backend & Database Integration** — Support project records, user accounts, feedback, reports, and other platform functionality through a centralized backend.
+- 📊 **Project Monitoring & Status Updates** — Help users track project information and monitor reported developments.
+
+*Feature availability may change as development progresses.*
+
+---
+
+## 🛠️ Tech Stack
 
 | Technology | Purpose |
 |---|---|
-| Next.js | Web application framework |
-| React | User interface development |
-| TypeScript | Type-safe application development |
-| Tailwind CSS | Styling and interface design |
-| Supabase | Database and authentication services |
-| Leaflet | Interactive map rendering |
-| Vercel | Intended application hosting and deployment |
+| ⚛️ Next.js | Web application framework |
+| 📘 TypeScript | Type-safe development |
+| 🎨 Tailwind CSS | User interface styling |
+| 🗄️ Supabase | Database and backend services |
+| 🗺️ Leaflet | Interactive maps |
+| 🚀 Vercel | Planned hosting and deployment |
 
-## Getting Started
+---
 
-### Prerequisites
+## 🎯 Project Goals
 
-Install the following before running the project:
+LGU Tracker aims to:
 
-- Node.js compatible with the project's dependencies
-- npm
-- Git
+- 🏛️ Improve public access to infrastructure project information.
+- 🗺️ Make project locations easier to identify and explore.
+- 🤝 Encourage public participation through feedback and reporting.
+- 🔍 Support transparency and accountability in infrastructure development.
+- 📈 Provide a foundation for more accessible and organized project monitoring.
 
-You will also need access to the repository and any required development environment configuration.
+---
 
-### Installation
+## 👥 Contributing
 
-1. Clone the repository:
+Contributions, suggestions, and feedback are welcome! 💙
 
-   ```bash
-   git clone https://github.com/sirikitmac/lgu-tracker.git
-   ```
+If you're interested in improving LGU Tracker, you can help by:
 
-2. Navigate to the project directory:
+- 🐛 Reporting bugs and issues.
+- 💡 Suggesting new features.
+- 🎨 Improving the user interface and user experience.
+- 💻 Contributing code through feature branches and pull requests.
+- 📖 Improving project documentation.
 
-   ```bash
-   cd lgu-tracker
-   ```
+Please coordinate with the project maintainers before making significant changes.
 
-3. Install dependencies:
+---
 
-   ```bash
-   npm install
-   ```
+## 📌 Project Status
 
-4. Configure the required environment variables in a local `.env.local` file. Refer to the project's environment variable documentation for the required names and values.
+🚧 **Currently in development.**
 
-5. Start the development server:
+LGU Tracker is being developed incrementally, with ongoing work on its interface, interactive map, project directory, database integration, and supporting functionality.
 
-   ```bash
-   npm run dev
-   ```
+Some features listed above are planned or still being integrated and may not yet be available in a deployed environment.
 
-6. Open the local development address shown in the terminal, typically:
+---
 
-   `http://localhost:3000`
+### 💙 Built with the goal of making infrastructure information more accessible to everyone.
 
-## Project Structure
-
-The project follows the Next.js App Router structure.
-
-```text
-src/
-├── app/          # Application routes and pages
-├── components/   # Reusable UI components
-├── data/         # Sample or development data
-├── lib/          # Application logic and integrations
-└── types/        # TypeScript type definitions
-
-supabase/
-└── migrations/   # Database schema migrations
-```
-
-*The directory structure may evolve as development continues.*
-
-## Data Sources
-
-The project is exploring integration with publicly available DPWH infrastructure project information through BetterGov.ph.
-
-Source attribution, available project details, and data freshness should be documented as the integration progresses.
-
-Project information displayed by the application should be interpreted according to its source and verification status.
-
-## Contributing
-
-Project collaborators are encouraged to contribute through the repository's established development workflow.
-
-Before submitting changes:
-
-1. Review the existing code and project structure.
-2. Create a branch for your changes.
-3. Keep changes focused on the task being addressed.
-4. Test relevant functionality.
-5. Submit a pull request or follow the team's agreed review process.
-
-## Project Status
-
-LGU Tracker is currently under active development.
-
-Features, integrations, and deployment configuration may change as development progresses.
-
-## License
-
-No license has been specified yet. Usage, modification, and redistribution permissions should be established by the project owners before the repository is distributed publicly.
+**LGU Tracker — Bantay Proyekto, Gabay sa Progreso.** 🇵🇭
