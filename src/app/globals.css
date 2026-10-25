@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
+
+  /* Primary Colors */
+  --color-civic-navy: #172B4D;
+  --color-civic-blue: #2563EB;
+  --color-civic-orange: #F59E0B;
+
+  /* Neutral Colors */
+  --color-civic-bg: #F8FAFC;
+  --color-civic-surface: #FFFFFF;
+  --color-civic-text: #0F172A;
+  --color-civic-slate: #64748B;
+  --color-civic-border: #E2E8F0;
+  --color-civic-muted: #F1F5F9;
+
+  /* Semantic Colors */
+  --color-civic-success: #16A34A;
+  --color-civic-warning: #D97706;
+  --color-civic-error: #DC2626;
+  --color-civic-info: #0284C7;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    background-color: #F8FAFC;
+    color: #0F172A;
+    overflow-x: clip;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #F8FAFC;
+    color: #0F172A;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+}
+
+/* Subtle Civic Architectural Textures & Glassmorphism */
+.civic-hero-surface {
+  background-color: #FFFFFF;
+  background-image:
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(37, 99, 235, 0.045), transparent 70%),
+    linear-gradient(to right, rgba(226, 232, 240, 0.45) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(226, 232, 240, 0.45) 1px, transparent 1px);
+  background-size: 100% 100%, 48px 48px, 48px 48px;
+  background-position: center top;
+}
+
+.civic-subtle-grid {
+  background-image:
+    linear-gradient(to right, rgba(226, 232, 240, 0.35) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(226, 232, 240, 0.35) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.civic-glass-nav {
+  background-color: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+@supports not (backdrop-filter: blur(12px)) {
+  .civic-glass-nav {
+    background-color: #FFFFFF;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
