@@ -16,3 +16,9 @@ supabase/.temp/
 
 # Local DPWH review exports (regenerate with npm run dpwh:iligan-export)
 /exports/
+
+# Next.js generated types (managed by Next; see Next.js TypeScript docs)
+next-env.d.ts
+
+# AI Studio workspace artifacts
+.aistudio/

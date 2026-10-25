@@ -1,6 +1,0 @@
-{
-  "summary":  "Implementation plan for LGU Tracker (Bantay Proyekto, Gabay sa Progreso), covering the Next.js App Router architecture, Philippine civic design system, Landing Page, Login Page with Supabase Auth readiness, and Main Dashboard with public transparency mode, toggleable table/card views, and project detail drawer.",
-  "updatedAt":  "2026-10-24T14:07:36.249297736Z",
-  "requestFeedback":  true,
-  "userFacing":  true
-}

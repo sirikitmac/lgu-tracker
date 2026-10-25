@@ -1,6 +1,0 @@
-{
-  "name": "LGU Tracker — Bantay Proyekto, Gabay sa Progreso",
-  "description": "Web-based Local Government Unit Project Monitoring System for tracking public infrastructure, budgets, procurement, and civic project lifecycles.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
