@@ -166,7 +166,7 @@ function StatusDonut({ rows, total }: { rows: DpwhCount<DpwhStatus>[]; total: nu
   if (total === 0) return <p className="text-sm text-muted">No contracts to show.</p>;
 
   return (
-    <div className="flex flex-col sm:flex-row lg:flex-col items-center gap-6">
+    <div className="h-full flex flex-col sm:flex-row lg:flex-col items-center justify-center gap-6">
       <div className="relative shrink-0" style={{ width: size, height: size }}>
         <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} role="img" aria-label={`Contracts by status: ${summary}.`} className="-rotate-90">
           <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-sunken)" strokeWidth={stroke} />

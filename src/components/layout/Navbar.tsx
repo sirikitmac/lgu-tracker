@@ -8,8 +8,8 @@ import { BpAssistant } from '@/components/bp/BpAssistant';
 import { ThemeSegmented, ThemeToggle } from './ThemeToggle';
 
 /**
- * Primary navigation for every public page. Landing sections are anchors on
- * the home page; the three app pages show which one is open. Below `lg` the
+ * Primary navigation for every public page: the three app pages first (each
+ * shows when it is open), then two anchors on the home page. Below `lg` the
  * links move into a menu panel; BP and the menu button stay in the bar.
  */
 
@@ -21,15 +21,15 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/#coverage', label: 'Coverage' },
-  { href: '/#how-it-works', label: 'How it works' },
   {
     href: '/projects',
     label: 'Projects',
     match: (p) => p === '/projects' || (p.startsWith('/projects/') && !p.startsWith('/projects/map') && !p.startsWith('/projects/dashboard')),
   },
-  { href: '/projects/map', label: 'Project Map', match: (p) => p.startsWith('/projects/map') },
+  { href: '/projects/map', label: 'Map', match: (p) => p.startsWith('/projects/map') },
   { href: '/projects/dashboard', label: 'Dashboard', match: (p) => p.startsWith('/projects/dashboard') },
+  { href: '/#coverage', label: 'Coverage' },
+  { href: '/#about', label: 'About' },
 ];
 
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink';

@@ -180,7 +180,7 @@ const columns = helper.columns([
       return (
         <>
           <span className="text-ink">{formatProgress(item.progress)}</span>
-          <ProgressBar value={Number(item.progress)} className="w-16 ml-auto mt-1.5" />
+          <ProgressBar value={Number(item.progress)} status={item.status} className="w-16 ml-auto mt-1.5" />
         </>
       );
     },

@@ -7,17 +7,21 @@ import { ArrowUpRight, Building2, Droplets, ImageOff, Landmark, MapPin, Route, W
 import type { ProjectListItem } from '@/types/dpwh';
 import { projectHref, sourceLabel } from '@/lib/integrations/bettergov/sources';
 import { regionDisplayName, regionInfo } from '@/lib/regionPalette';
-import { categoryLabel, contractMapHref, formatPeso, formatProgress, locationLabel } from './format';
+import { categoryLabel, contractMapHref, formatPeso, formatProgress, locationLabel, statusColor } from './format';
 import { StatusPill } from './StatusPill';
 import type { CardImage } from './categoryImages';
 import { textLinkClass } from './ui';
 
-/** Reported progress as a track at its true ratio; values outside 0–100 are clamped for drawing only. */
-export function ProgressBar({ value, className = '' }: { value: number; className?: string }) {
+/**
+ * Reported progress as a track at its true ratio; values outside 0–100 are
+ * clamped for drawing only. With a status the fill takes that status's colour,
+ * so the bar agrees with the pill above it; the percentage is always printed.
+ */
+export function ProgressBar({ value, status, className = '' }: { value: number; status?: string | null; className?: string }) {
   const pct = Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : 0;
   return (
     <span className={`block h-1.5 rounded-full bg-sunken overflow-hidden ${className}`} aria-hidden="true">
-      <span className="block h-full rounded-full bg-ink" style={{ width: `${pct}%` }} />
+      <span className={`block h-full rounded-full ${status === undefined ? 'bg-ink' : ''}`} style={{ width: `${pct}%`, ...(status !== undefined ? { backgroundColor: statusColor(status) } : {}) }} />
     </span>
   );
 }
@@ -77,7 +81,7 @@ function CardMedia({ image, category, status, eager }: { image: CardImage | unde
           rel="noopener noreferrer"
           title={`Representative photo, not of this project. ${credit}`}
           aria-label={`Representative photo, not of this project. Photo source: ${credit} (opens in a new tab)`}
-          className="absolute right-2 bottom-2 z-10 inline-flex items-center gap-1 h-6 px-2 rounded-full bg-black/60 text-[11px] font-medium text-white backdrop-blur-sm hover:bg-black/75 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-white"
+          className="glass-chip absolute right-2.5 bottom-2.5 z-10 inline-flex items-center gap-1 h-7 px-2.5 rounded-full text-[12px] font-medium hover:bg-black/70 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-white"
         >
           Representative photo <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
         </a>
@@ -138,7 +142,7 @@ export function DpwhProjectCard({
           </span>
         </p>
         {party && (
-          <p className="mt-1 text-xs text-muted truncate" title={`${party.label}: ${party.value}`}>
+          <p className="mt-1 text-[13px] text-muted truncate" title={`${party.label}: ${party.value}`}>
             {party.label}: <span className="text-subtle">{party.value}</span>
           </p>
         )}
@@ -161,7 +165,7 @@ export function DpwhProjectCard({
             </dd>
           </div>
         </dl>
-        {isContract && item.progress !== null && <ProgressBar value={Number(item.progress)} className="mt-2" />}
+        {isContract && item.progress !== null && <ProgressBar value={Number(item.progress)} status={item.status} className="mt-2" />}
 
         <div className="mt-4 pt-3 border-t border-line flex items-center justify-between gap-3 text-xs text-muted">
           <span className="min-w-0 truncate" title={`${item.record_id} · Source: ${sourceLabel(item.source)}`}>

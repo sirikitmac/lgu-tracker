@@ -60,7 +60,7 @@ export default async function PublicContractPage({ params }: PageProps<'/project
           <div className="p-4 sm:p-5">
             <dt className="text-xs font-medium text-muted">Reported progress</dt>
             <dd className="mt-2 font-semibold text-[32px] leading-none tracking-tight text-ink">{formatProgress(c.progress)}</dd>
-            {c.progress !== null && <ProgressBar value={Number(c.progress)} className="mt-3 max-w-[12rem]" />}
+            {c.progress !== null && <ProgressBar value={Number(c.progress)} status={c.status} className="mt-3 max-w-[12rem]" />}
           </div>
           <div className="p-4 sm:p-5">
             <dt className="text-xs font-medium text-muted">Reported location</dt>

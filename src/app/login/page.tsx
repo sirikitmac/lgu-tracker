@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { LguMark } from '@/components/layout/Navbar';
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { useRouter } from 'next/navigation';
 import {
   Eye,
@@ -145,18 +147,22 @@ export default function LoginPage() {
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <Link
             href="/"
-            className="font-display text-lg font-bold tracking-tight text-ink hover:text-accent-ink transition-colors whitespace-nowrap rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-ink"
+            className="inline-flex items-center gap-2.5 font-display text-lg font-bold tracking-tight text-ink hover:text-accent-ink transition-colors whitespace-nowrap rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-ink"
           >
+            <LguMark className="w-6 h-6" />
             LGU Tracker
           </Link>
 
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 min-h-[36px] px-3 py-1.5 text-xs font-semibold text-muted hover:text-ink hover:bg-sunken rounded-lg transition-colors whitespace-nowrap focus-visible:outline-2 focus-visible:outline-accent-ink"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Home</span>
-          </Link>
+          <div className="flex items-center gap-1">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 min-h-[36px] px-3 py-1.5 text-xs font-semibold text-muted hover:text-ink hover:bg-sunken rounded-lg transition-colors whitespace-nowrap focus-visible:outline-2 focus-visible:outline-accent-ink"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Home</span>
+            </Link>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 

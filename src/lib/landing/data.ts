@@ -39,6 +39,7 @@ export interface LandingData {
   totalContracts: number | null;
   totalAmount: number | null;
   ongoingContracts: number | null;
+  completedContracts: number | null;
   /** Stats refresh time (ISO), shown as "figures as of". */
   computedAt: string | null;
   /**
@@ -142,6 +143,7 @@ export async function loadLandingData(): Promise<LandingData> {
     totalContracts: null,
     totalAmount: null,
     ongoingContracts: null,
+    completedContracts: null,
     computedAt: null,
     regions: DEFAULT_SCOPE_REGIONS.map((region) => ({ region, contracts: null, points: [] })),
     nepProposals: null,
@@ -161,6 +163,7 @@ export async function loadLandingData(): Promise<LandingData> {
       totalContracts: stats?.stats.total_contracts ?? null,
       totalAmount: stats?.stats.contract_amount.sum ?? null,
       ongoingContracts: stats?.stats.by_status.find((s) => s.value === 'ongoing')?.count ?? null,
+      completedContracts: stats?.stats.by_status.find((s) => s.value === 'completed')?.count ?? null,
       computedAt: stats?.computed_at ?? null,
       regions: DEFAULT_SCOPE_REGIONS.map((region, i) => ({
         region,

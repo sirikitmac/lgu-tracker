@@ -4,9 +4,10 @@ import { LguMark } from './Navbar';
 
 const LINKS = [
   { href: '/projects', label: 'Projects' },
-  { href: '/projects/map', label: 'Project Map' },
+  { href: '/projects/map', label: 'Map' },
   { href: '/projects/dashboard', label: 'Dashboard' },
   { href: '/dashboard', label: 'LGU monitoring workspace' },
+  { href: '/#about', label: 'About the data' },
   { href: '/login', label: 'LGU Sign In' },
 ];
 
