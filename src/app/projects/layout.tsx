@@ -9,7 +9,7 @@ import { Footer } from '@/components/layout/Footer';
  */
 export default function PublicProjectsLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-[#0F172A]">
+    <div className="min-h-screen flex flex-col bg-ground text-ink">
       <Navbar />
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">{children}</main>
       <Footer />

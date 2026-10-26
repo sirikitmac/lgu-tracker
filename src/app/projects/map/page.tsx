@@ -3,7 +3,7 @@ import { CONTRACT_ID_PATTERN } from '@/lib/integrations/dpwh/nationwide/detail';
 import { DpwhPublicMap, type MapFocus } from '@/components/dpwh/DpwhPublicMap';
 
 export const metadata: Metadata = {
-  title: 'DPWH Project Map · LGU Tracker',
+  title: 'Project Map · LGU Tracker',
   description: 'Public map of DPWH infrastructure contracts with DPWH-reported coordinates.',
 };
 
@@ -23,13 +23,12 @@ export default async function PublicProjectMapPage({ searchParams }: PageProps<'
 
   return (
     <>
-      <div className="space-y-1">
-        <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#172B4D] tracking-tight">DPWH Project Map</h1>
-        <p className="text-sm text-[#64748B] max-w-3xl leading-relaxed">
-          DPWH infrastructure contracts nationwide, plotted at their DPWH-reported coordinates. Click a marker for
-          details. No sign-in required.
+      <header>
+        <h1 className="page-title text-[30px] sm:text-[36px] text-ink">Project Map</h1>
+        <p className="mt-1.5 text-[15px] text-subtle">
+          DPWH contracts in the Visayas and Mindanao at their reported coordinates. Select a marker for details.
         </p>
-      </div>
+      </header>
       <DpwhPublicMap focus={focus} />
     </>
   );

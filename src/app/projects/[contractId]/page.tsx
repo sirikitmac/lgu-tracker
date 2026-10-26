@@ -5,7 +5,9 @@ import { AlertTriangle, ArrowLeft, MapPin, MapPinOff } from 'lucide-react';
 import { loadDpwhContractDetail } from '@/lib/integrations/dpwh/nationwide/detail';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { DpwhContractDetails } from '@/components/dpwh/DpwhContractDetails';
-import { statusBadgeClass, contractMapHref, formatPeso, formatProgress, statusLabel } from '@/components/dpwh/format';
+import { contractMapHref, formatPeso, formatProgress } from '@/components/dpwh/format';
+import { StatusPill } from '@/components/dpwh/StatusPill';
+import { ProgressBar } from '@/components/dpwh/DpwhProjectCard';
 
 export async function generateMetadata({ params }: PageProps<'/projects/[contractId]'>): Promise<Metadata> {
   const { contractId } = await params;
@@ -20,7 +22,7 @@ export default async function PublicContractPage({ params }: PageProps<'/project
   if (result?.status === 'invalid' || result?.status === 'not_found') notFound();
 
   const back = (
-    <Link href="/projects" className="inline-flex items-center gap-1 text-sm font-medium text-[#2563EB] hover:underline">
+    <Link href="/projects" className="inline-flex items-center gap-1 text-sm font-medium text-subtle hover:text-ink rounded-sm focus-visible:outline-2 focus-visible:outline-accent-ink">
       <ArrowLeft className="w-4 h-4" /> Project directory
     </Link>
   );
@@ -29,7 +31,7 @@ export default async function PublicContractPage({ params }: PageProps<'/project
     return (
       <>
         {back}
-        <div role="alert" className="flex items-start gap-2 p-4 rounded-lg border border-red-200 bg-red-50 text-sm text-red-800">
+        <div role="alert" className="flex items-start gap-2 p-4 rounded-card border border-danger-line bg-danger-soft text-sm text-danger-ink">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           {result ? 'Could not load this contract. Please try again later.' : 'The project database is not configured.'}
         </div>
@@ -44,28 +46,40 @@ export default async function PublicContractPage({ params }: PageProps<'/project
   return (
     <>
       {back}
-      <header className="bg-white border border-[#E2E8F0] rounded-xl p-5 sm:p-6 shadow-2xs space-y-3">
+      <header className="space-y-4">
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="font-mono font-semibold text-[#172B4D]">{c.contract_id}</span>
-          <span className={`px-2 py-0.5 rounded-full border ${statusBadgeClass(c.status)}`}>{statusLabel(c.status)}</span>
+          <span className="font-semibold tabular-nums text-subtle">DPWH contract {c.contract_id}</span>
+          <StatusPill status={c.status} />
         </div>
-        <h1 className="font-display text-xl sm:text-2xl font-bold text-[#172B4D] leading-snug">{c.contract_name ?? c.title}</h1>
-        <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-[#64748B]">
-          <span>{[c.province, c.region].filter(Boolean).join(', ') || 'Location not reported'}</span>
-          <span>Contract amount <strong className="text-[#0F172A] tabular-nums">{formatPeso(c.contract_amount)}</strong></span>
-          <span>Reported progress <strong className="text-[#0F172A] tabular-nums">{formatProgress(c.progress)}</strong></span>
-        </div>
-        {mapHref ? (
-          <Link href={mapHref} className="inline-flex items-center gap-1 text-sm font-medium text-[#2563EB] hover:underline">
-            <MapPin className="w-4 h-4" /> View on map
-          </Link>
-        ) : (
-          <span className="inline-flex items-center gap-1 text-sm text-[#94A3B8]">
-            <MapPinOff className="w-4 h-4" /> The source reports no coordinates for this contract.
-          </span>
-        )}
+        <h1 className="max-w-4xl text-xl sm:text-[26px] font-semibold tracking-tight text-ink leading-[1.2]">{c.contract_name ?? c.title}</h1>
+        <dl className="grid grid-cols-1 sm:grid-cols-3 bg-surface border border-line rounded-card divide-y sm:divide-y-0 sm:divide-x divide-line">
+          <div className="p-4 sm:p-5">
+            <dt className="text-xs font-medium text-muted">Contract amount (reported)</dt>
+            <dd className="mt-2 font-semibold text-[32px] leading-none tracking-tight text-ink">{formatPeso(c.contract_amount)}</dd>
+          </div>
+          <div className="p-4 sm:p-5">
+            <dt className="text-xs font-medium text-muted">Reported progress</dt>
+            <dd className="mt-2 font-semibold text-[32px] leading-none tracking-tight text-ink">{formatProgress(c.progress)}</dd>
+            {c.progress !== null && <ProgressBar value={Number(c.progress)} status={c.status} className="mt-3 max-w-[12rem]" />}
+          </div>
+          <div className="p-4 sm:p-5">
+            <dt className="text-xs font-medium text-muted">Reported location</dt>
+            <dd className="mt-2 text-base font-semibold text-ink">{[c.province, c.region].filter(Boolean).join(', ') || 'Location not reported'}</dd>
+            <dd className="mt-2 text-sm">
+              {mapHref ? (
+                <Link href={mapHref} className="inline-flex items-center gap-1 font-medium text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">
+                  <MapPin className="w-4 h-4" aria-hidden="true" /> View on map
+                </Link>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-muted">
+                  <MapPinOff className="w-4 h-4" aria-hidden="true" /> The source reports no coordinates for this contract.
+                </span>
+              )}
+            </dd>
+          </div>
+        </dl>
       </header>
-      <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 sm:p-6 shadow-2xs">
+      <div className="bg-surface border border-line rounded-card p-5 sm:p-8">
         <DpwhContractDetails detail={detail} />
       </div>
     </>

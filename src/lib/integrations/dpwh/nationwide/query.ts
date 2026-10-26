@@ -143,7 +143,8 @@ export function applyDirectoryFilters<T extends FilterBuilder<T>>(builder: T, qu
   if (query.province) b = b.contains('provinces', [query.province]);
   if (query.municipality) b = b.eq('municipality', query.municipality);
   if (query.category) b = b.eq('category', query.category);
-  if (query.status) b = b.eq('status', query.status);
+  // status_key, not status: under RLS the planner can only estimate a leakproof (text) filter (migration 13).
+  if (query.status) b = b.eq('status_key', query.status);
   if (query.office) b = b.eq('implementing_office', query.office);
   if (query.source) b = b.eq('source', query.source);
   if (query.contractor) {

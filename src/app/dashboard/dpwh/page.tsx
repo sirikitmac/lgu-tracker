@@ -14,7 +14,7 @@ function DpwhPageContent() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen flex bg-[#F8FAFC] text-[#0F172A]">
+    <div className="min-h-screen flex bg-ground text-ink">
       <DashboardSidebar
         activeSection="dpwh"
         selectedCategory="All"
@@ -33,17 +33,17 @@ function DpwhPageContent() {
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
             <div className="space-y-1">
-              <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#172B4D] tracking-tight">
+              <h1 className="page-title text-[34px] sm:text-[42px] text-ink">
                 DPWH Nationwide Infrastructure Directory
               </h1>
-              <p className="text-sm text-[#64748B] max-w-3xl leading-relaxed">
+              <p className="text-sm text-muted max-w-3xl leading-relaxed">
                 Search, filter, and sort every DPWH infrastructure contract in the published BetterGov.ph snapshot of the
                 DPWH Transparency Portal. Kept separate from locally managed LGU projects.
               </p>
             </div>
             <DpwhSyncButton />
           </div>
-          <DpwhDirectory />
+          <DpwhDirectory showSummary />
         </main>
       </div>
     </div>
@@ -54,7 +54,7 @@ export default function DpwhPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center gap-2 text-sm text-[#64748B]">
+        <div className="min-h-screen flex items-center justify-center gap-2 text-sm text-muted">
           <Loader2 className="w-4 h-4 animate-spin" /> Loading DPWH directory…
         </div>
       }

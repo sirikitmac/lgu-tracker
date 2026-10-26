@@ -1,94 +1,58 @@
 import React from 'react';
 import Link from 'next/link';
+import { LguMark } from './Navbar';
 
+const LINKS = [
+  { href: '/projects', label: 'Projects' },
+  { href: '/projects/map', label: 'Map' },
+  { href: '/projects/dashboard', label: 'Dashboard' },
+  { href: '/dashboard', label: 'LGU monitoring workspace' },
+  { href: '/#about', label: 'About the data' },
+  { href: '/login', label: 'LGU Sign In' },
+];
+
+/** A quiet close in the theme's sunken tone: the name, where to go next, and the data notice. */
 export function Footer() {
   return (
-    <footer className="bg-[#172B4D] text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 lg:py-14">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 pb-10">
-          <div className="md:col-span-5 space-y-2.5">
-            <div className="font-display text-xl font-bold tracking-tight text-white">
-              LGU Tracker
-            </div>
-            <p className="text-sm italic font-medium text-[#F59E0B]">
-              Bantay Proyekto, Gabay sa Progreso.
-            </p>
-            <p className="text-sm text-slate-300 leading-relaxed max-w-md pt-1">
-              A web-based Local Government Unit Project Monitoring System designed for transparent public infrastructure tracking, procurement oversight, and fiscal accountability.
+    <footer className="bg-sunken text-ink border-t border-line">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 lg:py-12">
+        <div className="grid gap-8 md:grid-cols-12">
+          <div className="md:col-span-5 space-y-3">
+            <Link href="/" className="inline-flex items-center gap-2.5 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink">
+              <LguMark className="w-6 h-6" />
+              <span className="text-base font-bold tracking-[-0.02em]">LGU Tracker</span>
+            </Link>
+            <p className="text-sm text-subtle">Bantay Proyekto, Gabay sa Progreso.</p>
+            <p className="text-sm text-muted leading-relaxed max-w-md">
+              A public view of infrastructure projects and an LGU project monitoring system, built for transparent public works tracking.
             </p>
           </div>
 
-          <div className="md:col-span-3 space-y-3">
-            <h3 className="text-sm font-semibold text-white tracking-tight">
-              System Navigation
-            </h3>
-            <ul className="space-y-2 text-sm text-slate-300">
-              <li>
-                <Link
-                  href="/"
-                  className="hover:text-white hover:underline underline-offset-4 transition-colors"
-                >
-                  Home &amp; Overview
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/projects"
-                  className="hover:text-white hover:underline underline-offset-4 transition-colors"
-                >
-                  Explore Public Projects
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/projects/map"
-                  className="hover:text-white hover:underline underline-offset-4 transition-colors"
-                >
-                  Public Project Map
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/dashboard"
-                  className="hover:text-white hover:underline underline-offset-4 transition-colors"
-                >
-                  Project Monitoring Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/login"
-                  className="hover:text-white hover:underline underline-offset-4 transition-colors"
-                >
-                  LGU Personnel Sign In
-                </Link>
-              </li>
+          <nav aria-label="Footer" className="md:col-span-3">
+            <h2 className="text-[13px] font-semibold text-ink">Explore</h2>
+            <ul className="mt-3 space-y-2 text-sm text-subtle">
+              {LINKS.map((l) => (
+                <li key={l.href}>
+                  <Link href={l.href} className="rounded-sm hover:text-ink hover:underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
-          </div>
+          </nav>
 
-          <div className="md:col-span-4 space-y-3">
-            <h3 className="text-sm font-semibold text-white tracking-tight">
-              Academic &amp; Data Notice
-            </h3>
-            <p className="text-sm text-slate-300 leading-relaxed">
-              Developed as a{' '}
-              <strong className="text-white font-semibold">
-                CCC181 Final Project
-              </strong>{' '}
-              by{' '}
-              <strong className="text-white font-semibold">
-                Team BB (BeyondBoard)
-              </strong>
-              . The public project directory and map show DPWH contract and FY 2027 NEP records as published by BetterGov.ph, not verified by the LGU. The LGU monitoring dashboard falls back to labelled sample records when no database is connected.
+          <div className="md:col-span-4">
+            <h2 className="text-[13px] font-semibold text-ink">Data notice</h2>
+            <p className="mt-3 text-sm text-muted leading-relaxed">
+              The public directory, map and dashboard show DPWH contract and FY 2027 NEP records as published by BetterGov.ph, not verified by
+              the LGU. The LGU monitoring workspace falls back to labelled sample records when no database is connected.
             </p>
           </div>
         </div>
 
-        <div className="pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-sm text-slate-300">
-          <p>
-            © 2026 LGU Tracker — Team BB (BeyondBoard) · CCC181 Software Engineering Project.
-          </p>
-          <p>Next.js App Router · TypeScript · Supabase Ready</p>
+        <div className="mt-10 pt-6 border-t border-line flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-muted">
+          <p>© 2026 LGU Tracker · Team BB (BeyondBoard) · CCC181 Final Project</p>
+          <p>Data: BetterGov.ph (DPWH Transparency Portal, FY 2027 NEP)</p>
         </div>
       </div>
     </footer>

@@ -69,12 +69,12 @@ export function DpwhSyncButton() {
         type="button"
         onClick={run}
         disabled={busy}
-        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#172B4D] text-white font-medium hover:bg-[#1e3a66] disabled:opacity-60"
+        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-ink text-on-ink font-medium hover:bg-ink-soft disabled:opacity-60"
       >
         {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
         {runId ? 'Continue sync' : 'Run DPWH sync now'}
       </button>
-      {message && <span role="status" className="text-[#334155]">{message}</span>}
+      {message && <span role="status" className="text-subtle">{message}</span>}
     </div>
   );
 }

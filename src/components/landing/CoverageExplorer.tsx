@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { formatCount } from '@/components/dpwh/format';
+import { regionColor } from '@/lib/regionPalette';
 import { regionCode, regionName } from './content';
 
 interface RegionRow {
@@ -48,12 +49,12 @@ export function CoverageExplorer({
   ];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-10 gap-y-12">
-      <div className="lg:col-span-5 space-y-10">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-6 gap-y-4">
+      <div className="lg:col-span-5 space-y-8 rounded-[24px] bg-surface p-4 sm:p-6 self-start">
         {groups.map((group) => (
           <div key={group.name}>
-            <h3 className="font-serif text-[length:var(--step-lead)] leading-tight text-night">{group.name}</h3>
-            <ul className="mt-3 space-y-1">
+            <h3 className="text-[17px] font-semibold tracking-[-0.01em] text-ink">{group.name}</h3>
+            <ul className="mt-2 space-y-0.5">
               {group.rows.map((row) => {
                 const isActive = row.region === selected;
                 const code = regionCode(row.region);
@@ -63,22 +64,25 @@ export function CoverageExplorer({
                       type="button"
                       aria-pressed={isActive}
                       onClick={() => setSelected(isActive ? null : row.region)}
-                      className={`group w-full grid grid-cols-[1fr_auto] items-baseline gap-x-4 px-3 py-2.5 text-left transition-colors duration-150 cursor-pointer focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-night ${
-                        isActive ? 'bg-night text-signal' : 'text-night hover:bg-signal-tint'
+                      className={`group w-full grid grid-cols-[1fr_auto] items-baseline gap-x-4 px-3 py-2.5 rounded-xl text-left text-ink transition-colors duration-150 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink ${
+                        isActive ? 'bg-surface shadow-raise ring-1 ring-line-strong' : 'hover:bg-sunken'
                       }`}
                     >
-                      <span className="text-[length:var(--step-body)] font-semibold">
-                        {regionName(row.region)}
-                        {code && <span className="font-normal"> · {code}</span>}
+                      <span className="flex items-center gap-2 text-[15px] font-semibold">
+                        <span className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ backgroundColor: regionColor(row.region) }} aria-hidden="true" />
+                        <span>
+                          {regionName(row.region)}
+                          {code && <span className="font-normal text-muted"> · {code}</span>}
+                        </span>
                       </span>
-                      <span className="text-[length:var(--step-body)] tabular-nums font-semibold">
+                      <span className="text-[15px] tabular-nums font-semibold">
                         {row.contracts !== null ? formatCount(row.contracts) : ''}
                       </span>
                       {row.contracts !== null && (
                         <span
                           aria-hidden="true"
-                          className={`col-span-2 mt-1.5 block h-1.5 origin-left transition-transform duration-500 ${isActive ? 'bg-signal' : 'bg-night'}`}
-                          style={{ transform: `scaleX(${Math.max(0.01, row.contracts / max)})` }}
+                          className="col-span-2 mt-1.5 block h-1.5 rounded-full origin-left transition-transform duration-500"
+                          style={{ transform: `scaleX(${Math.max(0.01, row.contracts / max)})`, backgroundColor: regionColor(row.region) }}
                         />
                       )}
                     </button>
@@ -91,11 +95,11 @@ export function CoverageExplorer({
       </div>
 
       <div className="lg:col-span-7 flex flex-col">
-        <figure className="relative">
+        <figure className="relative rounded-[24px] border border-line bg-surface p-4 sm:p-6">
           {hasPoints ? (
             <svg
               viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-              className="w-full h-auto max-h-[78svh]"
+              className="w-full h-auto max-h-[70svh]"
               role="img"
               aria-label={
                 active
@@ -110,8 +114,8 @@ export function CoverageExplorer({
                   <g
                     key={row.region}
                     className="transition-opacity duration-300"
-                    fill={isActive ? '#ffffff' : '#050f16'}
-                    opacity={dim ? 0.28 : 1}
+                    fill={regionColor(row.region)}
+                    opacity={dim ? 0.15 : 0.9}
                   >
                     {row.points.map(([lon, lat], i) => (
                       <circle
@@ -126,47 +130,47 @@ export function CoverageExplorer({
               })}
             </svg>
           ) : (
-            <div className="aspect-[76/83] bg-signal-tint flex items-center justify-center p-8 text-center text-[length:var(--step-body)] text-night">
+            <div className="aspect-[76/83] rounded-2xl bg-sunken flex items-center justify-center p-8 text-center text-[15px] text-subtle">
               The map draws itself from contract locations, which could not be loaded right now.
             </div>
           )}
           {hasPoints && (
-            <figcaption className="mt-4 text-[length:var(--step-small)] text-night max-w-xl">
+            <figcaption className="mt-4 text-[13px] text-muted max-w-xl">
               Each dot is one of the {pointsPerRegion} largest contracts in its region that DPWH reported
               coordinates for. The shape of the islands is drawn by the records alone.
             </figcaption>
           )}
         </figure>
 
-        <div className="mt-8 bg-night text-white p-6 sm:p-8" aria-live="polite">
+        <div className="mt-4 rounded-[24px] border border-line bg-surface p-6 sm:p-7" aria-live="polite">
           {active && active.contracts !== null ? (
             <>
-              <p className="font-serif text-[length:var(--step-head)] leading-none tabular-nums text-signal">
+              <p className="font-display text-[length:var(--step-head)] leading-none tabular-nums text-ink">
                 {formatCount(active.contracts)}
               </p>
-              <p className="mt-3 text-[length:var(--step-body)] max-w-lg">
+              <p className="mt-2 text-[15px] text-subtle max-w-lg">
                 contracts stored for {regionName(active.region)}
                 {totalContracts ? `, ${Math.round((active.contracts / totalContracts) * 100)}% of all stored contracts.` : '.'}
               </p>
               <Link
                 href={directoryHref(active.region)}
-                className="mt-6 inline-flex items-center gap-2 min-h-12 px-5 bg-signal text-night font-semibold text-[length:var(--step-body)] transition-colors duration-150 hover:bg-white focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-signal"
+                className="mt-5 inline-flex items-center gap-2 min-h-11 px-5 rounded-full bg-ink text-on-ink font-semibold text-[15px] transition-colors duration-150 hover:bg-ink-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
               >
                 Browse {regionName(active.region)} contracts
-                <ArrowRight className="w-5 h-5" aria-hidden="true" />
+                <ArrowRight className="w-4 h-4" aria-hidden="true" />
               </Link>
             </>
           ) : hasCounts ? (
             <>
-              <p className="font-serif text-[length:var(--step-head)] leading-none tabular-nums text-signal">
+              <p className="font-display text-[length:var(--step-head)] leading-none tabular-nums text-ink">
                 {totalContracts !== null ? formatCount(totalContracts) : ''}
               </p>
-              <p className="mt-3 text-[length:var(--step-body)] max-w-lg">
+              <p className="mt-2 text-[15px] text-subtle max-w-lg">
                 DPWH contracts stored across ten regions. Choose a region to see its share and open its records.
               </p>
             </>
           ) : (
-            <p className="text-[length:var(--step-body)] max-w-lg">
+            <p className="text-[15px] text-subtle max-w-lg">
               Live counts are unavailable right now. The directory still lists every stored contract by region.
             </p>
           )}
