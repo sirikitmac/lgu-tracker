@@ -337,6 +337,29 @@
   backdrop-filter: blur(12px);
 }
 
+/* The public project map's frame: Leaflet controls line up with the overlays' 12px inset,
+   the attribution stays legible, and keyboard focus on the map shows inside the frame. */
+.map-frame .leaflet-top .leaflet-control {
+  margin-top: 12px;
+}
+.map-frame .leaflet-left .leaflet-control {
+  margin-left: 12px;
+}
+.map-frame .leaflet-control-attribution {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  line-height: 1.5;
+  padding: 1px 8px;
+  border-top-left-radius: 8px;
+}
+.map-frame .leaflet-container:focus-visible {
+  outline: 2px solid var(--color-accent-ink);
+  outline-offset: -2px;
+}
+.map-frame .leaflet-container {
+  font-family: var(--font-sans);
+}
+
 /* Dark maps: the OpenStreetMap tiles are re-toned (not replaced), so the
    provider, attribution and detail stay the same; markers keep their colours. */
 [data-theme="dark"] .leaflet-tile-pane {

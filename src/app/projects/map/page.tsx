@@ -1,4 +1,7 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
+import { BarChart3, List } from 'lucide-react';
+import { secondaryButtonClass } from '@/components/dpwh/ui';
 import { CONTRACT_ID_PATTERN } from '@/lib/integrations/dpwh/nationwide/detail';
 import { DpwhPublicMap, type MapFocus } from '@/components/dpwh/DpwhPublicMap';
 
@@ -23,11 +26,22 @@ export default async function PublicProjectMapPage({ searchParams }: PageProps<'
 
   return (
     <>
-      <header>
-        <h1 className="page-title text-[30px] sm:text-[36px] text-ink">Project Map</h1>
-        <p className="mt-1.5 text-[15px] text-subtle">
-          DPWH contracts in the Visayas and Mindanao at their reported coordinates. Select a marker for details.
-        </p>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="page-title text-[30px] sm:text-[36px] text-ink">Project Map</h1>
+          <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-subtle">
+            DPWH contracts across the Visayas and Mindanao, placed at the coordinates DPWH reports. Select a marker or a
+            contract for details.
+          </p>
+        </div>
+        <nav aria-label="Other views" className="flex flex-wrap items-center gap-2 sm:shrink-0">
+          <Link href="/projects/dashboard" className={secondaryButtonClass}>
+            <BarChart3 className="w-4 h-4" aria-hidden="true" /> Dashboard
+          </Link>
+          <Link href="/projects" className={secondaryButtonClass}>
+            <List className="w-4 h-4" aria-hidden="true" /> Directory
+          </Link>
+        </nav>
       </header>
       <DpwhPublicMap focus={focus} />
     </>
