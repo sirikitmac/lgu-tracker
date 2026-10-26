@@ -216,7 +216,7 @@ function DashboardContent() {
   const currentMeta = sectionMetadata[activeSection];
 
   return (
-    <div className="min-h-screen flex bg-[#F8FAFC] text-[#0F172A]">
+    <div className="min-h-screen flex bg-ground text-ink">
       {/* Reusable Sidebar Navigation */}
       <DashboardSidebar
         activeSection={activeSection}
@@ -251,10 +251,10 @@ function DashboardContent() {
           {/* Page Title & Description */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div className="space-y-1">
-              <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#172B4D] tracking-tight">
+              <h1 className="page-title text-[34px] sm:text-[42px] text-ink">
                 {currentMeta.title}
               </h1>
-              <p className="text-sm text-[#64748B] max-w-3xl leading-relaxed">
+              <p className="text-sm text-muted max-w-3xl leading-relaxed">
                 {currentMeta.description}
               </p>
             </div>
@@ -278,8 +278,8 @@ function DashboardContent() {
           )}
 
           {isLoadingData ? (
-            <div className="flex items-center justify-center gap-2.5 py-20 text-sm font-medium text-[#64748B]">
-              <Loader2 className="w-4 h-4 animate-spin text-[#2563EB]" />
+            <div className="flex items-center justify-center gap-2.5 py-20 text-sm font-medium text-muted">
+              <Loader2 className="w-4 h-4 animate-spin text-accent-ink" />
               <span>Loading project records from Supabase...</span>
             </div>
           ) : (
@@ -291,14 +291,14 @@ function DashboardContent() {
               {activeSection === 'budget' && (
                 <section
                   aria-label="Sector Budget Breakdown"
-                  className="bg-white border border-[#E2E8F0] rounded-xl p-5 sm:p-6 shadow-2xs space-y-4"
+                  className="bg-white border border-line rounded-card p-5 sm:p-6 space-y-4"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                    <h2 className="font-display text-base font-bold text-[#172B4D]">
+                    <h2 className="font-display text-base font-bold text-ink">
                       Sector Appropriation &amp; Disbursement Breakdown
                       {isSampleData ? ' (Sample Data)' : ''}
                     </h2>
-                    <span className="text-xs text-[#64748B]">
+                    <span className="text-xs text-muted">
                       Click any sector to filter projects below
                     </span>
                   </div>
@@ -320,20 +320,20 @@ function DashboardContent() {
                           }
                           className={`text-left p-4 rounded-lg border transition-all cursor-pointer ${
                             isActive
-                              ? 'bg-[#F8FAFC] border-[#2563EB] shadow-2xs'
-                              : 'bg-white border-[#E2E8F0] hover:border-[#64748B]'
+                              ? 'bg-ground border-accent'
+                              : 'bg-white border-line hover:border-muted'
                           }`}
                         >
-                          <div className="flex items-center justify-between gap-2 text-xs text-[#64748B]">
-                            <span className="font-semibold text-[#0F172A]">
+                          <div className="flex items-center justify-between gap-2 text-xs text-muted">
+                            <span className="font-semibold text-ink">
                               {item.category}
                             </span>
-                            <span className="font-mono tabular-nums">
+                            <span className="tabular-nums">
                               {item.projectCount} projects
                             </span>
                           </div>
-                          <div className="mt-2 flex items-baseline justify-between gap-2 font-mono tabular-nums">
-                            <span className="text-sm font-bold text-[#0F172A]">
+                          <div className="mt-2 flex items-baseline justify-between gap-2 tabular-nums">
+                            <span className="text-sm font-bold text-ink">
                               {formatPHP(item.allocated)}
                             </span>
                             <span className="text-xs text-[#16A34A] font-semibold">
@@ -341,9 +341,9 @@ function DashboardContent() {
                               {formatPHP(item.disbursed, true)})
                             </span>
                           </div>
-                          <div className="mt-2.5 w-full h-1.5 bg-[#E2E8F0] rounded-full overflow-hidden">
+                          <div className="mt-2.5 w-full h-1.5 bg-line rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-[#2563EB]"
+                              className="h-full bg-ink"
                               style={{ width: `${item.utilization}%` }}
                             />
                           </div>
@@ -407,7 +407,7 @@ export default function DashboardPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] text-sm font-medium text-[#64748B]">
+        <div className="min-h-screen flex items-center justify-center bg-ground text-sm font-medium text-muted">
           Loading LGU Tracker Monitoring Workspace...
         </div>
       }

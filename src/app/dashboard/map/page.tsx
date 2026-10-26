@@ -40,14 +40,14 @@ const IliganProjectMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="w-full h-full min-h-[420px] sm:min-h-[540px] rounded-xl border border-[#E2E8F0] bg-[#F1F5F9] flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-10 h-10 rounded-xl bg-white border border-[#E2E8F0] flex items-center justify-center mb-3 shadow-2xs">
-          <MapPin className="w-5 h-5 text-[#2563EB] animate-pulse" />
+      <div className="w-full h-full min-h-[420px] sm:min-h-[540px] rounded-card border border-line bg-sunken flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-10 h-10 rounded-card bg-white border border-line flex items-center justify-center mb-3">
+          <MapPin className="w-5 h-5 text-accent-ink animate-pulse" />
         </div>
-        <p className="text-sm font-semibold text-[#172B4D]">
+        <p className="text-sm font-semibold text-ink">
           Initializing Iligan City Interactive Map...
         </p>
-        <p className="text-xs text-[#64748B] mt-1">
+        <p className="text-xs text-muted mt-1">
           Loading OpenStreetMap tiles and project markers
         </p>
       </div>
@@ -172,7 +172,7 @@ function ProjectMapPageContent() {
   };
 
   return (
-    <div className="min-h-screen flex bg-[#F8FAFC] text-[#0F172A]">
+    <div className="min-h-screen flex bg-ground text-ink">
       {/* Fixed Left Sidebar */}
       <DashboardSidebar
         activeSection="map"
@@ -198,10 +198,10 @@ function ProjectMapPageContent() {
           {/* Page Header & Layout Mode Switcher */}
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div className="space-y-1">
-              <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#172B4D] tracking-tight">
+              <h1 className="page-title text-[34px] sm:text-[42px] text-ink">
                 Project Map
               </h1>
-              <p className="text-sm text-[#64748B]">
+              <p className="text-sm text-muted">
                 Explore government projects across Iligan City.
               </p>
             </div>
@@ -210,7 +210,7 @@ function ProjectMapPageContent() {
             <div
               role="group"
               aria-label="Map and List View Switcher"
-              className="flex items-center p-1 bg-white border border-[#E2E8F0] rounded-lg shadow-2xs self-start sm:self-auto shrink-0"
+              className="flex items-center p-1 bg-white border border-line rounded-lg self-start sm:self-auto shrink-0"
             >
               <button
                 type="button"
@@ -218,8 +218,8 @@ function ProjectMapPageContent() {
                 aria-pressed={layoutMode === 'split'}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
                   layoutMode === 'split'
-                    ? 'bg-[#172B4D] text-white shadow-2xs'
-                    : 'text-[#64748B] hover:text-[#0F172A]'
+                    ? 'bg-ink text-white'
+                    : 'text-muted hover:text-ink'
                 }`}
               >
                 <Columns className="w-3.5 h-3.5" />
@@ -231,8 +231,8 @@ function ProjectMapPageContent() {
                 aria-pressed={layoutMode === 'map'}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
                   layoutMode === 'map'
-                    ? 'bg-[#172B4D] text-white shadow-2xs'
-                    : 'text-[#64748B] hover:text-[#0F172A]'
+                    ? 'bg-ink text-white'
+                    : 'text-muted hover:text-ink'
                 }`}
               >
                 <MapIcon className="w-3.5 h-3.5" />
@@ -244,8 +244,8 @@ function ProjectMapPageContent() {
                 aria-pressed={layoutMode === 'list'}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
                   layoutMode === 'list'
-                    ? 'bg-[#172B4D] text-white shadow-2xs'
-                    : 'text-[#64748B] hover:text-[#0F172A]'
+                    ? 'bg-ink text-white'
+                    : 'text-muted hover:text-ink'
                 }`}
               >
                 <List className="w-3.5 h-3.5" />
@@ -257,7 +257,7 @@ function ProjectMapPageContent() {
           {/* Search & Filter Controls Bar */}
           <section
             aria-label="Map Search and Filters"
-            className="bg-white border border-[#E2E8F0] rounded-xl p-4 sm:p-5 shadow-2xs space-y-4"
+            className="bg-white border border-line rounded-card p-4 sm:p-5 space-y-4"
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
               {/* Search Input */}
@@ -266,7 +266,7 @@ function ProjectMapPageContent() {
                   Search projects by name, reference code, or barangay
                 </label>
                 <Search
-                  className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                  className="w-4 h-4 text-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
                   aria-hidden="true"
                 />
                 <input
@@ -280,7 +280,7 @@ function ProjectMapPageContent() {
                     }))
                   }
                   placeholder="Search project name, code, or barangay..."
-                  className="w-full h-10 pl-10 pr-3.5 text-sm text-[#0F172A] bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg placeholder:text-[#64748B] focus:bg-white focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 transition-all"
+                  className="w-full h-10 pl-10 pr-3.5 text-sm text-ink bg-ground border border-line rounded-lg placeholder:text-muted focus:bg-white focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ink/15 transition-all"
                 />
               </div>
 
@@ -298,7 +298,7 @@ function ProjectMapPageContent() {
                       status: e.target.value as ProjectStatus | 'All',
                     }))
                   }
-                  className="w-full h-10 px-3 text-xs sm:text-sm font-medium text-[#0F172A] bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg focus:bg-white focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 transition-all cursor-pointer"
+                  className="w-full h-10 px-3 text-xs sm:text-sm font-medium text-ink bg-ground border border-line rounded-lg focus:bg-white focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ink/15 transition-all cursor-pointer"
                 >
                   <option value="All">All Statuses</option>
                   {PROJECT_STATUSES.map((status) => (
@@ -323,7 +323,7 @@ function ProjectMapPageContent() {
                       barangay: e.target.value,
                     }))
                   }
-                  className="w-full h-10 px-3 text-xs sm:text-sm font-medium text-[#0F172A] bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg focus:bg-white focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 transition-all cursor-pointer"
+                  className="w-full h-10 px-3 text-xs sm:text-sm font-medium text-ink bg-ground border border-line rounded-lg focus:bg-white focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ink/15 transition-all cursor-pointer"
                 >
                   <option value="All">All Iligan Barangays</option>
                   {availableBarangays.map((barangay) => (
@@ -348,7 +348,7 @@ function ProjectMapPageContent() {
                       category: e.target.value as ProjectCategory | 'All',
                     }))
                   }
-                  className="w-full h-10 px-3 text-xs sm:text-sm font-medium text-[#0F172A] bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg focus:bg-white focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 transition-all cursor-pointer"
+                  className="w-full h-10 px-3 text-xs sm:text-sm font-medium text-ink bg-ground border border-line rounded-lg focus:bg-white focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ink/15 transition-all cursor-pointer"
                 >
                   <option value="All">All Project Categories</option>
                   {PROJECT_CATEGORIES.map((category) => (
@@ -361,11 +361,11 @@ function ProjectMapPageContent() {
             </div>
 
             {/* Matching Project Count & Clear Filters Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 border-t border-[#E2E8F0] text-xs text-[#64748B]">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono tabular-nums">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 border-t border-line text-xs text-muted">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 tabular-nums">
                 <span>
                   Showing{' '}
-                  <strong className="text-[#0F172A]">
+                  <strong className="text-ink">
                     {filteredProjects.length}
                   </strong>{' '}
                   matching{' '}
@@ -389,7 +389,7 @@ function ProjectMapPageContent() {
                 <button
                   type="button"
                   onClick={handleClearFilters}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#2563EB] hover:text-[#172B4D] hover:underline whitespace-nowrap cursor-pointer self-start sm:self-auto"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-accent-ink hover:text-ink hover:underline whitespace-nowrap cursor-pointer self-start sm:self-auto"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Clear Filters</span>
@@ -400,23 +400,23 @@ function ProjectMapPageContent() {
 
           {/* Empty State When No Projects Match */}
           {filteredProjects.length === 0 ? (
-            <div className="bg-white civic-subtle-grid border border-[#E2E8F0] rounded-xl p-10 sm:p-12 text-center shadow-2xs">
-              <div className="w-12 h-12 rounded-xl bg-[#F1F5F9] border border-[#E2E8F0] flex items-center justify-center mx-auto mb-3.5">
+            <div className="bg-white civic-subtle-grid border border-line rounded-card p-10 sm:p-12 text-center">
+              <div className="w-12 h-12 rounded-card bg-sunken border border-line flex items-center justify-center mx-auto mb-3.5">
                 <FolderSearch
-                  className="w-6 h-6 text-[#64748B]"
+                  className="w-6 h-6 text-muted"
                   aria-hidden="true"
                 />
               </div>
-              <h2 className="font-display text-base font-bold text-[#0F172A]">
+              <h2 className="font-display text-base font-bold text-ink">
                 No Matching Iligan City Projects Found
               </h2>
-              <p className="text-sm text-[#64748B] max-w-md mx-auto mt-1.5 leading-relaxed">
+              <p className="text-sm text-muted max-w-md mx-auto mt-1.5 leading-relaxed">
                 No project locations match your current search or filter settings. Clear the filters to restore all project markers across Iligan City.
               </p>
               <button
                 type="button"
                 onClick={handleClearFilters}
-                className="mt-5 inline-flex items-center justify-center min-h-[40px] px-4 py-2 text-xs font-semibold text-white bg-[#2563EB] hover:bg-[#172B4D] rounded-lg shadow-2xs transition-colors cursor-pointer"
+                className="mt-5 inline-flex items-center justify-center min-h-[40px] px-4 py-2 text-xs font-semibold text-white bg-ink hover:bg-ink-soft rounded-lg transition-colors cursor-pointer"
               >
                 Clear All Filters
               </button>
@@ -448,10 +448,10 @@ function ProjectMapPageContent() {
 
                   {/* Selected Marker Quick Summary Card when in Map-Only Focus Mode */}
                   {layoutMode === 'map' && selectedMapProject && (
-                    <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="bg-white border border-line rounded-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="space-y-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-[#64748B]">
-                          <span className="font-mono font-semibold text-[#172B4D] tabular-nums">
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+                          <span className="tabular-nums font-semibold text-ink">
                             {selectedMapProject.referenceCode}
                           </span>
                           <span aria-hidden="true">·</span>
@@ -459,16 +459,16 @@ function ProjectMapPageContent() {
                           <span aria-hidden="true">·</span>
                           <StatusBadge status={selectedMapProject.status} />
                         </div>
-                        <h3 className="font-display text-base font-bold text-[#0F172A] truncate">
+                        <h3 className="font-display text-base font-bold text-ink truncate">
                           {selectedMapProject.title}
                         </h3>
-                        <p className="text-xs text-[#64748B] font-mono tabular-nums">
+                        <p className="text-xs text-muted tabular-nums">
                           Allocated Budget:{' '}
-                          <strong className="text-[#0F172A]">
+                          <strong className="text-ink">
                             {formatPHP(selectedMapProject.allocatedBudget)}
                           </strong>{' '}
                           · Completion:{' '}
-                          <strong className="text-[#0F172A]">
+                          <strong className="text-ink">
                             {selectedMapProject.progressPercentage}%
                           </strong>{' '}
                           · Target: {selectedMapProject.targetCompletionDate}
@@ -478,7 +478,7 @@ function ProjectMapPageContent() {
                       <button
                         type="button"
                         onClick={() => setDrawerProject(selectedMapProject)}
-                        className="inline-flex items-center justify-center gap-1.5 min-h-[40px] px-4 py-2 text-xs font-semibold text-white bg-[#172B4D] hover:bg-[#2563EB] rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                        className="inline-flex items-center justify-center gap-1.5 min-h-[40px] px-4 py-2 text-xs font-semibold text-white bg-ink hover:bg-ink-soft rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
                       >
                         <span>View Full Project Details</span>
                         <ArrowUpRight className="w-3.5 h-3.5" />
@@ -501,18 +501,18 @@ function ProjectMapPageContent() {
                   {selectedMapProject && (
                     <section
                       aria-label="Selected Project Details"
-                      className="bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-2xs space-y-4"
+                      className="bg-white border border-line rounded-card p-5 space-y-4"
                     >
-                      <div className="flex items-center justify-between gap-2 pb-3 border-b border-[#E2E8F0]">
-                        <span className="text-xs font-semibold text-[#64748B]">
+                      <div className="flex items-center justify-between gap-2 pb-3 border-b border-line">
+                        <span className="text-xs font-semibold text-muted">
                           Selected Project Details
                         </span>
                         <StatusBadge status={selectedMapProject.status} />
                       </div>
 
                       <div>
-                        <div className="flex items-center gap-1.5 text-xs text-[#64748B] font-mono tabular-nums">
-                          <span className="font-semibold text-[#172B4D]">
+                        <div className="flex items-center gap-1.5 text-xs text-muted tabular-nums">
+                          <span className="font-semibold text-ink">
                             {selectedMapProject.referenceCode}
                           </span>
                           <span aria-hidden="true">·</span>
@@ -520,13 +520,13 @@ function ProjectMapPageContent() {
                             {selectedMapProject.category}
                           </span>
                         </div>
-                        <h2 className="font-display text-base font-bold text-[#0F172A] mt-1 leading-snug">
+                        <h2 className="font-display text-base font-bold text-ink mt-1 leading-snug">
                           {selectedMapProject.title}
                         </h2>
-                        <div className="flex items-center gap-1.5 text-xs text-[#64748B] mt-1.5">
+                        <div className="flex items-center gap-1.5 text-xs text-muted mt-1.5">
                           {hasValidCoordinates(selectedMapProject) ? (
                             <>
-                              <MapPin className="w-3.5 h-3.5 text-[#2563EB] shrink-0" />
+                              <MapPin className="w-3.5 h-3.5 text-accent-ink shrink-0" />
                               <span>
                                 {selectedMapProject.barangay}, Iligan City
                               </span>
@@ -544,38 +544,38 @@ function ProjectMapPageContent() {
                       </div>
 
                       {/* Key Metrics Grid */}
-                      <div className="grid grid-cols-2 gap-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-3.5 text-xs">
+                      <div className="grid grid-cols-2 gap-3 bg-ground border border-line rounded-lg p-3.5 text-xs">
                         <div>
-                          <span className="block text-[#64748B]">
+                          <span className="block text-muted">
                             Allocated Budget
                           </span>
-                          <span className="font-mono text-sm font-bold text-[#0F172A] tabular-nums mt-0.5 block">
+                          <span className="tabular-nums text-sm font-bold text-ink mt-0.5 block">
                             {formatPHP(selectedMapProject.allocatedBudget)}
                           </span>
                         </div>
                         <div>
-                          <span className="block text-[#64748B]">
+                          <span className="block text-muted">
                             Completion
                           </span>
-                          <span className="font-mono text-sm font-bold text-[#0F172A] tabular-nums mt-0.5 block">
+                          <span className="tabular-nums text-sm font-bold text-ink mt-0.5 block">
                             {selectedMapProject.progressPercentage}%
                           </span>
                         </div>
                         <div>
-                          <span className="block text-[#64748B]">
+                          <span className="block text-muted">
                             Start Date
                           </span>
-                          <span className="font-mono font-medium text-[#0F172A] tabular-nums mt-0.5 flex items-center gap-1">
-                            <Calendar className="w-3 h-3 text-[#64748B]" />
+                          <span className="tabular-nums font-medium text-ink mt-0.5 flex items-center gap-1">
+                            <Calendar className="w-3 h-3 text-muted" />
                             {selectedMapProject.startDate}
                           </span>
                         </div>
                         <div>
-                          <span className="block text-[#64748B]">
+                          <span className="block text-muted">
                             Target Completion
                           </span>
-                          <span className="font-mono font-medium text-[#0F172A] tabular-nums mt-0.5 flex items-center gap-1">
-                            <Calendar className="w-3 h-3 text-[#64748B]" />
+                          <span className="tabular-nums font-medium text-ink mt-0.5 flex items-center gap-1">
+                            <Calendar className="w-3 h-3 text-muted" />
                             {selectedMapProject.targetCompletionDate}
                           </span>
                         </div>
@@ -584,7 +584,7 @@ function ProjectMapPageContent() {
                       <button
                         type="button"
                         onClick={() => setDrawerProject(selectedMapProject)}
-                        className="w-full inline-flex items-center justify-center gap-1.5 min-h-[40px] px-4 py-2.5 text-xs font-semibold text-white bg-[#172B4D] hover:bg-[#2563EB] rounded-lg shadow-2xs transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
+                        className="w-full inline-flex items-center justify-center gap-1.5 min-h-[40px] px-4 py-2.5 text-xs font-semibold text-white bg-ink hover:bg-ink-soft rounded-lg transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
                       >
                         <span>View Full Project Details</span>
                         <ArrowUpRight className="w-3.5 h-3.5" />
@@ -595,18 +595,18 @@ function ProjectMapPageContent() {
                   {/* Accompanying Matching Projects List */}
                   <section
                     aria-label="Matching Projects Directory"
-                    className="bg-white border border-[#E2E8F0] rounded-xl overflow-hidden shadow-2xs"
+                    className="bg-white border border-line rounded-card overflow-hidden"
                   >
-                    <div className="px-4 py-3 bg-[#F8FAFC] border-b border-[#E2E8F0] flex items-center justify-between">
-                      <h3 className="text-xs font-semibold text-[#172B4D]">
+                    <div className="px-4 py-3 bg-ground border-b border-line flex items-center justify-between">
+                      <h3 className="text-xs font-semibold text-ink">
                         Matching Projects ({filteredProjects.length})
                       </h3>
-                      <span className="text-[11px] text-[#64748B]">
+                      <span className="text-[11px] text-muted">
                         Click to locate on map
                       </span>
                     </div>
 
-                    <div className="max-h-[340px] overflow-y-auto divide-y divide-[#E2E8F0]">
+                    <div className="max-h-[340px] overflow-y-auto divide-y divide-line">
                       {filteredProjects.map((project) => {
                         const isSelected = selectedMapProject?.id === project.id;
                         const hasCoords = hasValidCoordinates(project);
@@ -625,26 +625,26 @@ function ProjectMapPageContent() {
                             }}
                             className={`p-4 text-left transition-colors cursor-pointer ${
                               isSelected
-                                ? 'bg-[#F1F5F9]'
-                                : 'hover:bg-[#F8FAFC]'
+                                ? 'bg-sunken'
+                                : 'hover:bg-ground'
                             }`}
                           >
                             <div className="flex items-center justify-between gap-2 text-xs">
-                              <span className="font-mono font-semibold text-[#172B4D] tabular-nums">
+                              <span className="tabular-nums font-semibold text-ink">
                                 {project.referenceCode}
                               </span>
                               <StatusBadge status={project.status} />
                             </div>
 
-                            <p className="font-display text-sm font-bold text-[#0F172A] mt-1 line-clamp-1">
+                            <p className="font-display text-sm font-bold text-ink mt-1 line-clamp-1">
                               {project.title}
                             </p>
 
-                            <div className="flex items-center justify-between gap-2 mt-2 text-xs text-[#64748B]">
+                            <div className="flex items-center justify-between gap-2 mt-2 text-xs text-muted">
                               <span className="inline-flex items-center gap-1 truncate">
                                 {hasCoords ? (
                                   <>
-                                    <MapPin className="w-3 h-3 text-[#2563EB] shrink-0" />
+                                    <MapPin className="w-3 h-3 text-accent-ink shrink-0" />
                                     <span className="truncate">
                                       {project.barangay}
                                     </span>
@@ -659,7 +659,7 @@ function ProjectMapPageContent() {
                                 )}
                               </span>
 
-                              <span className="font-mono font-semibold text-[#0F172A] tabular-nums shrink-0">
+                              <span className="tabular-nums font-semibold text-ink shrink-0">
                                 {formatPHP(project.allocatedBudget, true)}
                               </span>
                             </div>
@@ -688,7 +688,7 @@ export default function ProjectMapPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] text-sm font-medium text-[#64748B]">
+        <div className="min-h-screen flex items-center justify-center bg-ground text-sm font-medium text-muted">
           Loading Iligan City Project Map...
         </div>
       }

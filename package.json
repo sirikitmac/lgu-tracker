@@ -10,7 +10,7 @@
     "lint": "tsc --noEmit",
     "dpwh:iligan-export": "tsx --conditions=react-server scripts/dpwh-iligan-export.ts",
     "dpwh:sync": "tsx --conditions=react-server --max-old-space-size=4096 scripts/dpwh-sync.ts",
-    "test": "tsx --conditions=react-server --test \"tests/dpwh/*.test.ts\" \"tests/bettergov/*.test.ts\"",
+    "test": "tsx --conditions=react-server --test \"tests/dpwh/*.test.ts\" \"tests/bettergov/*.test.ts\" \"tests/bp/*.test.ts\"",
     "test:db": "tsx --conditions=react-server --test \"tests/db/*.test.ts\"",
     "test:db:full": "tsx --conditions=react-server --max-old-space-size=6144 tests/db/full-import.ts",
     "bettergov:sync": "tsx --conditions=react-server scripts/bettergov-sync.ts"
@@ -20,6 +20,7 @@
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
     "@tailwindcss/postcss": "^4.3.3",
+    "@tanstack/react-table": "^9.3.1",
     "@types/leaflet": "^1.9.22",
     "dotenv": "^17.2.3",
     "hyparquet": "1.31.5",

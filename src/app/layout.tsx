@@ -1,18 +1,10 @@
 import type { Metadata } from 'next';
 import {
   Instrument_Serif,
-  Plus_Jakarta_Sans,
   Public_Sans,
   JetBrains_Mono,
 } from 'next/font/google';
 import './globals.css';
-
-const plusJakartaSans = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  weight: ['600', '700'],
-  variable: '--font-plus-jakarta',
-  display: 'swap',
-});
 
 const publicSans = Public_Sans({
   subsets: ['latin'],
@@ -55,9 +47,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${plusJakartaSans.variable} ${publicSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable}`}
+      className={`${publicSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable}`}
     >
-      <body className="min-h-screen flex flex-col bg-[#F8FAFC] text-[#172B4D]">
+      <body className="min-h-screen flex flex-col bg-ground text-ink">
         {children}
       </body>
     </html>

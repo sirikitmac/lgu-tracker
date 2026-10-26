@@ -1,23 +1,47 @@
 @import "tailwindcss";
 
 @theme {
-  --font-display: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
+  /* One sans for every interface element, as on the landing page; the serif is for page titles. */
+  --font-display: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
   --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
 
-  /* Primary Colors */
-  --color-civic-navy: #172B4D;
-  --color-civic-blue: #2563EB;
-  --color-civic-orange: #F59E0B;
+  /* ---------------------------------------------------------------------------
+     Design tokens for the whole app, taken from the landing page: night ink,
+     a warm off-white ground, stone lines, and one signal-orange accent.
+     Status colours live in src/lib/statusPalette.ts and are not accents.
+     --------------------------------------------------------------------------- */
+  --color-ink: #050F16;          /* primary text, headings, the primary button */
+  --color-ink-soft: #1F2A33;     /* primary button hover */
+  --color-subtle: #3D4852;       /* secondary text that must stay strong */
+  --color-muted: #5B6670;        /* labels and meta: 5.6:1 on white, 5.2:1 on ground */
+  --color-ground: #F7F7F5;       /* page background */
+  --color-surface: #FFFFFF;      /* cards and panels */
+  --color-sunken: #F0EFEC;       /* wells, tracks, skeletons, hover fills */
+  --color-line: #E5E4E0;         /* card edges and row rules */
+  --color-line-strong: #CFCDC7;  /* control borders */
+  --color-accent: #FF7A1F;       /* signal orange: fills that carry ink text */
+  --color-accent-data: #E8650F;  /* chart marks: 3.3:1 on white */
+  --color-accent-ink: #A8430B;   /* accent as text, links, focus rings: 6:1 on white */
+  --color-accent-soft: #FFF1E6;  /* selected rows and chips */
 
-  /* Neutral Colors */
-  --color-civic-bg: #F8FAFC;
+  --radius-card: 1rem;
+  --radius-control: 0.625rem;
+  --shadow-raise: 0 1px 2px rgb(5 15 22 / 0.04), 0 10px 28px -18px rgb(5 15 22 / 0.28);
+  --shadow-float: 0 2px 6px rgb(5 15 22 / 0.06), 0 24px 48px -20px rgb(5 15 22 / 0.32);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Earlier names, kept as aliases of the tokens above so older screens match. */
+  --color-civic-navy: #050F16;
+  --color-civic-blue: #A8430B;
+  --color-civic-orange: #F59E0B;
+  --color-civic-bg: #F7F7F5;
   --color-civic-surface: #FFFFFF;
-  --color-civic-text: #0F172A;
-  --color-civic-slate: #64748B;
-  --color-civic-border: #E2E8F0;
-  --color-civic-muted: #F1F5F9;
+  --color-civic-text: #050F16;
+  --color-civic-slate: #5B6670;
+  --color-civic-border: #E5E4E0;
+  --color-civic-muted: #F0EFEC;
 
   /* Semantic Colors */
   --color-civic-success: #16A34A;
@@ -38,15 +62,15 @@
 @layer base {
   html {
     scroll-behavior: smooth;
-    background-color: #F8FAFC;
-    color: #0F172A;
+    background-color: var(--color-ground);
+    color: var(--color-ink);
     overflow-x: clip;
   }
 
   body {
     font-family: var(--font-sans);
-    background-color: #F8FAFC;
-    color: #0F172A;
+    background-color: var(--color-ground);
+    color: var(--color-ink);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: clip;
@@ -58,24 +82,51 @@
   }
 }
 
-/* Subtle Civic Architectural Textures & Glassmorphism */
+/* The old grid-paper texture is retired: surfaces are flat. Kept as a no-op for existing markup. */
 .civic-subtle-grid {
-  background-image:
-    linear-gradient(to right, rgba(226, 232, 240, 0.35) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(226, 232, 240, 0.35) 1px, transparent 1px);
-  background-size: 40px 40px;
+  background-image: none;
 }
 
-.civic-glass-nav {
-  background-color: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+/*
+ * Glass, used sparingly: the navigation bar and floating layers (BP, sticky
+ * toolbars, drawer headers, map overlays). Never on data surfaces. Falls back
+ * to a solid surface without backdrop-filter or when the visitor asks for
+ * less transparency.
+ */
+.civic-glass-nav,
+.glass {
+  background-color: rgb(255 255 255 / 0.78);
+  -webkit-backdrop-filter: saturate(1.6) blur(18px);
+  backdrop-filter: saturate(1.6) blur(18px);
 }
-
-@supports not (backdrop-filter: blur(12px)) {
-  .civic-glass-nav {
+.glass-strong {
+  background-color: rgb(255 255 255 / 0.9);
+  -webkit-backdrop-filter: saturate(1.6) blur(24px);
+  backdrop-filter: saturate(1.6) blur(24px);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .civic-glass-nav,
+  .glass,
+  .glass-strong {
     background-color: #FFFFFF;
   }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .civic-glass-nav,
+  .glass,
+  .glass-strong {
+    background-color: #FFFFFF;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Page titles on internal screens use the landing page's display serif. */
+.page-title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -202,4 +253,30 @@
     opacity: 1;
     transform: none;
   }
+}
+
+/* BP opens with a short rise; reduced motion skips it (motion-safe:). */
+@keyframes bp-in {
+  from { opacity: 0; transform: translate3d(0, 12px, 0) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes drawer-in {
+  from { transform: translate3d(24px, 0, 0); opacity: 0.6; }
+  to { transform: none; opacity: 1; }
+}
+
+/* Leaflet's zoom buttons in the app face, on a rounded glass bar (map pages). */
+.leaflet-bar {
+  border: 1px solid rgb(229 228 224 / 0.9) !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgb(5 15 22 / 0.12) !important;
+}
+.leaflet-bar a {
+  font-family: var(--font-sans) !important;
+  font-weight: 500 !important;
+  color: var(--color-ink) !important;
+  background-color: rgb(255 255 255 / 0.9) !important;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }

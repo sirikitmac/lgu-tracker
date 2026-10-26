@@ -17,10 +17,10 @@ import {
 function Field({ label, value, note }: { label: string; value: React.ReactNode; note?: string }) {
   return (
     <div className="py-2 grid grid-cols-[minmax(0,10rem)_minmax(0,1fr)] gap-3 text-sm">
-      <dt className="text-xs font-medium text-[#64748B]">{label}</dt>
-      <dd className="text-[#0F172A] break-words">
-        {value === null || value === undefined || value === '' ? <span className="text-[#94A3B8]">Not reported</span> : value}
-        {note && <span className="block text-xs text-[#64748B] mt-0.5">{note}</span>}
+      <dt className="text-xs font-medium text-muted">{label}</dt>
+      <dd className="text-ink break-words">
+        {value === null || value === undefined || value === '' ? <span className="text-muted">Not reported</span> : value}
+        {note && <span className="block text-xs text-muted mt-0.5">{note}</span>}
       </dd>
     </div>
   );
@@ -29,8 +29,8 @@ function Field({ label, value, note }: { label: string; value: React.ReactNode; 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-1">
-      <h3 className="font-display text-sm font-bold text-[#172B4D] border-b border-[#E2E8F0] pb-1.5">{title}</h3>
-      <dl className="divide-y divide-[#F1F5F9]">{children}</dl>
+      <h3 className="text-sm font-semibold tracking-tight text-ink border-b border-line pb-2">{title}</h3>
+      <dl className="divide-y divide-sunken">{children}</dl>
     </section>
   );
 }
@@ -38,7 +38,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function SourceLink({ href, children }: { href: string | null; children: React.ReactNode }) {
   if (!href) return null;
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[#2563EB] hover:underline">
+    <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-accent-ink hover:underline">
       {children} <ExternalLink className="w-3 h-3" aria-hidden="true" />
     </a>
   );
@@ -51,7 +51,7 @@ export function DpwhContractDetails({ detail }: { detail: DpwhContractDetail }) 
 
   return (
     <div className="space-y-6">
-      <p className="text-xs text-[#64748B] leading-relaxed p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
+      <p className="text-xs text-subtle leading-relaxed px-4 py-3 rounded-card bg-sunken">
         Source-reported values from the DPWH Transparency Portal via BetterGov.ph. Amounts are reported contract
         values, not disbursements. {detail.review?.is_field_verified
           ? `Field-verified by the LGU on ${formatDate(detail.review.verified_at)}.`
@@ -150,6 +150,11 @@ export function DpwhContractDetails({ detail }: { detail: DpwhContractDetail }) 
       <Section title="Source">
         <Field label="Dataset" value={<SourceLink href={c.source_file_url}>BetterGov.ph DPWH dataset (Hugging Face)</SourceLink>} note={`Revision ${c.source_revision.slice(0, 10)}`} />
         <Field label="BetterGov record" value={<SourceLink href={c.bettergov_record_url}>Open record</SourceLink>} />
+        <Field
+          label="Site photos (DPWH)"
+          value={c.total_images === null ? null : `${c.total_images} reported${c.latest_image_date ? `, latest ${formatDate(c.latest_image_date)}` : ''}`}
+          note="DPWH reports how many site photos it holds. LGU Tracker does not store or show them; see the DPWH Transparency Portal."
+        />
         <Field label="Source snapshot" value={formatDate(c.source_snapshot_at)} note="Snapshot in which these values last changed" />
         <Field label="Last successful sync" value={detail.lastSuccessfulSyncAt && formatDate(detail.lastSuccessfulSyncAt)} />
       </Section>

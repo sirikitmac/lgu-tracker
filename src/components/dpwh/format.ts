@@ -30,6 +30,19 @@ export function formatCount(value: number): string {
   return count.format(value);
 }
 
+/** Share of a whole as a percentage with one decimal; tiny non-zero shares print as "<0.1%". */
+export function formatShare(part: number, whole: number): string {
+  if (whole <= 0) return '—';
+  const pct = (part / whole) * 100;
+  if (pct > 0 && pct < 0.05) return '<0.1%';
+  return `${pct.toFixed(1)}%`;
+}
+
+/** Reported location line for a directory row: province, or a count when the record spans several. */
+export function locationLabel(item: { province: string | null; provinces: string[] }): string {
+  return item.province ?? (item.provinces.length > 1 ? `${item.provinces.length} provinces` : 'Not reported');
+}
+
 export function formatDate(value: string | null | undefined): string {
   if (!value) return 'Not reported';
   const date = new Date(value.length === 10 ? `${value}T00:00:00Z` : value);

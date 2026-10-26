@@ -55,7 +55,7 @@ export function ProjectFilters({
     filters.status !== 'All';
 
   return (
-    <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 sm:p-5 shadow-2xs space-y-4">
+    <div className="bg-white border border-line rounded-card p-4 sm:p-5 space-y-4">
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3.5">
         {/* Search Input */}
         <div className="relative flex-1 min-w-0">
@@ -63,7 +63,7 @@ export function ProjectFilters({
             Search projects by title, reference code, barangay, or office
           </label>
           <Search
-            className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+            className="w-4 h-4 text-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
             aria-hidden="true"
           />
           <input
@@ -72,7 +72,7 @@ export function ProjectFilters({
             value={filters.searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search by project title, code (e.g. LGU-2026), or barangay..."
-            className="w-full h-10 pl-10 pr-4 text-sm text-[#0F172A] bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg placeholder:text-[#64748B] focus:bg-white focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 transition-all"
+            className="w-full h-10 pl-10 pr-4 text-sm text-ink bg-ground border border-line rounded-lg placeholder:text-muted focus:bg-white focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ink/15 transition-all"
           />
         </div>
 
@@ -89,7 +89,7 @@ export function ProjectFilters({
               onChange={(e) =>
                 onCategoryChange(e.target.value as ProjectCategory | 'All')
               }
-              className="w-full h-10 px-3 text-xs sm:text-sm font-medium text-[#0F172A] bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg focus:bg-white focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 transition-all cursor-pointer"
+              className="w-full h-10 px-3 text-xs sm:text-sm font-medium text-ink bg-ground border border-line rounded-lg focus:bg-white focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ink/15 transition-all cursor-pointer"
             >
               <option value="All">All Project Categories</option>
               {PROJECT_CATEGORIES.map((category) => (
@@ -106,7 +106,7 @@ export function ProjectFilters({
               Sort projects
             </label>
             <ArrowUpDown
-              className="w-3.5 h-3.5 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+              className="w-3.5 h-3.5 text-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
               aria-hidden="true"
             />
             <select
@@ -115,7 +115,7 @@ export function ProjectFilters({
               onChange={(e) =>
                 onSortChange(e.target.value as ProjectSortOption)
               }
-              className="w-full h-10 pl-8 pr-3 text-xs sm:text-sm font-medium text-[#0F172A] bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg focus:bg-white focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 transition-all cursor-pointer"
+              className="w-full h-10 pl-8 pr-3 text-xs sm:text-sm font-medium text-ink bg-ground border border-line rounded-lg focus:bg-white focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ink/15 transition-all cursor-pointer"
             >
               <option value="budget-desc">Budget: High to Low</option>
               <option value="budget-asc">Budget: Low to High</option>
@@ -129,7 +129,7 @@ export function ProjectFilters({
           <div
             role="group"
             aria-label="Project Display Layout"
-            className="flex items-center p-1 h-10 bg-[#F1F5F9] border border-[#E2E8F0] rounded-lg shrink-0"
+            className="flex items-center p-1 h-10 bg-sunken border border-line rounded-lg shrink-0"
           >
             <button
               type="button"
@@ -137,8 +137,8 @@ export function ProjectFilters({
               aria-pressed={viewMode === 'grid'}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
                 viewMode === 'grid'
-                  ? 'bg-[#172B4D] text-white shadow-2xs'
-                  : 'text-[#64748B] hover:text-[#0F172A]'
+                  ? 'bg-ink text-white'
+                  : 'text-muted hover:text-ink'
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
@@ -150,8 +150,8 @@ export function ProjectFilters({
               aria-pressed={viewMode === 'table'}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
                 viewMode === 'table'
-                  ? 'bg-[#172B4D] text-white shadow-2xs'
-                  : 'text-[#64748B] hover:text-[#0F172A]'
+                  ? 'bg-ink text-white'
+                  : 'text-muted hover:text-ink'
               }`}
             >
               <TableIcon className="w-3.5 h-3.5" />
@@ -162,7 +162,7 @@ export function ProjectFilters({
       </div>
 
       {/* Interactive Status Filter Bar & Count Summary */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3.5 border-t border-[#E2E8F0]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3.5 border-t border-line">
         <div
           role="group"
           aria-label="Filter by project status"
@@ -174,8 +174,8 @@ export function ProjectFilters({
             aria-pressed={filters.status === 'All'}
             className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap cursor-pointer ${
               filters.status === 'All'
-                ? 'bg-[#172B4D] text-white'
-                : 'bg-[#F8FAFC] text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] border border-[#E2E8F0]'
+                ? 'bg-ink text-white'
+                : 'bg-ground text-muted hover:text-ink hover:bg-sunken border border-line'
             }`}
           >
             All Statuses
@@ -190,8 +190,8 @@ export function ProjectFilters({
                 aria-pressed={isSelected}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap cursor-pointer ${
                   isSelected
-                    ? 'bg-[#2563EB] text-white'
-                    : 'bg-[#F8FAFC] text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] border border-[#E2E8F0]'
+                    ? 'bg-ink text-white'
+                    : 'bg-ground text-muted hover:text-ink hover:bg-sunken border border-line'
                 }`}
               >
                 {status}
@@ -200,17 +200,17 @@ export function ProjectFilters({
           })}
         </div>
 
-        <div className="flex items-center justify-between sm:justify-end gap-3 text-xs text-[#64748B]">
-          <span className="font-mono tabular-nums">
-            Showing <strong className="text-[#0F172A]">{resultCount}</strong> of{' '}
-            <strong className="text-[#0F172A]">{totalCount}</strong> sample
+        <div className="flex items-center justify-between sm:justify-end gap-3 text-xs text-muted">
+          <span className="tabular-nums">
+            Showing <strong className="text-ink">{resultCount}</strong> of{' '}
+            <strong className="text-ink">{totalCount}</strong> sample
             projects
           </span>
           {hasActiveFilters && (
             <button
               type="button"
               onClick={onResetFilters}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-[#2563EB] hover:text-[#172B4D] hover:underline whitespace-nowrap cursor-pointer"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-accent-ink hover:text-ink hover:underline whitespace-nowrap cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Reset Filters</span>

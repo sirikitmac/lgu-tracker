@@ -39,31 +39,31 @@ export function DpwhContractDrawer({ contractId, onClose }: { contractId: string
 
   return (
     <div className="fixed inset-0 z-[1000] flex justify-end" role="dialog" aria-modal="true" aria-label={`DPWH contract ${contractId}`}>
-      <button type="button" aria-label="Close details" className="absolute inset-0 bg-[#0F172A]/40" onClick={onClose} />
-      <aside className="relative w-full max-w-2xl h-full overflow-y-auto bg-white shadow-xl">
-        <header className="sticky top-0 z-10 bg-white border-b border-[#E2E8F0] px-5 py-4 flex items-start justify-between gap-3">
+      <button type="button" aria-label="Close details" className="absolute inset-0 bg-ink/35 backdrop-blur-[2px]" onClick={onClose} />
+      <aside className="relative w-full max-w-2xl h-full overflow-y-auto bg-surface shadow-float motion-safe:animate-[drawer-in_260ms_var(--ease-out)]">
+        <header className="sticky top-0 z-10 glass-strong border-b border-line/80 px-5 sm:px-6 py-4 flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-[#64748B]">DPWH contract {contractId}</p>
-            <h2 className="font-display text-lg font-bold text-[#172B4D] leading-snug">{c ? c.contract_name ?? c.title : 'Loading…'}</h2>
+            <p className="text-xs font-semibold text-muted">DPWH contract {contractId}</p>
+            <h2 className="text-lg font-semibold tracking-tight text-ink leading-snug">{c ? c.contract_name ?? c.title : 'Loading…'}</h2>
             <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-xs font-medium">
-              <Link href={`/projects/${encodeURIComponent(contractId)}`} className="inline-flex items-center gap-1 text-[#2563EB] hover:underline">
+              <Link href={`/projects/${encodeURIComponent(contractId)}`} className="inline-flex items-center gap-1 text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">
                 Open full page <ArrowUpRight className="w-3 h-3" />
               </Link>
               {mapHref && (
-                <Link href={mapHref} className="inline-flex items-center gap-1 text-[#2563EB] hover:underline">
+                <Link href={mapHref} className="inline-flex items-center gap-1 text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">
                   <MapPin className="w-3 h-3" /> View on map
                 </Link>
               )}
             </div>
           </div>
-          <button type="button" onClick={onClose} className="p-2 rounded-lg hover:bg-[#F1F5F9]" aria-label="Close">
+          <button type="button" onClick={onClose} className="p-2 rounded-full hover:bg-sunken focus-visible:outline-2 focus-visible:outline-accent-ink" aria-label="Close">
             <X className="w-5 h-5" />
           </button>
         </header>
 
         <div className="px-5 py-5 space-y-6">
           {!detail && !error && (
-            <div className="flex items-center gap-2 text-sm text-[#64748B]"><Loader2 className="w-4 h-4 animate-spin" /> Loading contract…</div>
+            <div className="flex items-center gap-2 text-sm text-muted"><Loader2 className="w-4 h-4 animate-spin" /> Loading contract…</div>
           )}
           {error && (
             <div role="alert" className="flex items-start gap-2 p-3 rounded-lg border border-red-200 bg-red-50 text-sm text-red-800">

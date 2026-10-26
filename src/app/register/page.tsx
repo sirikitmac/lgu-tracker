@@ -130,20 +130,20 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-[#F8FAFC] civic-subtle-grid text-[#0F172A]">
+    <div className="min-h-screen flex flex-col justify-between bg-ground civic-subtle-grid text-ink">
       {/* Top Bar */}
-      <header className="sticky top-0 z-30 civic-glass-nav border-b border-[#E2E8F0] px-4 sm:px-6 py-3.5">
+      <header className="sticky top-0 z-30 civic-glass-nav border-b border-line px-4 sm:px-6 py-3.5">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <Link
             href="/"
-            className="font-display text-lg font-bold tracking-tight text-[#172B4D] hover:text-[#2563EB] transition-colors whitespace-nowrap rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2563EB]"
+            className="font-display text-lg font-bold tracking-tight text-ink hover:text-accent-ink transition-colors whitespace-nowrap rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-ink"
           >
             LGU Tracker
           </Link>
 
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 min-h-[36px] px-3 py-1.5 text-xs font-semibold text-[#64748B] hover:text-[#172B4D] hover:bg-[#F1F5F9] rounded-lg transition-colors whitespace-nowrap focus-visible:outline-2 focus-visible:outline-[#2563EB]"
+            className="inline-flex items-center gap-1.5 min-h-[36px] px-3 py-1.5 text-xs font-semibold text-muted hover:text-ink hover:bg-sunken rounded-lg transition-colors whitespace-nowrap focus-visible:outline-2 focus-visible:outline-accent-ink"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back to Home</span>
@@ -156,29 +156,29 @@ export default function RegisterPage() {
         <div className="w-full max-w-md space-y-6">
           {/* Branding Header */}
           <div className="text-center space-y-1.5">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#172B4D] text-white mx-auto mb-2 shadow-xs">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-card bg-ink text-white mx-auto mb-2 shadow-xs">
               <Shield className="w-5 h-5 text-[#F59E0B]" aria-hidden="true" />
             </div>
-            <div className="font-display text-2xl sm:text-3xl font-bold text-[#172B4D] tracking-tight">
+            <div className="font-display text-2xl sm:text-3xl font-bold text-ink tracking-tight">
               LGU Tracker
             </div>
             <p className="font-display text-sm sm:text-base italic font-semibold text-[#F59E0B]">
               Bantay Proyekto, Gabay sa Progreso.
             </p>
-            <h1 className="pt-2 text-sm font-semibold text-[#64748B]">
+            <h1 className="pt-2 text-sm font-semibold text-muted">
               Create Your LGU Tracker Account
             </h1>
           </div>
 
           {/* Card Container */}
-          <div className="bg-white border border-[#E2E8F0] rounded-xl p-6 sm:p-8 shadow-sm">
+          <div className="bg-white border border-line rounded-card p-6 sm:p-8 shadow-sm">
             {!registrationComplete ? (
               <form onSubmit={handleSubmit} noValidate className="space-y-5">
                 {/* Full Name */}
                 <div>
                   <label
                     htmlFor="register-full-name"
-                    className="block text-xs font-semibold text-[#0F172A] mb-1.5"
+                    className="block text-xs font-semibold text-ink mb-1.5"
                   >
                     Full Name
                   </label>
@@ -199,10 +199,10 @@ export default function RegisterPage() {
                     aria-describedby={
                       errors.fullName ? 'register-full-name-error' : undefined
                     }
-                    className={`w-full h-11 px-3.5 text-sm text-[#0F172A] bg-[#F8FAFC] border rounded-lg placeholder:text-[#64748B] focus:bg-white focus:outline-none focus:ring-2 transition-all ${
+                    className={`w-full h-11 px-3.5 text-sm text-ink bg-ground border rounded-lg placeholder:text-muted focus:bg-white focus:outline-none focus:ring-2 transition-all ${
                       errors.fullName
                         ? 'border-[#DC2626] focus:border-[#DC2626] focus:ring-[#DC2626]/15'
-                        : 'border-[#E2E8F0] focus:border-[#2563EB] focus:ring-[#2563EB]/15'
+                        : 'border-line focus:border-accent focus:ring-accent-ink/15'
                     }`}
                   />
                   {errors.fullName && (
@@ -221,7 +221,7 @@ export default function RegisterPage() {
                 <div>
                   <label
                     htmlFor="register-email"
-                    className="block text-xs font-semibold text-[#0F172A] mb-1.5"
+                    className="block text-xs font-semibold text-ink mb-1.5"
                   >
                     Institutional Email Address
                   </label>
@@ -242,10 +242,10 @@ export default function RegisterPage() {
                     aria-describedby={
                       errors.email ? 'register-email-error' : undefined
                     }
-                    className={`w-full h-11 px-3.5 text-sm text-[#0F172A] bg-[#F8FAFC] border rounded-lg placeholder:text-[#64748B] focus:bg-white focus:outline-none focus:ring-2 transition-all ${
+                    className={`w-full h-11 px-3.5 text-sm text-ink bg-ground border rounded-lg placeholder:text-muted focus:bg-white focus:outline-none focus:ring-2 transition-all ${
                       errors.email
                         ? 'border-[#DC2626] focus:border-[#DC2626] focus:ring-[#DC2626]/15'
-                        : 'border-[#E2E8F0] focus:border-[#2563EB] focus:ring-[#2563EB]/15'
+                        : 'border-line focus:border-accent focus:ring-accent-ink/15'
                     }`}
                   />
                   {errors.email && (
@@ -264,7 +264,7 @@ export default function RegisterPage() {
                 <div>
                   <label
                     htmlFor="register-password"
-                    className="block text-xs font-semibold text-[#0F172A] mb-1.5"
+                    className="block text-xs font-semibold text-ink mb-1.5"
                   >
                     Password
                   </label>
@@ -286,17 +286,17 @@ export default function RegisterPage() {
                       aria-describedby={
                         errors.password ? 'register-password-error' : undefined
                       }
-                      className={`w-full h-11 pl-3.5 pr-11 text-sm text-[#0F172A] bg-[#F8FAFC] border rounded-lg placeholder:text-[#64748B] focus:bg-white focus:outline-none focus:ring-2 transition-all ${
+                      className={`w-full h-11 pl-3.5 pr-11 text-sm text-ink bg-ground border rounded-lg placeholder:text-muted focus:bg-white focus:outline-none focus:ring-2 transition-all ${
                         errors.password
                           ? 'border-[#DC2626] focus:border-[#DC2626] focus:ring-[#DC2626]/15'
-                          : 'border-[#E2E8F0] focus:border-[#2563EB] focus:ring-[#2563EB]/15'
+                          : 'border-line focus:border-accent focus:ring-accent-ink/15'
                       }`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword((prev) => !prev)}
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-[#64748B] hover:text-[#0F172A] rounded-md transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2563EB]"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-muted hover:text-ink rounded-md transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-accent-ink"
                     >
                       {showPassword ? (
                         <EyeOff className="w-4 h-4" />
@@ -321,7 +321,7 @@ export default function RegisterPage() {
                 <div>
                   <label
                     htmlFor="register-confirm-password"
-                    className="block text-xs font-semibold text-[#0F172A] mb-1.5"
+                    className="block text-xs font-semibold text-ink mb-1.5"
                   >
                     Confirm Password
                   </label>
@@ -348,10 +348,10 @@ export default function RegisterPage() {
                           ? 'register-confirm-password-error'
                           : undefined
                       }
-                      className={`w-full h-11 pl-3.5 pr-11 text-sm text-[#0F172A] bg-[#F8FAFC] border rounded-lg placeholder:text-[#64748B] focus:bg-white focus:outline-none focus:ring-2 transition-all ${
+                      className={`w-full h-11 pl-3.5 pr-11 text-sm text-ink bg-ground border rounded-lg placeholder:text-muted focus:bg-white focus:outline-none focus:ring-2 transition-all ${
                         errors.confirmPassword
                           ? 'border-[#DC2626] focus:border-[#DC2626] focus:ring-[#DC2626]/15'
-                          : 'border-[#E2E8F0] focus:border-[#2563EB] focus:ring-[#2563EB]/15'
+                          : 'border-line focus:border-accent focus:ring-accent-ink/15'
                       }`}
                     />
                     <button
@@ -360,7 +360,7 @@ export default function RegisterPage() {
                       aria-label={
                         showConfirmPassword ? 'Hide password' : 'Show password'
                       }
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-[#64748B] hover:text-[#0F172A] rounded-md transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-[#2563EB]"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-muted hover:text-ink rounded-md transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-accent-ink"
                     >
                       {showConfirmPassword ? (
                         <EyeOff className="w-4 h-4" />
@@ -385,7 +385,7 @@ export default function RegisterPage() {
                 <div>
                   <label
                     htmlFor="register-role"
-                    className="block text-xs font-semibold text-[#0F172A] mb-1.5"
+                    className="block text-xs font-semibold text-ink mb-1.5"
                   >
                     Requested Role
                   </label>
@@ -403,10 +403,10 @@ export default function RegisterPage() {
                     aria-describedby={
                       errors.role ? 'register-role-error' : 'register-role-hint'
                     }
-                    className={`w-full h-11 px-3.5 text-sm text-[#0F172A] bg-[#F8FAFC] border rounded-lg focus:bg-white focus:outline-none focus:ring-2 transition-all ${
+                    className={`w-full h-11 px-3.5 text-sm text-ink bg-ground border rounded-lg focus:bg-white focus:outline-none focus:ring-2 transition-all ${
                       errors.role
                         ? 'border-[#DC2626] focus:border-[#DC2626] focus:ring-[#DC2626]/15'
-                        : 'border-[#E2E8F0] focus:border-[#2563EB] focus:ring-[#2563EB]/15'
+                        : 'border-line focus:border-accent focus:ring-accent-ink/15'
                     }`}
                   >
                     <option value="" disabled>
@@ -430,7 +430,7 @@ export default function RegisterPage() {
                   ) : (
                     <p
                       id="register-role-hint"
-                      className="mt-1.5 text-xs text-[#64748B] leading-relaxed"
+                      className="mt-1.5 text-xs text-muted leading-relaxed"
                     >
                       Selecting a role only submits a request. Staff, financial,
                       procurement, and administrator access is granted by an LGU
@@ -448,7 +448,7 @@ export default function RegisterPage() {
                         ? 'bg-emerald-50 border-emerald-200 text-[#16A34A]'
                         : statusNotice.type === 'error'
                         ? 'bg-red-50 border-red-200 text-[#DC2626]'
-                        : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]'
+                        : 'bg-ground border-line text-ink'
                     }`}
                   >
                     {statusNotice.type === 'success' ? (
@@ -466,16 +466,16 @@ export default function RegisterPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full min-h-[44px] py-2.5 px-4 text-sm font-semibold text-white bg-[#172B4D] hover:bg-[#2563EB] disabled:opacity-60 rounded-lg shadow-xs transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
+                  className="w-full min-h-[44px] py-2.5 px-4 text-sm font-semibold text-white bg-ink hover:bg-ink-soft disabled:opacity-60 rounded-lg shadow-xs transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
                 >
                   {isSubmitting ? 'Creating Account...' : 'Sign Up'}
                 </button>
 
-                <p className="text-center text-xs text-[#64748B]">
+                <p className="text-center text-xs text-muted">
                   Already have an account?{' '}
                   <Link
                     href="/login"
-                    className="font-semibold text-[#2563EB] hover:text-[#172B4D] hover:underline transition-colors"
+                    className="font-semibold text-accent-ink hover:text-ink hover:underline transition-colors"
                   >
                     Sign In
                   </Link>
@@ -496,7 +496,7 @@ export default function RegisterPage() {
 
                 <Link
                   href="/login"
-                  className="w-full inline-flex items-center justify-center min-h-[44px] py-2.5 px-4 text-sm font-semibold text-white bg-[#172B4D] hover:bg-[#2563EB] rounded-lg shadow-xs transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
+                  className="w-full inline-flex items-center justify-center min-h-[44px] py-2.5 px-4 text-sm font-semibold text-white bg-ink hover:bg-ink-soft rounded-lg shadow-xs transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
                 >
                   Continue to Sign In
                 </Link>
@@ -504,29 +504,29 @@ export default function RegisterPage() {
             )}
 
             {/* Supabase Integration Readiness */}
-            <div className="mt-6 pt-5 border-t border-[#E2E8F0] space-y-3">
+            <div className="mt-6 pt-5 border-t border-line space-y-3">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-[#0F172A]">
+                <span className="font-semibold text-ink">
                   Supabase Auth Status
                 </span>
                 <span
-                  className={`font-mono font-medium ${
-                    isSupabaseConfigured ? 'text-[#16A34A]' : 'text-[#64748B]'
+                  className={`tabular-nums font-medium ${
+                    isSupabaseConfigured ? 'text-[#16A34A]' : 'text-muted'
                   }`}
                 >
                   {isSupabaseConfigured ? 'Connected' : 'Prepared (Env Standby)'}
                 </span>
               </div>
-              <p className="text-xs text-[#64748B] leading-relaxed">
+              <p className="text-xs text-muted leading-relaxed">
                 Wired to the typed Supabase Auth adapter (
-                <code className="font-mono text-[11px] text-[#172B4D]">
+                <code className="tabular-nums text-[11px] text-ink">
                   src/lib/supabase/client.ts
                 </code>
                 ). Public transparency data never requires an account:
               </p>
               <Link
                 href="/dashboard?mode=public"
-                className="inline-flex items-center justify-center w-full min-h-[40px] px-3.5 py-2 text-xs font-semibold text-[#0F172A] bg-[#F8FAFC] hover:bg-[#F1F5F9] border border-[#E2E8F0] rounded-lg transition-colors whitespace-nowrap"
+                className="inline-flex items-center justify-center w-full min-h-[40px] px-3.5 py-2 text-xs font-semibold text-ink bg-ground hover:bg-sunken border border-line rounded-lg transition-colors whitespace-nowrap"
               >
                 Browse Public Transparency View
               </Link>
@@ -536,9 +536,9 @@ export default function RegisterPage() {
       </main>
 
       {/* Quiet Footer */}
-      <footer className="py-5 px-4 sm:px-6 border-t border-[#E2E8F0] bg-white text-center text-xs text-[#64748B]">
+      <footer className="py-5 px-4 sm:px-6 border-t border-line bg-white text-center text-xs text-muted">
         LGU Tracker —{' '}
-        <span className="italic text-[#172B4D] font-medium">
+        <span className="italic text-ink font-medium">
           Bantay Proyekto, Gabay sa Progreso.
         </span>{' '}
         · CCC181 Final Project by Team BB (BeyondBoard)

@@ -23,9 +23,9 @@ export default async function PublicProjectMapPage({ searchParams }: PageProps<'
 
   return (
     <>
-      <div className="space-y-1">
-        <h1 className="font-display text-2xl sm:text-3xl font-bold text-[#172B4D] tracking-tight">DPWH Project Map</h1>
-        <p className="text-sm text-[#64748B] max-w-3xl leading-relaxed">
+      <div>
+        <h1 className="page-title text-[36px] sm:text-[44px] text-ink">DPWH Project Map</h1>
+        <p className="mt-3 text-base sm:text-[17px] text-ink max-w-3xl leading-relaxed">
           DPWH infrastructure contracts nationwide, plotted at their DPWH-reported coordinates. Click a marker for
           details. No sign-in required.
         </p>

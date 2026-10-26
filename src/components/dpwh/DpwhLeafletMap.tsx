@@ -157,7 +157,7 @@ export default function DpwhLeafletMap({ points, focus, selectedId, onBoundsChan
   return (
     <div
       ref={containerRef}
-      className="w-full h-full min-h-[420px] rounded-xl border border-[#E2E8F0] overflow-hidden z-0"
+      className="w-full h-full min-h-[420px] overflow-hidden z-0"
       role="region"
       aria-label="Map of DPWH projects with reported coordinates"
     />
