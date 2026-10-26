@@ -47,7 +47,7 @@ test('applies every filter to the right column', () => {
     ['eq', 'region', 'Region XIII'],
     ['contains', 'provinces', ['Agusan del Norte']],
     ['eq', 'category', 'bridges'],
-    ['eq', 'status', 'ongoing'],
+    ['eq', 'status_key', 'ongoing'],
     ['eq', 'implementing_office', 'Region XIII'],
     ['ilike', 'contractor', 'MAMSAR%'],
     ['order', 'progress', true, false],
@@ -87,7 +87,7 @@ test('map query: filters, coordinates required, viewport, largest first, capped'
   const bounds = parseBounds('120.5,10,125.25,14');
   assert.ok(bounds.ok);
   assert.deepEqual(applyMapQuery(new Recorder(), r.query, bounds.bounds).calls, [
-    ['eq', 'status', 'ongoing'],
+    ['eq', 'status_key', 'ongoing'],
     ['not', 'latitude', 'is', null],
     ['not', 'longitude', 'is', null],
     ['gte', 'latitude', 10],

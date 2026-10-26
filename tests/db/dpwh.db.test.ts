@@ -146,6 +146,19 @@ test('search, location filter, and sort work on the stored columns', async () =>
   assert.equal(contractor, 120);
 });
 
+test('status_key filters return exactly the rows a status filter does, for the public', async () => {
+  const statuses = (await db.query<{ s: string }>(`select unnest(enum_range(null::public.dpwh_status))::text s`)).rows.map((r) => r.s);
+  for (const view of ['project_directory', 'dpwh_contracts_directory']) {
+    const key = view === 'project_directory' ? `source || ':' || record_id` : 'contract_id';
+    for (const s of statuses) {
+      const byKey = await as<{ k: string }>(db, 'anon', null, `select ${key} k from public.${view} where status_key = $1 order by 1`, [s]);
+      const byEnum = await as<{ k: string }>(db, 'anon', null, `select ${key} k from public.${view} where status = $1::public.dpwh_status order by 1`, [s]);
+      assert.ok(byKey.rows && byEnum.rows, `${view} ${s}: ${byKey.error?.message ?? byEnum.error?.message}`);
+      assert.deepEqual(byKey.rows, byEnum.rows, `${view} ${s}`);
+    }
+  }
+});
+
 test('LGU review fields: reviewers can write, the public cannot read, syncs never overwrite', async () => {
   const insert = `insert into public.dpwh_contract_reviews (contract_id, is_field_verified, verified_at, verified_by, verification_notes)
                   values ('20N00065', true, now(), $1, 'Inspected on site')`;
