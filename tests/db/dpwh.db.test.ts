@@ -5,6 +5,7 @@ import { snapshotFor, type OpenSnapshot } from '@/lib/integrations/dpwh/nationwi
 import { runDpwhSync } from '@/lib/integrations/dpwh/nationwide/sync';
 import { realRow, rowWithId } from '../dpwh/fixtures';
 import { USERS, as, createTestDb, pgliteStore } from './pglite';
+import type { DpwhDirectoryStats } from '@/types/dpwh';
 
 /**
  * Migration + RPC tests against a local PGlite database (never the hosted
@@ -80,8 +81,25 @@ test('admin sync imports through the real SQL with source values intact', async 
   const run = (await db.query<Record<string, unknown>>(`select * from public.dpwh_sync_runs`)).rows[0];
   assert.equal(run.triggered_by, USERS.admin);
   assert.equal(run.status, 'succeeded');
-  const stats = (await db.query<{ stats: { total_contracts: number; by_region: unknown[] } }>(`select stats from public.dpwh_directory_stats`)).rows[0].stats;
+  const stats = (await db.query<{ stats: DpwhDirectoryStats }>(`select stats from public.dpwh_directory_stats`)).rows[0].stats;
   assert.equal(stats.total_contracts, 120);
+
+  // Per-region detail reconciles with the all-region figures.
+  const detail = stats.by_region_detail ?? [];
+  assert.equal(detail.length, stats.by_region.length);
+  const sum = (xs: { count: number }[]) => xs.reduce((n, x) => n + x.count, 0);
+  assert.equal(sum(detail), stats.total_contracts);
+  for (const d of detail) {
+    assert.equal(d.count, stats.by_region.find((r) => r.value === d.region)?.count);
+    assert.equal(sum(d.by_status), d.count);
+    assert.equal(sum(d.by_category), d.count);
+  }
+  assert.equal(detail.reduce((n, d) => n + Number(d.amount_sum), 0), Number(stats.contract_amount.sum));
+  assert.equal(detail.reduce((n, d) => n + d.contracts_with_value, 0), stats.contract_amount.contracts_with_value);
+  for (const s of stats.by_status) {
+    const perRegion = detail.reduce((n, d) => n + (d.by_status.find((x) => x.value === s.value)?.count ?? 0), 0);
+    assert.equal(perRegion, s.count);
+  }
 });
 
 test('the public can read contracts and the summary; only admins see sync runs', async () => {

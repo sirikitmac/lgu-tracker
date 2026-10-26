@@ -1,149 +1,161 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
+import { BpAssistant } from '@/components/bp/BpAssistant';
+import { ThemeSegmented, ThemeToggle } from './ThemeToggle';
+
+/**
+ * Primary navigation for every public page. Landing sections are anchors on
+ * the home page; the three app pages show which one is open. Below `lg` the
+ * links move into a menu panel; BP and the menu button stay in the bar.
+ */
+
+interface NavItem {
+  href: string;
+  label: string;
+  /** Pathname test for the active state; anchors on the home page have none. */
+  match?: (pathname: string) => boolean;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { href: '/#coverage', label: 'Coverage' },
+  { href: '/#how-it-works', label: 'How it works' },
+  {
+    href: '/projects',
+    label: 'Projects',
+    match: (p) => p === '/projects' || (p.startsWith('/projects/') && !p.startsWith('/projects/map') && !p.startsWith('/projects/dashboard')),
+  },
+  { href: '/projects/map', label: 'Project Map', match: (p) => p.startsWith('/projects/map') },
+  { href: '/projects/dashboard', label: 'Dashboard', match: (p) => p.startsWith('/projects/dashboard') },
+];
+
+const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink';
+
+/** The product mark: a site pin in signal orange, as on DPWH work-zone signs. */
+export function LguMark({ className = 'w-7 h-7' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 28 28" className={className} aria-hidden="true">
+      <rect width="28" height="28" rx="8" fill="var(--color-accent)" />
+      <path d="M14 6.5a5.5 5.5 0 0 0-5.5 5.5c0 4.1 5.5 9.5 5.5 9.5s5.5-5.4 5.5-9.5A5.5 5.5 0 0 0 14 6.5Z" fill="#050F16" />
+      <circle cx="14" cy="12" r="2.1" fill="var(--color-accent)" />
+    </svg>
+  );
+}
 
 export function Navbar() {
+  const pathname = usePathname() ?? '/';
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // A route change closes the menu.
+  useEffect(() => setMobileMenuOpen(false), [pathname]);
 
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && mobileMenuOpen) {
+    if (!mobileMenuOpen) return;
+    panelRef.current?.querySelector<HTMLElement>('a, button')?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
         setMobileMenuOpen(false);
+        menuButtonRef.current?.focus();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, [mobileMenuOpen]);
 
+  const isActive = (item: NavItem) => item.match?.(pathname) ?? false;
+
   return (
-    <header className="sticky top-0 z-40 civic-glass-nav border-b border-line/70">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-8 px-4 sm:px-6 py-3.5">
-        {/* Zone 1: Single text element wordmark */}
-        <Link
-          href="/"
-          className="font-display text-lg font-bold tracking-tight text-ink hover:text-accent-ink transition-colors whitespace-nowrap shrink-0 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-ink"
-        >
-          LGU Tracker
+    <header className="sticky top-0 z-40 civic-glass-nav border-b border-line">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 h-14 px-4 sm:px-6">
+        <Link href="/" className={`flex items-center gap-2.5 shrink-0 rounded-lg ${focusRing}`} aria-label="LGU Tracker home">
+          <LguMark />
+          <span className="text-[17px] font-bold tracking-[-0.02em] text-ink whitespace-nowrap">LGU Tracker</span>
         </Link>
 
-        {/* Zone 2: concise single-line text navigation links */}
-        <nav
-          aria-label="Primary Navigation"
-          className="hidden md:flex items-center gap-5 lg:gap-8 text-sm font-medium text-muted"
-        >
-          <a
-            href="/#coverage"
-            className="py-1 hover:text-ink hover:underline underline-offset-8 decoration-accent decoration-2 transition-colors whitespace-nowrap shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-ink"
-          >
-            Coverage
-          </a>
-          <a
-            href="/#how-it-works"
-            className="py-1 hover:text-ink hover:underline underline-offset-8 decoration-accent decoration-2 transition-colors whitespace-nowrap shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-ink"
-          >
-            How it works
-          </a>
-          <Link
-            href="/projects"
-            className="py-1 hover:text-ink hover:underline underline-offset-8 decoration-accent decoration-2 transition-colors whitespace-nowrap shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-ink"
-          >
-            Projects
-          </Link>
-          <Link
-            href="/projects/map"
-            className="py-1 hover:text-ink hover:underline underline-offset-8 decoration-accent decoration-2 transition-colors whitespace-nowrap shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-ink"
-          >
-            Project Map
-          </Link>
-          <Link
-            href="/dashboard"
-            className="py-1 hover:text-ink hover:underline underline-offset-8 decoration-accent decoration-2 transition-colors whitespace-nowrap shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-ink"
-          >
-            Dashboard
-          </Link>
+        <nav aria-label="Primary" className="hidden lg:block">
+          <ul className="flex items-center gap-1">
+            {NAV_ITEMS.map((item) => {
+              const active = isActive(item);
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    aria-current={active ? 'page' : undefined}
+                    className={`inline-flex items-center h-8 px-3 rounded-full text-[13.5px] font-medium whitespace-nowrap transition-colors ${focusRing} ${
+                      active ? 'bg-sunken text-ink' : 'text-subtle hover:text-ink hover:bg-sunken/70'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         </nav>
 
-        {/* Zone 3: 1 primary action (+ mobile menu trigger on small screens) */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <BpAssistant variant="nav" />
+          <span className="hidden lg:block">
+            <ThemeToggle />
+          </span>
           <Link
             href="/login"
-            className="hidden sm:inline-flex items-center justify-center min-h-[40px] px-4 py-2 text-sm font-semibold text-white bg-ink hover:bg-ink-soft rounded-lg transition-colors whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
+            className={`hidden lg:inline-flex items-center h-9 px-4 rounded-full bg-ink text-on-ink text-[13px] font-semibold whitespace-nowrap hover:bg-ink-soft transition-colors ${focusRing}`}
           >
             LGU Sign In
           </Link>
-
           <button
+            ref={menuButtonRef}
             type="button"
             onClick={() => setMobileMenuOpen((prev) => !prev)}
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-primary-menu"
-            aria-label={
-              mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'
-            }
-            className="md:hidden inline-flex items-center justify-center min-w-[44px] min-h-[44px] p-2.5 rounded-lg text-ink hover:bg-sunken border border-line transition-colors focus-visible:outline-2 focus-visible:outline-accent-ink"
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            className={`lg:hidden inline-flex items-center justify-center w-11 h-11 -mr-1.5 rounded-full text-ink hover:bg-sunken transition-colors ${focusRing}`}
           >
-            {mobileMenuOpen ? (
-              <X className="w-5 h-5" />
-            ) : (
-              <Menu className="w-5 h-5" />
-            )}
+            {mobileMenuOpen ? <X className="w-5 h-5" aria-hidden="true" /> : <Menu className="w-5 h-5" aria-hidden="true" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
         <div
+          ref={panelRef}
           id="mobile-primary-menu"
-          className="md:hidden bg-white/95 backdrop-blur-md border-b border-line px-4 sm:px-6 py-4 space-y-3 shadow-lg"
+          className="lg:hidden border-t border-line bg-surface px-4 sm:px-6 pt-3 pb-5 max-h-[calc(100dvh-3.5rem)] overflow-y-auto motion-safe:animate-[bp-in_180ms_var(--ease-out)]"
         >
-          <nav
-            aria-label="Mobile Navigation"
-            className="flex flex-col space-y-1 text-sm font-medium text-ink"
-          >
-            <a
-              href="/#coverage"
-              onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2.5 rounded-lg hover:bg-sunken hover:text-accent-ink transition-colors"
-            >
-              Coverage
-            </a>
-            <a
-              href="/#how-it-works"
-              onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2.5 rounded-lg hover:bg-sunken hover:text-accent-ink transition-colors"
-            >
-              How it works
-            </a>
-            <Link
-              href="/projects"
-              onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2.5 rounded-lg hover:bg-sunken hover:text-accent-ink transition-colors"
-            >
-              DPWH Project Directory
-            </Link>
-            <Link
-              href="/projects/map"
-              onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2.5 rounded-lg hover:bg-sunken hover:text-accent-ink transition-colors"
-            >
-              DPWH Project Map
-            </Link>
-            <Link
-              href="/dashboard"
-              onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2.5 rounded-lg hover:bg-sunken hover:text-accent-ink transition-colors"
-            >
-              Monitoring Dashboard
-            </Link>
+          <nav aria-label="Primary">
+            <ul className="flex flex-col gap-0.5">
+              {NAV_ITEMS.map((item) => {
+                const active = isActive(item);
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      aria-current={active ? 'page' : undefined}
+                      className={`flex items-center min-h-11 px-3 rounded-xl text-[15px] font-medium transition-colors ${focusRing} ${
+                        active ? 'bg-sunken text-ink' : 'text-subtle hover:bg-sunken hover:text-ink'
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
           </nav>
-          <div className="pt-3 border-t border-line flex flex-col">
+          <div className="mt-4 pt-4 border-t border-line space-y-3">
+            <ThemeSegmented />
             <Link
               href="/login"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full inline-flex items-center justify-center min-h-[44px] px-4 py-2.5 text-sm font-semibold text-white bg-ink hover:bg-ink-soft rounded-lg transition-colors"
+              className={`flex items-center justify-center w-full min-h-11 rounded-full bg-ink text-on-ink text-sm font-semibold hover:bg-ink-soft transition-colors ${focusRing}`}
             >
               LGU Sign In
             </Link>

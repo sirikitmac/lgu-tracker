@@ -41,7 +41,7 @@ const IliganProjectMap = dynamic(
     ssr: false,
     loading: () => (
       <div className="w-full h-full min-h-[420px] sm:min-h-[540px] rounded-card border border-line bg-sunken flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-10 h-10 rounded-card bg-white border border-line flex items-center justify-center mb-3">
+        <div className="w-10 h-10 rounded-card bg-surface border border-line flex items-center justify-center mb-3">
           <MapPin className="w-5 h-5 text-accent-ink animate-pulse" />
         </div>
         <p className="text-sm font-semibold text-ink">
@@ -210,7 +210,7 @@ function ProjectMapPageContent() {
             <div
               role="group"
               aria-label="Map and List View Switcher"
-              className="flex items-center p-1 bg-white border border-line rounded-lg self-start sm:self-auto shrink-0"
+              className="flex items-center p-1 bg-surface border border-line rounded-lg self-start sm:self-auto shrink-0"
             >
               <button
                 type="button"
@@ -218,7 +218,7 @@ function ProjectMapPageContent() {
                 aria-pressed={layoutMode === 'split'}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
                   layoutMode === 'split'
-                    ? 'bg-ink text-white'
+                    ? 'bg-ink text-on-ink'
                     : 'text-muted hover:text-ink'
                 }`}
               >
@@ -231,7 +231,7 @@ function ProjectMapPageContent() {
                 aria-pressed={layoutMode === 'map'}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
                   layoutMode === 'map'
-                    ? 'bg-ink text-white'
+                    ? 'bg-ink text-on-ink'
                     : 'text-muted hover:text-ink'
                 }`}
               >
@@ -244,7 +244,7 @@ function ProjectMapPageContent() {
                 aria-pressed={layoutMode === 'list'}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
                   layoutMode === 'list'
-                    ? 'bg-ink text-white'
+                    ? 'bg-ink text-on-ink'
                     : 'text-muted hover:text-ink'
                 }`}
               >
@@ -257,7 +257,7 @@ function ProjectMapPageContent() {
           {/* Search & Filter Controls Bar */}
           <section
             aria-label="Map Search and Filters"
-            className="bg-white border border-line rounded-card p-4 sm:p-5 space-y-4"
+            className="bg-surface border border-line rounded-card p-4 sm:p-5 space-y-4"
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
               {/* Search Input */}
@@ -400,7 +400,7 @@ function ProjectMapPageContent() {
 
           {/* Empty State When No Projects Match */}
           {filteredProjects.length === 0 ? (
-            <div className="bg-white civic-subtle-grid border border-line rounded-card p-10 sm:p-12 text-center">
+            <div className="bg-surface civic-subtle-grid border border-line rounded-card p-10 sm:p-12 text-center">
               <div className="w-12 h-12 rounded-card bg-sunken border border-line flex items-center justify-center mx-auto mb-3.5">
                 <FolderSearch
                   className="w-6 h-6 text-muted"
@@ -416,7 +416,7 @@ function ProjectMapPageContent() {
               <button
                 type="button"
                 onClick={handleClearFilters}
-                className="mt-5 inline-flex items-center justify-center min-h-[40px] px-4 py-2 text-xs font-semibold text-white bg-ink hover:bg-ink-soft rounded-lg transition-colors cursor-pointer"
+                className="mt-5 inline-flex items-center justify-center min-h-[40px] px-4 py-2 text-xs font-semibold text-on-ink bg-ink hover:bg-ink-soft rounded-lg transition-colors cursor-pointer"
               >
                 Clear All Filters
               </button>
@@ -448,7 +448,7 @@ function ProjectMapPageContent() {
 
                   {/* Selected Marker Quick Summary Card when in Map-Only Focus Mode */}
                   {layoutMode === 'map' && selectedMapProject && (
-                    <div className="bg-white border border-line rounded-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="bg-surface border border-line rounded-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="space-y-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
                           <span className="tabular-nums font-semibold text-ink">
@@ -478,7 +478,7 @@ function ProjectMapPageContent() {
                       <button
                         type="button"
                         onClick={() => setDrawerProject(selectedMapProject)}
-                        className="inline-flex items-center justify-center gap-1.5 min-h-[40px] px-4 py-2 text-xs font-semibold text-white bg-ink hover:bg-ink-soft rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                        className="inline-flex items-center justify-center gap-1.5 min-h-[40px] px-4 py-2 text-xs font-semibold text-on-ink bg-ink hover:bg-ink-soft rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
                       >
                         <span>View Full Project Details</span>
                         <ArrowUpRight className="w-3.5 h-3.5" />
@@ -501,7 +501,7 @@ function ProjectMapPageContent() {
                   {selectedMapProject && (
                     <section
                       aria-label="Selected Project Details"
-                      className="bg-white border border-line rounded-card p-5 space-y-4"
+                      className="bg-surface border border-line rounded-card p-5 space-y-4"
                     >
                       <div className="flex items-center justify-between gap-2 pb-3 border-b border-line">
                         <span className="text-xs font-semibold text-muted">
@@ -584,7 +584,7 @@ function ProjectMapPageContent() {
                       <button
                         type="button"
                         onClick={() => setDrawerProject(selectedMapProject)}
-                        className="w-full inline-flex items-center justify-center gap-1.5 min-h-[40px] px-4 py-2.5 text-xs font-semibold text-white bg-ink hover:bg-ink-soft rounded-lg transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
+                        className="w-full inline-flex items-center justify-center gap-1.5 min-h-[40px] px-4 py-2.5 text-xs font-semibold text-on-ink bg-ink hover:bg-ink-soft rounded-lg transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
                       >
                         <span>View Full Project Details</span>
                         <ArrowUpRight className="w-3.5 h-3.5" />
@@ -595,7 +595,7 @@ function ProjectMapPageContent() {
                   {/* Accompanying Matching Projects List */}
                   <section
                     aria-label="Matching Projects Directory"
-                    className="bg-white border border-line rounded-card overflow-hidden"
+                    className="bg-surface border border-line rounded-card overflow-hidden"
                   >
                     <div className="px-4 py-3 bg-ground border-b border-line flex items-center justify-between">
                       <h3 className="text-xs font-semibold text-ink">

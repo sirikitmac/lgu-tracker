@@ -205,6 +205,22 @@ export interface DpwhDirectoryStats {
   municipalities: { province: string | null; municipality: string; count: number }[];
   offices: { implementing_region: string | null; office: string; count: number }[];
   infra_years: DpwhCount<number | null>[];
+  /**
+   * Per-region totals and breakdowns, added by migration
+   * 20261031000100_dpwh_stats_by_region.sql. Absent until that migration is
+   * applied and the stats are refreshed; screens fall back to all-region
+   * figures and say so.
+   */
+  by_region_detail?: DpwhRegionDetail[];
+}
+
+export interface DpwhRegionDetail {
+  region: string | null;
+  count: number;
+  amount_sum: number;
+  contracts_with_value: number;
+  by_status: DpwhCount<DpwhStatus>[];
+  by_category: DpwhCount<DpwhCategory>[];
 }
 
 export interface DpwhSummary {

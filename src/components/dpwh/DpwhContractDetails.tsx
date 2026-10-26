@@ -141,7 +141,7 @@ export function DpwhContractDetails({ detail }: { detail: DpwhContractDetail }) 
 
       {c.data_warnings.length > 0 && (
         <Section title="Data-quality notes">
-          <ul className="py-2 space-y-1 text-xs text-[#92400E] list-disc pl-5">
+          <ul className="py-2 space-y-1 text-xs text-warn-ink list-disc pl-5">
             {c.data_warnings.map((w) => <li key={w}>{warningLabel(w)}</li>)}
           </ul>
         </Section>

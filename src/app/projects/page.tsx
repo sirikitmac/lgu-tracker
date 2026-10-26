@@ -1,15 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { MapPin } from 'lucide-react';
-import { BpAssistant } from '@/components/bp/BpAssistant';
+import { BarChart3, MapPin } from 'lucide-react';
 import { DpwhDirectory } from '@/components/dpwh/DpwhDirectory';
-import { primaryButtonClass } from '@/components/dpwh/ui';
+import { secondaryButtonClass } from '@/components/dpwh/ui';
 import { isProjectSource } from '@/lib/integrations/bettergov/sources';
 import { DPWH_SORTS } from '@/lib/integrations/dpwh/nationwide/query';
 import { DPWH_CATEGORIES, DPWH_STATUSES } from '@/types/dpwh';
 
 export const metadata: Metadata = {
-  title: 'Project Directory · LGU Tracker',
+  title: 'Projects · LGU Tracker',
   description: 'Search, filter, and sort infrastructure projects from BetterGov.ph datasets: DPWH contracts and DPWH FY 2027 NEP proposals.',
 };
 
@@ -26,30 +25,21 @@ export default async function PublicProjectsPage({ searchParams }: PageProps<'/p
 
   return (
     <>
-      <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
-        <div className="min-w-0 max-w-3xl">
-          <h1 className="page-title text-[36px] sm:text-[44px] text-ink">Project Directory</h1>
-          <p className="mt-3 text-base sm:text-[17px] leading-relaxed text-ink">
-            Infrastructure projects from BetterGov.ph datasets. Each row shows its source. Values are as published and have not been
-            verified by the LGU.
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="page-title text-[30px] sm:text-[36px] text-ink">Projects</h1>
+          <p className="mt-1.5 text-[15px] text-subtle">
+            DPWH contracts across the Visayas and Mindanao, and FY 2027 budget proposals nationwide.
           </p>
-          <dl className="mt-4 grid gap-x-8 gap-y-2 sm:grid-cols-2 text-[13px] leading-relaxed">
-            <div className="pl-3 border-l-2 border-accent">
-              <dt className="font-semibold text-ink">DPWH contracts</dt>
-              <dd className="text-muted">From the DPWH Transparency Portal snapshot (Visayas and Mindanao project locations)</dd>
-            </div>
-            <div className="pl-3 border-l-2 border-line-strong">
-              <dt className="font-semibold text-ink">FY 2027 NEP proposals</dt>
-              <dd className="text-muted">DPWH projects proposed in the FY 2027 National Expenditure Program (nationwide)</dd>
-            </div>
-          </dl>
         </div>
-        <div className="flex flex-wrap items-center gap-2 lg:shrink-0 lg:pb-1">
-          <BpAssistant />
-          <Link href="/projects/map" className={primaryButtonClass}>
-            <MapPin className="w-4 h-4" aria-hidden="true" /> Open project map
+        <nav aria-label="Other views" className="flex flex-wrap items-center gap-2 sm:shrink-0">
+          <Link href="/projects/dashboard" className={secondaryButtonClass}>
+            <BarChart3 className="w-4 h-4" aria-hidden="true" /> Dashboard
           </Link>
-        </div>
+          <Link href="/projects/map" className={secondaryButtonClass}>
+            <MapPin className="w-4 h-4" aria-hidden="true" /> Map
+          </Link>
+        </nav>
       </header>
       <DpwhDirectory
         initial={{

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { AlertTriangle, ArrowUpRight, Bot, Loader2, RotateCcw, Send, Sparkles, X } from 'lucide-react';
 import { formatPeso } from '@/components/dpwh/format';
@@ -8,8 +9,9 @@ import { StatusPill } from '@/components/dpwh/StatusPill';
 import { secondaryButtonClass } from '@/components/dpwh/ui';
 
 /**
- * "Talk to BP" button and the floating, non-modal chat panel. The page stays
- * usable behind it. Answers come from POST /api/bp/chat; reference links are
+ * "Ask BP" button and the floating, non-modal chat panel. The page stays
+ * usable behind it. The panel is portalled to <body> so a translucent
+ * navigation bar (backdrop-filter) never becomes its containing block. Answers come from POST /api/bp/chat; reference links are
  * the records the server actually retrieved, never parsed from the answer.
  */
 
@@ -95,7 +97,7 @@ function ReferenceList({ references }: { references: Reference[] }) {
           <li key={`${r.source}:${r.record_id}`}>
             <Link
               href={r.href}
-              className="group block rounded-lg border border-line bg-white px-3 py-2.5 hover:border-line-strong focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent-ink"
+              className="group block rounded-lg border border-line bg-surface px-3 py-2.5 hover:border-line-strong focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent-ink"
             >
               <span className="flex items-start justify-between gap-2">
                 <span className="text-[13px] font-medium leading-snug text-ink group-hover:text-accent-ink line-clamp-2">{r.title}</span>
@@ -116,7 +118,7 @@ function ReferenceList({ references }: { references: Reference[] }) {
   );
 }
 
-export function BpAssistant() {
+export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav' }) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -219,19 +221,25 @@ export function BpAssistant() {
         onClick={() => (open ? close() : setOpen(true))}
         aria-expanded={open}
         aria-controls={panelId}
-        className={secondaryButtonClass}
+        aria-label={variant === 'nav' ? 'Ask BP, the AI assistant' : undefined}
+        className={
+          variant === 'nav'
+            ? 'inline-flex items-center justify-center gap-1.5 h-9 w-10 sm:w-auto sm:px-3.5 rounded-full border border-line-strong bg-surface text-[13px] font-semibold text-ink hover:bg-sunken transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink aria-expanded:bg-sunken'
+            : secondaryButtonClass
+        }
       >
-        <Sparkles className="w-4 h-4 text-accent-ink" aria-hidden="true" /> Talk to BP
+        <Sparkles className="w-4 h-4 text-accent-ink" aria-hidden="true" />
+        <span className={variant === 'nav' ? 'hidden sm:inline' : undefined}>Ask BP</span>
       </button>
 
-      {open && (
+      {open && typeof document !== 'undefined' && createPortal(
         <section
           id={panelId}
           role="dialog"
           aria-modal="false"
           aria-labelledby={titleId}
           onKeyDown={(e) => e.key === 'Escape' && close()}
-          className="fixed z-[900] inset-x-2 bottom-2 top-16 sm:inset-x-auto sm:top-auto sm:right-6 sm:bottom-6 sm:w-[400px] sm:h-[min(640px,calc(100dvh-7rem))] flex flex-col glass-strong border border-white/70 rounded-[22px] shadow-float overflow-hidden motion-safe:animate-[bp-in_220ms_var(--ease-out)]"
+          className="fixed z-[900] inset-x-2 bottom-2 top-16 sm:inset-x-auto sm:top-auto sm:right-6 sm:bottom-6 sm:w-[400px] sm:h-[min(640px,calc(100dvh-7rem))] flex flex-col glass-strong border border-line rounded-[22px] shadow-float overflow-hidden motion-safe:animate-[bp-in_220ms_var(--ease-out)]"
         >
           <header className="flex items-start gap-3 px-4 py-3 border-b border-line/80">
             <span className="mt-0.5 flex items-center justify-center w-9 h-9 shrink-0 rounded-full bg-accent text-ink" aria-hidden="true">
@@ -273,7 +281,7 @@ export function BpAssistant() {
                       type="button"
                       onClick={() => ask(s)}
                       disabled={pending}
-                      className="text-left text-xs leading-snug px-3 py-1.5 rounded-full border border-line-strong bg-white text-ink hover:border-accent-ink hover:text-accent-ink disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-accent-ink"
+                      className="text-left text-xs leading-snug px-3 py-1.5 rounded-full border border-line-strong bg-surface text-ink hover:border-accent-ink hover:text-accent-ink disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-accent-ink"
                     >
                       {s}
                     </button>
@@ -285,13 +293,13 @@ export function BpAssistant() {
             {messages.map((m) =>
               m.role === 'user' ? (
                 <div key={m.id} className="flex justify-end">
-                  <p className="max-w-[85%] rounded-2xl rounded-tr-sm bg-ink px-3.5 py-2.5 text-white whitespace-pre-wrap break-words">{m.content}</p>
+                  <p className="max-w-[85%] rounded-2xl rounded-tr-sm bg-ink px-3.5 py-2.5 text-on-ink whitespace-pre-wrap break-words">{m.content}</p>
                 </div>
               ) : (
                 <div key={m.id} className="max-w-[95%]">
                   <div className="rounded-2xl rounded-tl-sm bg-surface border border-line px-3.5 py-2.5 text-ink space-y-2 leading-relaxed break-words">
                     {m.mode === 'preview' && (
-                      <p className="inline-block px-2 py-0.5 rounded-full border border-amber-300 bg-amber-50 text-[11px] font-semibold text-[#92400E]">
+                      <p className="inline-block px-2 py-0.5 rounded-full border border-warn-line bg-warn-soft text-[11px] font-semibold text-warn-ink">
                         Preview mode · not AI-generated
                       </p>
                     )}
@@ -313,7 +321,7 @@ export function BpAssistant() {
               </div>
             )}
             {error && (
-              <div role="alert" className="flex items-start gap-2 p-3 rounded-lg border border-red-200 bg-red-50 text-xs text-red-800">
+              <div role="alert" className="flex items-start gap-2 p-3 rounded-lg border border-danger-line bg-danger-soft text-xs text-danger-ink">
                 <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" /> {error}
               </div>
             )}
@@ -346,13 +354,14 @@ export function BpAssistant() {
             <button
               type="submit"
               disabled={pending || !input.trim()}
-              className="inline-flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-ink text-white hover:bg-accent-ink disabled:opacity-40 disabled:hover:bg-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
+              className="inline-flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-ink text-on-ink hover:bg-ink-soft disabled:opacity-40 disabled:hover:bg-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
               aria-label="Send question"
             >
               {pending ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Send className="w-4 h-4" aria-hidden="true" />}
             </button>
           </form>
-        </section>
+        </section>,
+        document.body
       )}
     </>
   );

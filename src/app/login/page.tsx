@@ -165,13 +165,13 @@ export default function LoginPage() {
         <div className="w-full max-w-md space-y-6">
           {/* Branding Header */}
           <div className="text-center space-y-1.5">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-card bg-ink text-white mx-auto mb-2 shadow-xs">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-card bg-ink text-on-ink mx-auto mb-2 shadow-xs">
               <Shield className="w-5 h-5 text-[#F59E0B]" aria-hidden="true" />
             </div>
             <div className="font-display text-2xl sm:text-3xl font-bold text-ink tracking-tight">
               LGU Tracker
             </div>
-            <p className="font-display text-sm sm:text-base italic font-semibold text-[#F59E0B]">
+            <p className="font-display text-sm sm:text-base font-semibold text-[#F59E0B]">
               Bantay Proyekto, Gabay sa Progreso.
             </p>
             <h1 className="pt-2 text-sm font-semibold text-muted">
@@ -182,7 +182,7 @@ export default function LoginPage() {
           </div>
 
           {/* Card Container */}
-          <div className="bg-white border border-line rounded-card p-6 sm:p-8 shadow-sm">
+          <div className="bg-surface border border-line rounded-card p-6 sm:p-8 shadow-sm">
             {!forgotPasswordMode ? (
               <form
                 onSubmit={handleSignInSubmit}
@@ -316,9 +316,9 @@ export default function LoginPage() {
                     role="status"
                     className={`p-3.5 rounded-lg border text-xs leading-relaxed flex items-start gap-2.5 ${
                       statusNotice.type === 'success'
-                        ? 'bg-emerald-50 border-emerald-200 text-[#16A34A]'
+                        ? 'bg-emerald-50 dark:bg-emerald-500/12 border-emerald-200 dark:border-emerald-500/30 text-[#16A34A]'
                         : statusNotice.type === 'error'
-                        ? 'bg-red-50 border-red-200 text-[#DC2626]'
+                        ? 'bg-danger-soft border-danger-line text-[#DC2626]'
                         : 'bg-ground border-line text-ink'
                     }`}
                   >
@@ -337,7 +337,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full min-h-[44px] py-2.5 px-4 text-sm font-semibold text-white bg-ink hover:bg-ink-soft disabled:opacity-60 rounded-lg shadow-xs transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
+                  className="w-full min-h-[44px] py-2.5 px-4 text-sm font-semibold text-on-ink bg-ink hover:bg-ink-soft disabled:opacity-60 rounded-lg shadow-xs transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
                 >
                   {isSubmitting ? 'Verifying Credentials...' : 'Sign In'}
                 </button>
@@ -410,7 +410,7 @@ export default function LoginPage() {
                   <button
                     type="submit"
                     disabled={isSendingRecovery}
-                    className="w-full min-h-[44px] py-2.5 px-4 text-sm font-semibold text-white bg-ink hover:bg-ink-soft disabled:opacity-60 rounded-lg shadow-xs transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
+                    className="w-full min-h-[44px] py-2.5 px-4 text-sm font-semibold text-on-ink bg-ink hover:bg-ink-soft disabled:opacity-60 rounded-lg shadow-xs transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
                   >
                     {isSendingRecovery
                       ? 'Sending Recovery Request...'
@@ -469,9 +469,9 @@ export default function LoginPage() {
       </main>
 
       {/* Quiet Footer */}
-      <footer className="py-5 px-4 sm:px-6 border-t border-line bg-white text-center text-xs text-muted">
+      <footer className="py-5 px-4 sm:px-6 border-t border-line bg-surface text-center text-xs text-muted">
         LGU Tracker —{' '}
-        <span className="italic text-ink font-medium">
+        <span className="text-ink font-medium">
           Bantay Proyekto, Gabay sa Progreso.
         </span>{' '}
         · CCC181 Final Project by Team BB (BeyondBoard)

@@ -30,7 +30,7 @@ export default async function LandingPage() {
   const data = await loadLandingData();
 
   return (
-    <div className="landing min-h-svh flex flex-col bg-white">
+    <div className="landing min-h-svh flex flex-col bg-ground">
       <Navbar />
       <Reveal />
 
@@ -60,7 +60,7 @@ function Hero({ data }: { data: LandingData }) {
         <div className={`${FRAME} pt-[9svh] pb-12 lg:pt-[10svh] lg:pb-16`}>
           <h1
             id="hero-title"
-            className="font-serif text-[length:var(--step-display)] leading-[0.86] text-night lg:max-w-[62%]"
+            className="font-display text-[length:var(--step-display)] leading-[0.86] text-night lg:max-w-[62%]"
           >
             Bantay
             <br />
@@ -145,7 +145,7 @@ function WhyNow({ data }: { data: LandingData }) {
     <section id="why" className="pt-32 pb-24 lg:py-40 scroll-mt-20" aria-labelledby="why-title">
       <div className={`${FRAME} grid grid-cols-1 lg:grid-cols-12 gap-x-12 gap-y-14`}>
         <div className="lg:col-span-7">
-          <h2 id="why-title" data-reveal className="font-serif text-[length:var(--step-head)] leading-[0.95] max-w-[14ch]">
+          <h2 id="why-title" data-reveal className="font-display text-[length:var(--step-head)] leading-[0.95] max-w-[14ch]">
             Why it matters now
           </h2>
           <p data-reveal style={delay(80)} className="mt-8 text-[length:var(--step-lead)] leading-snug max-w-[36ch]">
@@ -171,7 +171,7 @@ function WhyNow({ data }: { data: LandingData }) {
                 <div key={f.label} data-reveal style={delay(220 + i * 80)}>
                   <dt className="sr-only">{f.label}</dt>
                   <dd>
-                    <span className="block font-serif text-[length:var(--step-head)] leading-none tabular-nums">{f.value}</span>
+                    <span className="block font-display text-[clamp(2.25rem,1.5rem+2.2vw,3.5rem)] leading-none tracking-[-0.03em] tabular-nums">{f.value}</span>
                     <span className="mt-3 block text-[length:var(--step-small)] leading-snug">{f.label}</span>
                   </dd>
                 </div>
@@ -206,8 +206,8 @@ const AUDIENCES: { name: string; text: string; photo: LandingPhoto; bg: string; 
     name: 'Students',
     text: 'Use real public-works records for papers, capstone projects and data exercises: searchable, sourced and free to read.',
     photo: PHOTOS.wmsu,
-    bg: 'bg-white',
-    ink: 'text-night',
+    bg: 'bg-surface',
+    ink: 'text-ink',
     tilt: 2,
   },
   {
@@ -233,7 +233,7 @@ function CommunityImpact() {
     <section id="impact" className="bg-night text-white py-24 lg:py-36 overflow-hidden" aria-labelledby="impact-title">
       <div className={FRAME}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-12 gap-y-6 items-end">
-          <h2 id="impact-title" data-reveal className="lg:col-span-6 font-serif text-[length:var(--step-head)] leading-[0.95]">
+          <h2 id="impact-title" data-reveal className="lg:col-span-6 font-display text-[length:var(--step-head)] leading-[0.95]">
             Who it is for
           </h2>
           <p data-reveal style={delay(80)} className="lg:col-span-6 text-[length:var(--step-lead)] leading-snug max-w-[34ch]">
@@ -250,7 +250,7 @@ function CommunityImpact() {
               className={`landing-fan-card xl:absolute xl:top-0 xl:w-[21.25rem] xl:h-[27.5rem] ${a.bg} ${a.ink} p-7 flex flex-col`}
             >
               <div className="xl:max-w-[13.5rem] flex flex-col h-full">
-                <h3 className="font-serif text-[length:var(--step-lead)] leading-none">{a.name}</h3>
+                <h3 className="font-display text-[length:var(--step-lead)] leading-none">{a.name}</h3>
                 <div className="relative mt-5 aspect-[4/3] overflow-hidden">
                   <Image src={a.photo.src} alt={a.photo.alt} fill sizes="(min-width: 1280px) 216px, 80vw" className="object-cover" />
                 </div>
@@ -271,7 +271,7 @@ function Coverage({ data }: { data: LandingData }) {
     <section id="coverage" className="bg-signal py-24 lg:py-36 scroll-mt-16" aria-labelledby="coverage-title">
       <div className={FRAME}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-12 gap-y-6">
-          <h2 id="coverage-title" data-reveal className="lg:col-span-5 font-serif text-[length:var(--step-head)] leading-[0.95]">
+          <h2 id="coverage-title" data-reveal className="lg:col-span-5 font-display text-[length:var(--step-head)] leading-[0.95]">
             Where the records are
           </h2>
           <div data-reveal style={delay(80)} className="lg:col-span-7 space-y-4 max-w-[60ch]">
@@ -318,7 +318,7 @@ function Coverage({ data }: { data: LandingData }) {
 /* ------------------------------------------------------------------------- */
 
 const STEPS = [
-  { clause: 'First, search a place, project or contractor.', field: 'bg-stone', ink: 'text-night' },
+  { clause: 'First, search a place, project or contractor.', field: 'bg-stone', ink: 'text-ink' },
   { clause: 'Then find where it is on the map.', field: 'bg-peach', ink: 'text-night' },
   { clause: 'Open the record: amount, contractor, progress.', field: 'bg-signal', ink: 'text-night' },
   { clause: 'Follow it back to the published source.', field: 'bg-night', ink: 'text-white' },
@@ -334,7 +334,7 @@ function HowItWorks({ example, regionPoints }: { example: ExampleContract | null
             className={`landing-step ${step.field} ${step.ink} min-h-[36rem] xl:min-h-[44rem] px-5 sm:px-8 lg:px-10 py-10 flex flex-col`}
           >
             {i === 0 ? (
-              <h2 id="how-title" className="font-serif text-[length:var(--step-head)] leading-[0.95]">
+              <h2 id="how-title" className="font-display text-[length:var(--step-head)] leading-[0.95]">
                 How it works
               </h2>
             ) : (
@@ -343,7 +343,7 @@ function HowItWorks({ example, regionPoints }: { example: ExampleContract | null
             <div data-reveal style={delay(i * 90)} className="landing-step-card mt-10 xl:mt-16 w-full max-w-[19rem]">
               <StepCard step={i} example={example} regionPoints={regionPoints} />
             </div>
-            <p className="mt-auto pt-10 font-serif text-[length:var(--step-lead)] leading-tight max-w-[16ch]">{step.clause}</p>
+            <p className="mt-auto pt-10 font-display text-[length:var(--step-lead)] leading-tight max-w-[16ch]">{step.clause}</p>
           </li>
         ))}
       </ol>
@@ -379,7 +379,7 @@ function StepCard({ step, example, regionPoints }: { step: number; example: Exam
     const mapHref = example ? contractMapHref(example) : null;
     return (
       <div data-ui className={base}>
-        <svg viewBox="0 0 260 200" className="w-full h-auto bg-stone" role="img" aria-label="Contract location among other Northern Mindanao contracts">
+        <svg viewBox="0 0 260 200" className="w-full h-auto bg-[#EDEDEB]" role="img" aria-label="Contract location among other Northern Mindanao contracts">
           {regionPoints.map(([plon, plat], i) => (
             <circle key={i} cx={x(plon).toFixed(1)} cy={y(plat).toFixed(1)} r="2.6" fill="#050f16" opacity="0.35" />
           ))}
@@ -413,7 +413,7 @@ function StepCard({ step, example, regionPoints }: { step: number; example: Exam
         <dl className="mt-4 space-y-3">
           <div>
             <dt>Contract amount</dt>
-            <dd className="font-serif text-[length:var(--step-lead)] leading-none tabular-nums">{formatPeso(example?.contract_amount)}</dd>
+            <dd className="font-display text-[length:var(--step-lead)] leading-none tabular-nums">{formatPeso(example?.contract_amount)}</dd>
           </div>
           <div>
             <dt>Contractor</dt>
@@ -424,7 +424,7 @@ function StepCard({ step, example, regionPoints }: { step: number; example: Exam
               {example ? `${statusLabel(example.status)} · ${categoryLabel(example.category)}` : 'Status'}
             </dt>
             <dd className="mt-1.5">
-              <span className="block h-2 bg-stone">
+              <span className="block h-2 bg-[#EDEDEB]">
                 <span className="block h-full bg-signal" style={{ width: `${Math.min(100, Math.max(0, progress ?? 0))}%` }} />
               </span>
               <span className="mt-1 block tabular-nums">
@@ -486,11 +486,11 @@ const GOALS = [
 function Sdgs() {
   const photo = PHOTOS.marceloFernan;
   return (
-    <section id="sdgs" className="py-5 sm:py-8 bg-white" aria-labelledby="sdg-title">
+    <section id="sdgs" className="py-5 sm:py-8 bg-ground" aria-labelledby="sdg-title">
       <div className="mx-2.5 sm:mx-5 bg-rust text-rust-ink overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[auto_1fr] gap-x-12 px-6 sm:px-10 lg:px-14 pt-14 lg:pt-20">
           <div className="lg:col-span-6 lg:row-start-1">
-            <h2 id="sdg-title" data-reveal className="font-serif text-[length:var(--step-head)] leading-[0.95] max-w-[13ch]">
+            <h2 id="sdg-title" data-reveal className="font-display text-[length:var(--step-head)] leading-[0.95] max-w-[13ch]">
               Aligned with three global goals
             </h2>
             <p data-reveal style={delay(80)} className="mt-6 max-w-[44ch]">
@@ -503,7 +503,7 @@ function Sdgs() {
             <ul className="space-y-12 max-w-[34rem]">
               {GOALS.map((goal, i) => (
                 <li key={goal.name} data-reveal style={delay(i * 90)}>
-                  <h3 className="font-serif text-[length:var(--step-lead)] leading-tight">{goal.name}</h3>
+                  <h3 className="font-display text-[length:var(--step-lead)] leading-tight">{goal.name}</h3>
                   <p className="mt-3">{goal.text}</p>
                 </li>
               ))}
@@ -539,14 +539,14 @@ function Sdgs() {
 
 function ExploreBand({ totalContracts }: { totalContracts: number | null }) {
   return (
-    <section aria-labelledby="explore-title" className="bg-white">
+    <section aria-labelledby="explore-title" className="bg-ground">
       <Link
         href="/projects"
         className="landing-cta group relative flex flex-col justify-between gap-6 bg-night text-white overflow-hidden transition-colors duration-150 focus-visible:outline-none"
       >
         <h2
           id="explore-title"
-          className="landing-cta-word block font-serif text-signal leading-[0.9] tracking-[-0.04em] text-[34vw] whitespace-nowrap px-3 lg:px-6 pt-6 pb-[7vw] transition-colors duration-150"
+          className="landing-cta-word block font-display text-signal leading-[0.9] tracking-[-0.04em] text-[34vw] whitespace-nowrap px-3 lg:px-6 pt-6 pb-[7vw] transition-colors duration-150"
         >
           Explore
         </h2>
@@ -567,7 +567,7 @@ function ExploreBand({ totalContracts }: { totalContracts: number | null }) {
 
 function Credits() {
   return (
-    <section aria-labelledby="credits-title" className="bg-white py-14">
+    <section aria-labelledby="credits-title" className="bg-ground py-14">
       <div className={`${FRAME} grid grid-cols-1 lg:grid-cols-12 gap-x-12 gap-y-6 text-[length:var(--step-small)]`}>
         <div className="lg:col-span-4 space-y-3">
           <h2 id="credits-title" className="text-[length:var(--step-body)] font-semibold">

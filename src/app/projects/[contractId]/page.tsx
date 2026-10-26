@@ -31,7 +31,7 @@ export default async function PublicContractPage({ params }: PageProps<'/project
     return (
       <>
         {back}
-        <div role="alert" className="flex items-start gap-2 p-4 rounded-card border border-red-200 bg-red-50 text-sm text-red-800">
+        <div role="alert" className="flex items-start gap-2 p-4 rounded-card border border-danger-line bg-danger-soft text-sm text-danger-ink">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           {result ? 'Could not load this contract. Please try again later.' : 'The project database is not configured.'}
         </div>
@@ -55,11 +55,11 @@ export default async function PublicContractPage({ params }: PageProps<'/project
         <dl className="grid grid-cols-1 sm:grid-cols-3 bg-surface border border-line rounded-card divide-y sm:divide-y-0 sm:divide-x divide-line">
           <div className="p-4 sm:p-5">
             <dt className="text-xs font-medium text-muted">Contract amount (reported)</dt>
-            <dd className="mt-2 font-serif text-[32px] leading-none tracking-tight text-ink">{formatPeso(c.contract_amount)}</dd>
+            <dd className="mt-2 font-semibold text-[32px] leading-none tracking-tight text-ink">{formatPeso(c.contract_amount)}</dd>
           </div>
           <div className="p-4 sm:p-5">
             <dt className="text-xs font-medium text-muted">Reported progress</dt>
-            <dd className="mt-2 font-serif text-[32px] leading-none tracking-tight text-ink">{formatProgress(c.progress)}</dd>
+            <dd className="mt-2 font-semibold text-[32px] leading-none tracking-tight text-ink">{formatProgress(c.progress)}</dd>
             {c.progress !== null && <ProgressBar value={Number(c.progress)} className="mt-3 max-w-[12rem]" />}
           </div>
           <div className="p-4 sm:p-5">

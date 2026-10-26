@@ -45,7 +45,7 @@ export default async function SourceProjectPage({ params }: PageProps<'/projects
     return (
       <>
         {back}
-        <div role="alert" className="flex items-start gap-2 p-4 rounded-card border border-red-200 bg-red-50 text-sm text-red-800">
+        <div role="alert" className="flex items-start gap-2 p-4 rounded-card border border-danger-line bg-danger-soft text-sm text-danger-ink">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           {supabase ? 'Could not load this project. Please try again later.' : 'The project database is not configured.'}
         </div>
@@ -73,7 +73,7 @@ export default async function SourceProjectPage({ params }: PageProps<'/projects
           {p.fiscal_year && <span>Fiscal year <strong className="text-ink">{p.fiscal_year}</strong></span>}
         </div>
         {p.status === 'proposed' && (
-          <p className="text-xs text-[#5B21B6] bg-violet-50 border border-violet-200 rounded-card px-4 py-3 leading-relaxed">
+          <p className="text-xs text-[#5B21B6] dark:text-violet-300 bg-violet-50 dark:bg-violet-500/12 border border-violet-200 dark:border-violet-500/30 rounded-card px-4 py-3 leading-relaxed">
             <strong>Proposed (budget)</strong> means this project is listed in the FY 2027 National Expenditure Program,
             the budget the executive proposes to Congress. It is not an approved appropriation, a funded project, or an
             awarded contract. The source has no status column: LGU Tracker gives every record in this dataset this status.
@@ -98,7 +98,7 @@ export default async function SourceProjectPage({ params }: PageProps<'/projects
             <Field label="Region (as reported)">{p.region}</Field>
           </dl>
           {p.data_warnings.length > 0 && (
-            <ul className="text-xs text-[#92400E] bg-amber-50 border border-amber-200 rounded-card px-4 py-3 space-y-1">
+            <ul className="text-xs text-warn-ink bg-warn-soft border border-warn-line rounded-card px-4 py-3 space-y-1">
               {p.data_warnings.map((w) => <li key={w}>{warningLabel(w)}</li>)}
             </ul>
           )}

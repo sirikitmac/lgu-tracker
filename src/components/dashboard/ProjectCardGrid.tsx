@@ -25,7 +25,7 @@ export function ProjectCardGrid({
 }: ProjectCardGridProps) {
   if (projects.length === 0) {
     return (
-      <div className="bg-white civic-subtle-grid border border-line rounded-card p-10 sm:p-12 text-center">
+      <div className="bg-surface civic-subtle-grid border border-line rounded-card p-10 sm:p-12 text-center">
         <div className="w-12 h-12 rounded-card bg-sunken border border-line flex items-center justify-center mx-auto mb-3.5">
           <FolderSearch
             className="w-6 h-6 text-muted"
@@ -41,7 +41,7 @@ export function ProjectCardGrid({
         <button
           type="button"
           onClick={onResetFilters}
-          className="mt-5 inline-flex items-center justify-center min-h-[40px] px-4 py-2 text-xs font-semibold text-white bg-ink hover:bg-ink-soft rounded-lg transition-colors cursor-pointer"
+          className="mt-5 inline-flex items-center justify-center min-h-[40px] px-4 py-2 text-xs font-semibold text-on-ink bg-ink hover:bg-ink-soft rounded-lg transition-colors cursor-pointer"
         >
           Reset All Filters
         </button>
@@ -58,7 +58,7 @@ export function ProjectCardGrid({
           <article
             key={project.id}
             onClick={() => onSelectProject(project)}
-            className="bg-white border border-line rounded-card overflow-hidden flex flex-col justify-between hover:shadow-md hover:border-accent/40 hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group"
+            className="bg-surface border border-line rounded-card overflow-hidden flex flex-col justify-between hover:shadow-md hover:border-accent/40 hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group"
           >
             <div>
               {/* Clean Project Picture Holder */}
@@ -134,7 +134,7 @@ export function ProjectCardGrid({
                 <button
                   type="button"
                   onClick={() => onSelectProject(project)}
-                  className="inline-flex items-center gap-1 min-h-[34px] px-3 py-1.5 text-xs font-semibold text-ink hover:text-white bg-ground hover:bg-ink-soft border border-line hover:border-accent rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-accent-ink"
+                  className="inline-flex items-center gap-1 min-h-[34px] px-3 py-1.5 text-xs font-semibold text-ink hover:text-on-ink bg-ground hover:bg-ink-soft border border-line hover:border-accent rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-accent-ink"
                 >
                   <span>Details</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />

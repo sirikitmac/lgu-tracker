@@ -52,7 +52,7 @@ export function CoverageExplorer({
       <div className="lg:col-span-5 space-y-10">
         {groups.map((group) => (
           <div key={group.name}>
-            <h3 className="font-serif text-[length:var(--step-lead)] leading-tight text-night">{group.name}</h3>
+            <h3 className="font-display text-[length:var(--step-lead)] leading-tight text-night">{group.name}</h3>
             <ul className="mt-3 space-y-1">
               {group.rows.map((row) => {
                 const isActive = row.region === selected;
@@ -141,7 +141,7 @@ export function CoverageExplorer({
         <div className="mt-8 bg-night text-white p-6 sm:p-8" aria-live="polite">
           {active && active.contracts !== null ? (
             <>
-              <p className="font-serif text-[length:var(--step-head)] leading-none tabular-nums text-signal">
+              <p className="font-display text-[length:var(--step-head)] leading-none tabular-nums text-signal">
                 {formatCount(active.contracts)}
               </p>
               <p className="mt-3 text-[length:var(--step-body)] max-w-lg">
@@ -158,7 +158,7 @@ export function CoverageExplorer({
             </>
           ) : hasCounts ? (
             <>
-              <p className="font-serif text-[length:var(--step-head)] leading-none tabular-nums text-signal">
+              <p className="font-display text-[length:var(--step-head)] leading-none tabular-nums text-signal">
                 {totalContracts !== null ? formatCount(totalContracts) : ''}
               </p>
               <p className="mt-3 text-[length:var(--step-body)] max-w-lg">

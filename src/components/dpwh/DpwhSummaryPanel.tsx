@@ -5,11 +5,13 @@ import { Database, FileText, Info, RefreshCw } from 'lucide-react';
 import type { DpwhCount, DpwhSummary } from '@/types/dpwh';
 import { categoryLabel, formatCount, formatDate, formatPeso, formatPesoCompact, formatShare, statusColor, statusLabel } from './format';
 import { panelClass } from './ui';
+import { regionColor, regionDisplayName } from '@/lib/regionPalette';
 
 /**
- * Nationwide totals and simple bar lists. Each list is a single series, so
- * bars share one hue and carry their value as text (the list doubles as the
- * table view). Contract amounts are award amounts as reported, never
+ * Totals and bar lists for the staff DPWH page. Region rows take their colour
+ * from the shared region palette and status rows from the status palette;
+ * categories are one neutral series. Every bar carries its value as text
+ * (the list doubles as the table view). Contract amounts are award amounts as reported, never
  * disbursements, and are never added to other amount fields. Shares are of
  * total_contracts: every breakdown in the summary sums to it.
  */
@@ -22,6 +24,7 @@ function BarList({
   onSelect,
   selected,
   swatch,
+  barColor,
   note,
   footer,
   className = '',
@@ -34,6 +37,8 @@ function BarList({
   selected?: string | null;
   /** Key color shown beside each label (status lists match the map legend). */
   swatch?: (value: string | null) => string;
+  /** Bar colour per row; defaults to the swatch colour, else the neutral data ink. */
+  barColor?: (value: string | null) => string;
   note?: string;
   /** A total pinned to the card's foot when the card stretches to its neighbour. */
   footer?: React.ReactNode;
@@ -69,15 +74,18 @@ function BarList({
                 } ${isSelected ? 'bg-accent-soft ring-1 ring-inset ring-accent' : ''}`}
               >
                 <span className="flex items-center gap-2 min-w-0 text-ink">
-                  {swatch && <span className="w-2 h-2 shrink-0 rounded-full" style={{ backgroundColor: swatch(row.value) }} aria-hidden="true" />}
+                  {swatch && <span className={`w-2 h-2 shrink-0 ${swatch === regionColor ? 'rounded-[2px]' : 'rounded-full'}`} style={{ backgroundColor: swatch(row.value) }} aria-hidden="true" />}
                   <span className={`line-clamp-2 break-words leading-snug ${isSelected ? 'font-semibold text-ink' : ''}`}>{name}</span>
                 </span>
                 <span className="tabular-nums text-right text-ink">{formatCount(row.count)}</span>
                 <span className="tabular-nums text-right text-muted">{formatShare(row.count, total)}</span>
                 <span className="col-span-3 block h-1.5" aria-hidden="true">
                   <span
-                    className="block h-1.5 rounded-full bg-accent-data transition-[width] duration-500 ease-out"
-                    style={{ width: row.count > 0 ? `max(3px, ${(row.count / max) * 100}%)` : 0 }}
+                    className="block h-1.5 rounded-full transition-[width] duration-500 ease-out"
+                    style={{
+                      width: row.count > 0 ? `max(3px, ${(row.count / max) * 100}%)` : 0,
+                      backgroundColor: (barColor ?? swatch)?.(row.value) ?? 'var(--color-subtle)',
+                    }}
                   />
                 </span>
               </button>
@@ -134,8 +142,8 @@ export function DpwhSummaryPanel({
   const total = stats.total_contracts;
   const withValue = stats.contract_amount.contracts_with_value;
   const amount = Number(stats.contract_amount.sum);
-  // Headline figures in the landing page's display serif, at app size.
-  const figureClass = 'font-serif text-[40px] leading-none tracking-tight text-ink';
+  // Headline figures in the sans, semibold, at app size.
+  const figureClass = 'font-semibold text-[40px] leading-none tracking-tight text-ink';
 
   return (
     <div className="space-y-5">
@@ -188,7 +196,7 @@ export function DpwhSummaryPanel({
             }
           >
             {summary.last_successful_sync_at ? (
-              <span className="font-serif text-[32px] leading-none tracking-tight text-ink">{formatDate(summary.last_successful_sync_at)}</span>
+              <span className="font-semibold text-[32px] leading-none tracking-tight text-ink">{formatDate(summary.last_successful_sync_at)}</span>
             ) : (
               <span className="block pt-2 text-base leading-tight font-semibold text-subtle">No completed sync yet</span>
             )}
@@ -201,7 +209,8 @@ export function DpwhSummaryPanel({
           title="Contracts by reported region"
           rows={stats.by_region}
           total={total}
-          label={(v) => v ?? 'Location not reported'}
+          label={(v) => (v ? regionDisplayName(v) : 'Location not reported')}
+          swatch={regionColor}
           onSelect={onSelectRegion}
           selected={selectedRegion}
           footer={

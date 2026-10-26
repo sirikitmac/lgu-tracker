@@ -13,7 +13,9 @@ import {
 } from '@/types/dpwh';
 import type { MapBounds } from '@/lib/integrations/dpwh/nationwide/query';
 import { controlBaseClass, controlClass, panelClass } from './ui';
-import { MAP_STATUSES, STATUS_COLORS, formatCount, formatPeso, statusColor, statusLabel, statusTextColor } from './format';
+import { MAP_STATUSES, STATUS_COLORS, formatCount, formatPeso, statusColor, statusLabel } from './format';
+import { regionColor, regionDisplayName } from '@/lib/regionPalette';
+import type { MarkerColorMode } from './DpwhLeafletMap';
 
 const DpwhLeafletMap = dynamic(() => import('./DpwhLeafletMap'), {
   ssr: false,
@@ -61,6 +63,7 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
   const [summary, setSummary] = useState<DpwhSummary | null>(null);
   const [summaryState, setSummaryState] = useState<'loading' | 'ready' | 'empty' | 'error'>('loading');
   const [reload, setReload] = useState(0);
+  const [colorMode, setColorMode] = useState<MarkerColorMode>('status');
 
   const q = useDebounced(filters.q, 350);
   const debouncedBounds = useDebounced(bounds, 250);
@@ -116,11 +119,17 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
   const isFiltered = filters.q !== '' || filters.region !== '' || filters.category !== '' || filters.status !== '';
   const capped = state === 'ready' && total > points.length;
   const listed = points.slice(0, 100);
+  // Region legend lists only regions with markers in view, in the summary's order.
+  const regionsInView = useMemo(() => {
+    const present = new Set(points.map((p) => p.region));
+    const ordered = (summary?.stats.by_region ?? []).map((r) => r.value).filter((r) => present.has(r));
+    return present.has(null) ? [...ordered, null] : ordered;
+  }, [points, summary]);
 
   return (
     <div className="space-y-4">
       {summaryState === 'empty' && (
-        <div role="status" className="flex items-start gap-2 p-3.5 rounded-card border border-amber-200 bg-amber-50 text-xs text-[#92400E]">
+        <div role="status" className="flex items-start gap-2 p-3.5 rounded-card border border-warn-line bg-warn-soft text-xs text-warn-ink">
           <AlertTriangle className="w-4 h-4 shrink-0" /> No DPWH data has been imported yet, so the map has no markers. An administrator needs to run the initial sync.
         </div>
       )}
@@ -142,7 +151,7 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
           <select aria-label="Region" className={`${selectClass} lg:col-span-3`} value={filters.region}
             onChange={(e) => setFilters((f) => ({ ...f, region: e.target.value }))}>
             <option value="">All regions</option>
-            {regionOptions.map((r) => <option key={r} value={r}>{r}</option>)}
+            {regionOptions.map((r) => <option key={r} value={r}>{regionDisplayName(r)}</option>)}
           </select>
           <select aria-label="Category" className={`${selectClass} lg:col-span-2`} value={filters.category}
             onChange={(e) => setFilters((f) => ({ ...f, category: e.target.value }))}>
@@ -161,11 +170,11 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
             {state === 'ready' && (capped
               ? <>Showing the <strong className="text-ink">{formatCount(points.length)}</strong> largest of <strong className="text-ink">{formatCount(total)}</strong> mapped contracts in view (limit {formatCount(limit)}). Zoom in to see the rest.</>
               : <><strong className="text-ink">{formatCount(total)}</strong> mapped contract{total === 1 ? '' : 's'} in view.</>)}
-            {state === 'error' && <span className="text-red-700">Could not load markers ({error}).</span>}
+            {state === 'error' && <span className="text-danger-ink">Could not load markers ({error}).</span>}
           </span>
           <div className="flex items-center gap-2">
             {state === 'error' && (
-              <button type="button" onClick={() => setReload((n) => n + 1)} className="px-3 py-1.5 rounded-full border border-red-200 text-red-800 font-medium hover:bg-red-50">Try again</button>
+              <button type="button" onClick={() => setReload((n) => n + 1)} className="px-3 py-1.5 rounded-full border border-danger-line text-danger-ink font-medium hover:bg-danger-soft">Try again</button>
             )}
             <button type="button" onClick={() => setFilters(EMPTY)} disabled={!isFiltered}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-line text-ink font-medium hover:bg-sunken disabled:opacity-50 disabled:cursor-not-allowed">
@@ -178,15 +187,42 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
         <div className="lg:col-span-8 space-y-2">
           <div className="relative h-[480px] sm:h-[620px] w-full rounded-card overflow-hidden border border-line">
-            <DpwhLeafletMap points={points} focus={focus} selectedId={selectedId} onBoundsChange={setBounds} />
-            {/* Legend floats on the map as a small glass card; above the tiles, below Leaflet's own controls. */}
-            <ul aria-label="Marker legend" className="absolute left-3 bottom-3 z-[450] grid grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-1.5 max-w-[calc(100%-1.5rem)] px-3 py-2 rounded-card glass-strong border border-white/70 shadow-[0_1px_3px_rgb(5_15_22/0.12)] text-xs text-ink pointer-events-none">
-              {MAP_STATUSES.map((s) => (
-                <li key={s} className="inline-flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full border border-white shadow-sm" style={{ backgroundColor: STATUS_COLORS[s] }} aria-hidden="true" />
-                  {DPWH_STATUS_LABELS[s]}
-                </li>
+            <DpwhLeafletMap points={points} focus={focus} selectedId={selectedId} onBoundsChange={setBounds} colorMode={colorMode} />
+            <div role="group" aria-label="Colour markers by" className="absolute right-3 top-3 z-[450] inline-flex items-center gap-1 p-1 rounded-full glass-strong border border-line shadow-raise">
+              {(['status', 'region'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  aria-pressed={colorMode === mode}
+                  onClick={() => setColorMode(mode)}
+                  className={`h-8 px-3 rounded-full text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent-ink ${
+                    colorMode === mode ? 'bg-ink text-on-ink' : 'text-subtle hover:text-ink'
+                  }`}
+                >
+                  {mode === 'status' ? 'By status' : 'By region'}
+                </button>
               ))}
+            </div>
+            {/* Legend floats on the map; above the tiles, below Leaflet's own controls. */}
+            <ul
+              aria-label={colorMode === 'status' ? 'Marker legend: status' : 'Marker legend: region'}
+              className="absolute left-3 bottom-3 z-[450] grid grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-1.5 max-w-[calc(100%-1.5rem)] max-h-[40%] overflow-y-auto px-3 py-2 rounded-card glass-strong border border-line shadow-raise text-xs text-ink"
+            >
+              {colorMode === 'status'
+                ? MAP_STATUSES.map((s) => (
+                    <li key={s} className="inline-flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full border border-white shadow-sm" style={{ backgroundColor: STATUS_COLORS[s] }} aria-hidden="true" />
+                      {DPWH_STATUS_LABELS[s]}
+                    </li>
+                  ))
+                : regionsInView.length === 0
+                  ? <li className="text-muted">No markers in view</li>
+                  : regionsInView.map((r) => (
+                      <li key={r ?? 'none'} className="inline-flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-[3px] border border-white shadow-sm" style={{ backgroundColor: regionColor(r) }} aria-hidden="true" />
+                        {r ? regionDisplayName(r) : 'Region not reported'}
+                      </li>
+                    ))}
             </ul>
           </div>
           <p className="text-xs text-muted">
@@ -196,7 +232,7 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
         </div>
 
         <section aria-label="Contracts in view" className={`lg:col-span-4 ${panelClass} overflow-hidden`}>
-          <div className="px-4 py-3 bg-ground border-b border-line flex items-center justify-between gap-2">
+          <div className="px-4 py-3 border-b border-line flex items-center justify-between gap-2">
             <h2 className="text-sm font-semibold tracking-tight text-ink">Largest contracts in view</h2>
             <Link href="/projects" className="inline-flex items-center gap-1 text-xs font-medium text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">
               <List className="w-3.5 h-3.5" /> Full directory
@@ -211,11 +247,11 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
               {listed.map((p) => (
                 <li key={p.contract_id}>
                   <button type="button" onClick={() => setSelectedId(p.contract_id)}
-                    className={`w-full text-left px-4 py-3 hover:bg-ground ${selectedId === p.contract_id ? 'bg-sunken' : ''}`}>
+                    className={`w-full text-left px-4 py-3 hover:bg-sunken focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent-ink ${selectedId === p.contract_id ? 'bg-sunken' : ''}`}>
                     <span className="flex items-center justify-between gap-2 text-[11px]">
                       <span className="tabular-nums font-semibold text-ink">{p.contract_id}</span>
-                      <span className="inline-flex items-center gap-1 font-semibold" style={{ color: statusTextColor(p.status) }}>
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: statusColor(p.status) }} />
+                      <span className="inline-flex items-center gap-1 font-semibold text-subtle">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: statusColor(p.status) }} aria-hidden="true" />
                         {statusLabel(p.status)}
                       </span>
                     </span>

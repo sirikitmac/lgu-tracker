@@ -280,7 +280,7 @@ export default function IliganProjectMap({
         <button
           type="button"
           onClick={handleResetMapView}
-          className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-ink bg-white/95 hover:bg-white border border-line rounded-lg shadow-sm transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-accent-ink"
+          className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-ink bg-surface/95 hover:bg-white border border-line rounded-lg shadow-sm transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-accent-ink"
         >
           <Compass className="w-3.5 h-3.5 text-accent-ink" aria-hidden="true" />
           <span>Reset Iligan City View</span>
@@ -290,7 +290,7 @@ export default function IliganProjectMap({
       {/* Bottom-Left Status Marker Legend */}
       <div
         aria-label="Map Marker Status Legend"
-        className="absolute bottom-3 left-3 z-[400] bg-white/95 backdrop-blur-xs border border-line rounded-lg px-3.5 py-2.5 shadow-sm max-w-[calc(100%-24px)]"
+        className="absolute bottom-3 left-3 z-[400] bg-surface/95 backdrop-blur-xs border border-line rounded-lg px-3.5 py-2.5 shadow-sm max-w-[calc(100%-24px)]"
       >
         <p className="text-[11px] font-semibold text-ink mb-1.5">
           Project Status Markers

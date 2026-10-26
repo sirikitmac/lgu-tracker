@@ -1,47 +1,65 @@
 @import "tailwindcss";
 
+/* Dark mode follows the data-theme attribute set on <html> before first paint
+   (see src/lib/theme.ts), not the media query: the visitor's choice wins. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 @theme {
-  /* One sans for every interface element, as on the landing page; the serif is for page titles. */
-  --font-display: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
+  /* One sans for everything: interface, headings, figures. No serif, no italic display. */
+  --font-display: var(--font-public-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: var(--font-public-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
-  --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
+  /* Retired: kept so older markup that still says font-serif renders in the sans. */
+  --font-serif: var(--font-display);
 
   /* ---------------------------------------------------------------------------
-     Design tokens for the whole app, taken from the landing page: night ink,
-     a warm off-white ground, stone lines, and one signal-orange accent.
-     Status colours live in src/lib/statusPalette.ts and are not accents.
+     Design tokens for the whole app. Light values here; dark values are
+     redefined under [data-theme="dark"] below, so every utility that reads a
+     token (bg-surface, text-ink, border-line, ...) switches with the theme.
+     Status colours live in src/lib/statusPalette.ts, region colours in
+     src/lib/regionPalette.ts; neither is an accent.
      --------------------------------------------------------------------------- */
-  --color-ink: #050F16;          /* primary text, headings, the primary button */
-  --color-ink-soft: #1F2A33;     /* primary button hover */
-  --color-subtle: #3D4852;       /* secondary text that must stay strong */
-  --color-muted: #5B6670;        /* labels and meta: 5.6:1 on white, 5.2:1 on ground */
-  --color-ground: #F7F7F5;       /* page background */
+  --color-ink: #1D1D1F;          /* primary text, headings, the primary button */
+  --color-ink-soft: #3A3A3C;     /* primary button hover */
+  --color-on-ink: #FFFFFF;       /* text on an ink fill */
+  --color-subtle: #424245;       /* secondary text that must stay strong */
+  --color-muted: #6E6E73;        /* labels and meta: 5.0:1 on white */
+  --color-ground: #FBFBFD;       /* page background */
   --color-surface: #FFFFFF;      /* cards and panels */
-  --color-sunken: #F0EFEC;       /* wells, tracks, skeletons, hover fills */
-  --color-line: #E5E4E0;         /* card edges and row rules */
-  --color-line-strong: #CFCDC7;  /* control borders */
-  --color-accent: #FF7A1F;       /* signal orange: fills that carry ink text */
-  --color-accent-data: #E8650F;  /* chart marks: 3.3:1 on white */
-  --color-accent-ink: #A8430B;   /* accent as text, links, focus rings: 6:1 on white */
-  --color-accent-soft: #FFF1E6;  /* selected rows and chips */
+  --color-raised: #FFFFFF;       /* menus, popovers, tooltips */
+  --color-sunken: #F2F2F5;       /* wells, tracks, skeletons, hover fills */
+  --color-line: #E5E5EA;         /* card edges and row rules */
+  --color-line-strong: #D2D2D7;  /* control borders */
+  --color-accent: #FF7A1F;       /* signal orange: the brand mark and fills that carry ink text */
+  --color-accent-data: #E8650F;  /* single-series chart marks */
+  --color-accent-ink: #A8430B;   /* accent as text and focus rings: 6:1 on white */
+  --color-accent-soft: #FFF1E6;  /* selected chips */
+  --color-accent-soft-hover: #FFE4CF;
 
-  --radius-card: 1rem;
+  /* Feedback surfaces (alerts), not statuses. */
+  --color-danger-soft: #FEF2F2;
+  --color-danger-line: #FECACA;
+  --color-danger-ink: #991B1B;
+  --color-warn-soft: #FFFBEB;
+  --color-warn-line: #FDE68A;
+  --color-warn-ink: #92400E;
+
+  --radius-card: 1.125rem;
   --radius-control: 0.625rem;
-  --shadow-raise: 0 1px 2px rgb(5 15 22 / 0.04), 0 10px 28px -18px rgb(5 15 22 / 0.28);
-  --shadow-float: 0 2px 6px rgb(5 15 22 / 0.06), 0 24px 48px -20px rgb(5 15 22 / 0.32);
+  --shadow-raise: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px -16px rgb(0 0 0 / 0.22);
+  --shadow-float: 0 2px 6px rgb(0 0 0 / 0.06), 0 24px 48px -20px rgb(0 0 0 / 0.3);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 
-  /* Earlier names, kept as aliases of the tokens above so older screens match. */
-  --color-civic-navy: #050F16;
-  --color-civic-blue: #A8430B;
+  /* Earlier names, kept as aliases of the tokens above so older screens follow the theme. */
+  --color-civic-navy: var(--color-ink);
+  --color-civic-blue: var(--color-accent-ink);
   --color-civic-orange: #F59E0B;
-  --color-civic-bg: #F7F7F5;
-  --color-civic-surface: #FFFFFF;
-  --color-civic-text: #050F16;
-  --color-civic-slate: #5B6670;
-  --color-civic-border: #E5E4E0;
-  --color-civic-muted: #F0EFEC;
+  --color-civic-bg: var(--color-ground);
+  --color-civic-surface: var(--color-surface);
+  --color-civic-text: var(--color-ink);
+  --color-civic-slate: var(--color-muted);
+  --color-civic-border: var(--color-line);
+  --color-civic-muted: var(--color-sunken);
 
   /* Semantic Colors */
   --color-civic-success: #16A34A;
@@ -49,7 +67,8 @@
   --color-civic-error: #DC2626;
   --color-civic-info: #0284C7;
 
-  /* Public landing page: work-zone orange and blue-black, after the signs at DPWH sites */
+  /* Public landing page: work-zone orange and blue-black, after the signs at DPWH sites.
+     night, signal and rust are fixed brand fields in both themes; stone follows the theme. */
   --color-signal: #FF7A1F;
   --color-signal-tint: #FF9A55;
   --color-peach: #FFD2B0;
@@ -59,9 +78,43 @@
   --color-stone: #EDEDEB;
 }
 
+/* Dark theme: tuned surfaces stepped up from near-black, never pure inversions. */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-ink: #F5F5F7;
+  --color-ink-soft: #D2D2D7;
+  --color-on-ink: #0B0B0C;
+  --color-subtle: #C7C7CC;
+  --color-muted: #9A9AA0;        /* 6.4:1 on the dark surface */
+  --color-ground: #0B0B0C;
+  --color-surface: #161618;
+  --color-raised: #1F1F22;
+  --color-sunken: #222225;
+  --color-line: #2C2C30;
+  --color-line-strong: #3E3E44;
+  --color-accent-data: #FF8A3D;
+  --color-accent-ink: #FFA366;
+  --color-accent-soft: #3A2213;
+  --color-accent-soft-hover: #4A2C18;
+  --color-danger-soft: #2A1414;
+  --color-danger-line: #5C2424;
+  --color-danger-ink: #FCA5A5;
+  --color-warn-soft: #2A2010;
+  --color-warn-line: #5C4516;
+  --color-warn-ink: #FCD34D;
+  --color-stone: #1F1F22;
+  --shadow-raise: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -16px rgb(0 0 0 / 0.7);
+  --shadow-float: 0 2px 6px rgb(0 0 0 / 0.4), 0 24px 48px -20px rgb(0 0 0 / 0.8);
+}
+:root:not([data-theme="dark"]) {
+  color-scheme: light;
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
+    /* The sticky navigation never covers an anchor's heading. */
+    scroll-padding-top: 4.5rem;
     background-color: var(--color-ground);
     color: var(--color-ink);
     overflow-x: clip;
@@ -95,12 +148,12 @@
  */
 .civic-glass-nav,
 .glass {
-  background-color: rgb(255 255 255 / 0.78);
+  background-color: color-mix(in srgb, var(--color-surface) 82%, transparent);
   -webkit-backdrop-filter: saturate(1.6) blur(18px);
   backdrop-filter: saturate(1.6) blur(18px);
 }
 .glass-strong {
-  background-color: rgb(255 255 255 / 0.9);
+  background-color: color-mix(in srgb, var(--color-surface) 92%, transparent);
   -webkit-backdrop-filter: saturate(1.6) blur(24px);
   backdrop-filter: saturate(1.6) blur(24px);
 }
@@ -108,25 +161,25 @@
   .civic-glass-nav,
   .glass,
   .glass-strong {
-    background-color: #FFFFFF;
+    background-color: var(--color-surface);
   }
 }
 @media (prefers-reduced-transparency: reduce) {
   .civic-glass-nav,
   .glass,
   .glass-strong {
-    background-color: #FFFFFF;
+    background-color: var(--color-surface);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
 }
 
-/* Page titles on internal screens use the landing page's display serif. */
+/* Page titles on internal screens: the sans, semibold and tightly tracked. */
 .page-title {
-  font-family: var(--font-serif);
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  line-height: 1.02;
+  font-family: var(--font-display);
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -153,13 +206,14 @@
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   font-size: var(--step-body);
   line-height: 1.55;
-  color: var(--color-night);
+  color: var(--color-ink);
 }
 
-.landing .font-serif {
-  font-family: var(--font-serif);
-  font-weight: 400;
-  letter-spacing: -0.02em;
+/* Landing display type: the same sans as the app, set heavy and tight. */
+.landing .font-display {
+  font-family: var(--font-display);
+  font-weight: 650;
+  letter-spacing: -0.035em;
 }
 
 /* The hero photograph opens like a shutter, then drifts very slowly. */
@@ -267,7 +321,7 @@
 
 /* Leaflet's zoom buttons in the app face, on a rounded glass bar (map pages). */
 .leaflet-bar {
-  border: 1px solid rgb(229 228 224 / 0.9) !important;
+  border: 1px solid var(--color-line) !important;
   border-radius: 12px !important;
   overflow: hidden;
   box-shadow: 0 1px 3px rgb(5 15 22 / 0.12) !important;
@@ -276,7 +330,36 @@
   font-family: var(--font-sans) !important;
   font-weight: 500 !important;
   color: var(--color-ink) !important;
-  background-color: rgb(255 255 255 / 0.9) !important;
+  background-color: color-mix(in srgb, var(--color-surface) 92%, transparent) !important;
+  border-bottom-color: var(--color-line) !important;
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
+}
+
+/* Dark maps: the OpenStreetMap tiles are re-toned (not replaced), so the
+   provider, attribution and detail stay the same; markers keep their colours. */
+[data-theme="dark"] .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.88) saturate(0.55);
+}
+[data-theme="dark"] .leaflet-container {
+  background-color: #1A1B1E;
+}
+[data-theme="dark"] .leaflet-control-attribution {
+  background-color: rgb(22 22 24 / 0.85) !important;
+  color: var(--color-muted) !important;
+}
+[data-theme="dark"] .leaflet-control-attribution a {
+  color: var(--color-ink) !important;
+}
+[data-theme="dark"] .leaflet-popup-content-wrapper,
+[data-theme="dark"] .leaflet-popup-tip {
+  background-color: var(--color-raised);
+  color: var(--color-ink);
+}
+
+/* Native form controls follow the theme (selects, date pickers, scrollbars). */
+select option,
+select optgroup {
+  background-color: var(--color-raised);
+  color: var(--color-ink);
 }

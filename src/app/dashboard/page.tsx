@@ -264,9 +264,9 @@ function DashboardContent() {
           {!isLoadingData && isSampleData && (
             <div
               role="status"
-              className="flex items-start gap-2.5 p-3.5 rounded-lg border border-amber-200 bg-amber-50 text-xs text-[#92400E] leading-relaxed"
+              className="flex items-start gap-2.5 p-3.5 rounded-lg border border-warn-line bg-warn-soft text-xs text-warn-ink leading-relaxed"
             >
-              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-[#B45309]" />
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-warn-ink" />
               <span>
                 {!isSupabaseConfigured
                   ? 'Supabase is not connected in this environment — displaying bundled sample/demo data, not live LGU records.'
@@ -291,7 +291,7 @@ function DashboardContent() {
               {activeSection === 'budget' && (
                 <section
                   aria-label="Sector Budget Breakdown"
-                  className="bg-white border border-line rounded-card p-5 sm:p-6 space-y-4"
+                  className="bg-surface border border-line rounded-card p-5 sm:p-6 space-y-4"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <h2 className="font-display text-base font-bold text-ink">
@@ -321,7 +321,7 @@ function DashboardContent() {
                           className={`text-left p-4 rounded-lg border transition-all cursor-pointer ${
                             isActive
                               ? 'bg-ground border-accent'
-                              : 'bg-white border-line hover:border-muted'
+                              : 'bg-surface border-line hover:border-muted'
                           }`}
                         >
                           <div className="flex items-center justify-between gap-2 text-xs text-muted">

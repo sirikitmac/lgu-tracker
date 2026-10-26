@@ -1,22 +1,12 @@
 import type { Metadata } from 'next';
-import {
-  Instrument_Serif,
-  Public_Sans,
-  JetBrains_Mono,
-} from 'next/font/google';
+import { Public_Sans, JetBrains_Mono } from 'next/font/google';
+import { themeInitScript } from '@/lib/theme';
 import './globals.css';
 
 const publicSans = Public_Sans({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '500', '600', '700', '800'],
   variable: '--font-public-sans',
-  display: 'swap',
-});
-
-const instrumentSerif = Instrument_Serif({
-  subsets: ['latin'],
-  weight: '400',
-  variable: '--font-instrument-serif',
   display: 'swap',
 });
 
@@ -45,10 +35,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    // Rendered light; the inline script swaps in a saved theme before first
+    // paint, so <html> may differ from the server markup on purpose.
     <html
       lang="en"
-      className={`${publicSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable}`}
+      data-theme="light"
+      suppressHydrationWarning
+      className={`${publicSans.variable} ${jetbrainsMono.variable}`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-screen flex flex-col bg-ground text-ink">
         {children}
       </body>

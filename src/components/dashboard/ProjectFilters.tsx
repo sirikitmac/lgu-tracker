@@ -55,7 +55,7 @@ export function ProjectFilters({
     filters.status !== 'All';
 
   return (
-    <div className="bg-white border border-line rounded-card p-4 sm:p-5 space-y-4">
+    <div className="bg-surface border border-line rounded-card p-4 sm:p-5 space-y-4">
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3.5">
         {/* Search Input */}
         <div className="relative flex-1 min-w-0">
@@ -137,7 +137,7 @@ export function ProjectFilters({
               aria-pressed={viewMode === 'grid'}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
                 viewMode === 'grid'
-                  ? 'bg-ink text-white'
+                  ? 'bg-ink text-on-ink'
                   : 'text-muted hover:text-ink'
               }`}
             >
@@ -150,7 +150,7 @@ export function ProjectFilters({
               aria-pressed={viewMode === 'table'}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
                 viewMode === 'table'
-                  ? 'bg-ink text-white'
+                  ? 'bg-ink text-on-ink'
                   : 'text-muted hover:text-ink'
               }`}
             >
@@ -174,7 +174,7 @@ export function ProjectFilters({
             aria-pressed={filters.status === 'All'}
             className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap cursor-pointer ${
               filters.status === 'All'
-                ? 'bg-ink text-white'
+                ? 'bg-ink text-on-ink'
                 : 'bg-ground text-muted hover:text-ink hover:bg-sunken border border-line'
             }`}
           >
@@ -190,7 +190,7 @@ export function ProjectFilters({
                 aria-pressed={isSelected}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap cursor-pointer ${
                   isSelected
-                    ? 'bg-ink text-white'
+                    ? 'bg-ink text-on-ink'
                     : 'bg-ground text-muted hover:text-ink hover:bg-sunken border border-line'
                 }`}
               >

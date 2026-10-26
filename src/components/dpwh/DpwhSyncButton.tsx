@@ -69,7 +69,7 @@ export function DpwhSyncButton() {
         type="button"
         onClick={run}
         disabled={busy}
-        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-ink text-white font-medium hover:bg-ink-soft disabled:opacity-60"
+        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-ink text-on-ink font-medium hover:bg-ink-soft disabled:opacity-60"
       >
         {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
         {runId ? 'Continue sync' : 'Run DPWH sync now'}

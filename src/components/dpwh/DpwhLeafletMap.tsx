@@ -5,7 +5,12 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { DpwhMapPoint } from '@/types/dpwh';
 import type { MapBounds } from '@/lib/integrations/dpwh/nationwide/query';
-import { statusColor, statusTextColor, formatPeso, formatProgress, statusLabel } from './format';
+import { regionColor } from '@/lib/regionPalette';
+import { statusColor, formatPeso, formatProgress, statusLabel } from './format';
+
+export type MarkerColorMode = 'status' | 'region';
+
+const markerFill = (p: DpwhMapPoint, mode: MarkerColorMode) => (mode === 'region' ? regionColor(p.region) : statusColor(p.status));
 
 /** Whole Philippines. */
 const PH_CENTER: L.LatLngExpression = [12.3, 122.5];
@@ -21,25 +26,26 @@ function escapeHtml(text: string): string {
     .replace(/'/g, '&#039;');
 }
 
+/** Popup markup; colours are theme tokens, so it reads in light and dark. */
 function popupHtml(p: DpwhMapPoint): string {
-  const color = statusColor(p.status);
   const location = [p.province, p.region].filter(Boolean).join(', ') || 'Location not reported';
+  const muted = 'color:var(--color-muted)';
   return `
-    <div style="min-width:230px;max-width:280px;font-family:inherit;color:#0F172A">
-      <div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;margin-bottom:4px">
-        <span style="font-family:monospace;font-weight:600;color:#172B4D">${escapeHtml(p.contract_id)}</span>
-        <span style="font-weight:700;color:${statusTextColor(p.status)}">${escapeHtml(statusLabel(p.status))}</span>
+    <div style="min-width:230px;max-width:280px;font-family:inherit;color:var(--color-ink)">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;margin-bottom:4px">
+        <span style="font-weight:600;font-variant-numeric:tabular-nums">${escapeHtml(p.contract_id)}</span>
+        <span style="display:inline-flex;align-items:center;gap:5px;font-weight:600"><span style="width:8px;height:8px;border-radius:9999px;background:${statusColor(p.status)}"></span>${escapeHtml(statusLabel(p.status))}</span>
       </div>
       <div style="font-weight:700;font-size:13px;line-height:1.35;margin-bottom:4px">${escapeHtml(p.contract_name ?? p.title)}</div>
-      <div style="font-size:12px;color:#64748B;margin-bottom:6px">${escapeHtml(location)}</div>
+      <div style="font-size:12px;${muted};margin-bottom:6px">${escapeHtml(location)}</div>
       <div style="font-size:12px;line-height:1.5">
-        <div><span style="color:#64748B">Contract amount:</span> <strong>${escapeHtml(formatPeso(p.contract_amount))}</strong></div>
-        <div><span style="color:#64748B">Reported progress:</span> <strong>${escapeHtml(formatProgress(p.progress))}</strong></div>
-        <div><span style="color:#64748B">Contractor:</span> ${escapeHtml(p.contractor ?? 'Not reported')}</div>
-        <div><span style="color:#64748B">Office:</span> ${escapeHtml(p.implementing_office ?? 'Not reported')}</div>
+        <div><span style="${muted}">Contract amount:</span> <strong>${escapeHtml(formatPeso(p.contract_amount))}</strong></div>
+        <div><span style="${muted}">Reported progress:</span> <strong>${escapeHtml(formatProgress(p.progress))}</strong></div>
+        <div><span style="${muted}">Contractor:</span> ${escapeHtml(p.contractor ?? 'Not reported')}</div>
+        <div><span style="${muted}">Office:</span> ${escapeHtml(p.implementing_office ?? 'Not reported')}</div>
       </div>
-      <a href="/projects/${encodeURIComponent(p.contract_id)}" style="display:inline-block;margin-top:8px;font-size:12px;font-weight:600;color:#2563EB">View full details →</a>
-      <div style="margin-top:6px;font-size:10.5px;color:#94A3B8">Coordinates as reported by DPWH; not verified.</div>
+      <a href="/projects/${encodeURIComponent(p.contract_id)}" style="display:inline-block;margin-top:8px;font-size:12px;font-weight:600;color:var(--color-accent-ink)">View full details →</a>
+      <div style="margin-top:6px;font-size:10.5px;${muted}">Coordinates as reported by DPWH; not verified.</div>
     </div>`;
 }
 
@@ -49,9 +55,10 @@ interface Props {
   focus: { id: string | null; lat: number; lng: number } | null;
   selectedId: string | null;
   onBoundsChange: (bounds: MapBounds) => void;
+  colorMode?: MarkerColorMode;
 }
 
-export default function DpwhLeafletMap({ points, focus, selectedId, onBoundsChange }: Props) {
+export default function DpwhLeafletMap({ points, focus, selectedId, onBoundsChange, colorMode = 'status' }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.LayerGroup | null>(null);
@@ -59,6 +66,9 @@ export default function DpwhLeafletMap({ points, focus, selectedId, onBoundsChan
   const onBoundsChangeRef = useRef(onBoundsChange);
   onBoundsChangeRef.current = onBoundsChange;
   const pendingOpenRef = useRef<string | null>(focus?.id ?? null);
+  const colorModeRef = useRef(colorMode);
+  colorModeRef.current = colorMode;
+  const pointsRef = useRef(new Map<string, DpwhMapPoint>());
 
   useEffect(() => {
     const container = containerRef.current;
@@ -114,20 +124,21 @@ export default function DpwhLeafletMap({ points, focus, selectedId, onBoundsChan
       if (!next.has(id)) {
         layer.removeLayer(marker);
         markersRef.current.delete(id);
+        pointsRef.current.delete(id);
       }
     }
     for (const p of points) {
       if (markersRef.current.has(p.contract_id)) continue;
-      const color = statusColor(p.status);
       const marker = L.circleMarker([p.latitude, p.longitude], {
         radius: 6,
         color: '#FFFFFF',
         weight: 1.5,
-        fillColor: color,
+        fillColor: markerFill(p, colorModeRef.current),
         fillOpacity: 0.9,
       }).bindPopup(popupHtml(p), { maxWidth: 300 });
       marker.addTo(layer);
       markersRef.current.set(p.contract_id, marker);
+      pointsRef.current.set(p.contract_id, p);
     }
     const pending = pendingOpenRef.current;
     if (pending && markersRef.current.has(pending)) {
@@ -135,6 +146,14 @@ export default function DpwhLeafletMap({ points, focus, selectedId, onBoundsChan
       pendingOpenRef.current = null;
     }
   }, [points]);
+
+  // Switching between status and region colours restyles the markers in place.
+  useEffect(() => {
+    for (const [id, marker] of markersRef.current) {
+      const p = pointsRef.current.get(id);
+      if (p) marker.setStyle({ fillColor: markerFill(p, colorMode) });
+    }
+  }, [colorMode]);
 
   useEffect(() => {
     const map = mapRef.current;

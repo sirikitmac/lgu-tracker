@@ -66,7 +66,7 @@ export function DpwhContractDrawer({ contractId, onClose }: { contractId: string
             <div className="flex items-center gap-2 text-sm text-muted"><Loader2 className="w-4 h-4 animate-spin" /> Loading contract…</div>
           )}
           {error && (
-            <div role="alert" className="flex items-start gap-2 p-3 rounded-lg border border-red-200 bg-red-50 text-sm text-red-800">
+            <div role="alert" className="flex items-start gap-2 p-3 rounded-lg border border-danger-line bg-danger-soft text-sm text-danger-ink">
               <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" /> {error}
             </div>
           )}

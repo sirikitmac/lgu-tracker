@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useId, useMemo, useState } from 'react';
-import { AlertTriangle, LayoutGrid, List, Loader2, RotateCcw, Search, SearchX, SlidersHorizontal, X } from 'lucide-react';
+import { AlertTriangle, LayoutGrid, List, RotateCcw, Search, SearchX, SlidersHorizontal, X } from 'lucide-react';
 import type { ColumnVisibilityState as VisibilityState, PaginationState } from '@tanstack/react-table';
 import {
   DPWH_CATEGORIES,
@@ -12,13 +12,15 @@ import {
   type ProjectListItem,
 } from '@/types/dpwh';
 import { PROJECT_SOURCES, PROJECT_SOURCE_IDS, sourceLabel } from '@/lib/integrations/bettergov/sources';
+import { regionColor, regionDisplayName } from '@/lib/regionPalette';
 import { DpwhSummaryPanel } from './DpwhSummaryPanel';
+import { DataScopeNote } from './DataScopeNote';
 import { DpwhContractDrawer } from './DpwhContractDrawer';
 import { ColumnToggle, DEFAULT_COLUMN_VISIBILITY, DirectoryPager, DpwhProjectTable, PAGE_SIZE_OPTIONS, useDirectoryTable } from './DpwhProjectTable';
 import { DpwhProjectCard, DpwhProjectCardSkeleton } from './DpwhProjectCard';
 import { assignCardImages, creditsFor, recordKey } from './categoryImages';
 import { categoryLabel, formatCount, statusLabel } from './format';
-import { controlBaseClass, controlClass, glassBarClass, panelClass, secondaryButtonLgClass, secondaryButtonSmClass } from './ui';
+import { controlBaseClass, controlClass, panelClass, secondaryButtonLgClass, secondaryButtonSmClass } from './ui';
 
 export const SORT_OPTIONS = [
   ['contract_amount-desc', 'Contract amount: high to low'],
@@ -65,7 +67,8 @@ const EMPTY_FILTERS: Filters = {
   sort: 'contract_amount-desc',
 };
 const DEFAULT_PAGE_SIZE = 25;
-const VIEW_STORAGE_KEY = 'lgu-tracker:directory-view';
+// v2: the grid became the default; choices saved while the table was the default are not carried over.
+const VIEW_STORAGE_KEY = 'lgu-tracker:directory-view:v2';
 const COLUMNS_STORAGE_KEY = 'lgu-tracker:directory-columns';
 const FILTER_KEYS = ['region', 'province', 'municipality', 'category', 'status', 'office', 'contractor', 'source'] as const;
 const FILTER_LABELS: Record<(typeof FILTER_KEYS)[number], string> = {
@@ -94,18 +97,7 @@ function Field({ label, className = '', children }: { label: string; className?:
   );
 }
 
-/** A labelled row of related filters: the group name sits left on wide screens, above on narrow ones. */
-function FilterGroup({ title, children }: { title: string; children: React.ReactNode }) {
-  const id = useId();
-  return (
-    <div role="group" aria-labelledby={id} className="grid gap-3 lg:grid-cols-[8.5rem_minmax(0,1fr)] lg:gap-4 pt-4 first:pt-0 border-t first:border-t-0 border-line">
-      <p id={id} className="text-[13px] font-semibold text-ink lg:pt-[26px]">{title}</p>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{children}</div>
-    </div>
-  );
-}
-
-export function DpwhDirectory({ initial }: { initial?: DirectoryInitialState } = {}) {
+export function DpwhDirectory({ initial, showSummary = false }: { initial?: DirectoryInitialState; showSummary?: boolean } = {}) {
   const [summary, setSummary] = useState<DpwhSummary | null>(null);
   const [summaryState, setSummaryState] = useState<'loading' | 'ready' | 'empty' | 'error'>('loading');
   const [filters, setFilters] = useState<Filters>(() => ({ ...EMPTY_FILTERS, ...initial?.filters }));
@@ -120,15 +112,17 @@ export function DpwhDirectory({ initial }: { initial?: DirectoryInitialState } =
   const [listError, setListError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
-  const [view, setView] = useState<DirectoryView>(initial?.view ?? 'list');
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [view, setView] = useState<DirectoryView>(initial?.view ?? 'grid');
+  // Filters start folded away unless a shared link already applies some.
+  const [filtersOpen, setFiltersOpen] = useState(() =>
+    FILTER_KEYS.some((key) => (initial?.filters?.[key] ?? '').trim() !== '')
+  );
   const filtersId = useId();
   const searchHintId = useId();
   const resultsId = useId();
 
   // A ?view= link wins; otherwise this browser's last choice; otherwise the
-  // grid on phones, where the table has to scroll sideways. Switching views
-  // only re-renders the records already loaded.
+  // grid. Switching views only re-renders the records already loaded.
   useEffect(() => {
     try {
       const cols = JSON.parse(localStorage.getItem(COLUMNS_STORAGE_KEY) ?? 'null');
@@ -139,11 +133,10 @@ export function DpwhDirectory({ initial }: { initial?: DirectoryInitialState } =
     if (initial?.view) return;
     try {
       const saved = localStorage.getItem(VIEW_STORAGE_KEY);
-      if (saved === 'grid' || saved === 'list') return setView(saved);
+      if (saved === 'grid' || saved === 'list') setView(saved);
     } catch {
-      // Fall through to the width default.
+      // Keep the grid.
     }
-    if (window.matchMedia('(max-width: 639px)').matches) setView('grid');
   }, [initial?.view]);
   const remember = (key: string, value: string) => {
     try {
@@ -226,7 +219,7 @@ export function DpwhDirectory({ initial }: { initial?: DirectoryInitialState } =
     if (shown.get('sort') === EMPTY_FILTERS.sort) shown.delete('sort');
     if (shown.get('page') === '1') shown.delete('page');
     if (shown.get('pageSize') === String(DEFAULT_PAGE_SIZE)) shown.delete('pageSize');
-    if (view === 'grid') shown.set('view', 'grid');
+    if (view === 'list') shown.set('view', 'list');
     const qs = shown.toString();
     const next = `${window.location.pathname}${qs ? `?${qs}` : ''}`;
     if (next !== `${window.location.pathname}${window.location.search}`) window.history.replaceState(window.history.state, '', next);
@@ -308,30 +301,29 @@ export function DpwhDirectory({ initial }: { initial?: DirectoryInitialState } =
       type="button"
       onClick={() => chooseView(value)}
       aria-pressed={view === value}
-      className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-sm font-medium transition-[background-color,color,box-shadow] duration-200 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent-ink ${
+      className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[13px] font-medium transition-[background-color,color,box-shadow] duration-200 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent-ink ${
         view === value ? 'bg-surface text-ink shadow-raise' : 'text-subtle hover:text-ink'
       }`}
     >
       <Icon className="w-4 h-4" aria-hidden="true" /> {label}
     </button>
   );
+  const chipClass =
+    'inline-flex items-center gap-1.5 h-8 pl-3 pr-2 rounded-full bg-accent-soft text-[13px] text-ink hover:bg-accent-soft-hover focus-visible:outline-2 focus-visible:outline-accent-ink';
 
   return (
-    <div className="space-y-8">
-      {summaryState === 'loading' && (
-        <div role="status" className="flex items-center gap-2 text-sm text-muted"><Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> Loading summary…</div>
-      )}
+    <div className="space-y-5">
       {summaryState === 'error' && (
-        <div role="alert" className="flex items-start gap-2 p-3.5 rounded-card border border-red-200 bg-red-50 text-[13px] text-red-800">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" /> Could not load the DPWH summary. The directory below may still work.
+        <div role="alert" className="flex items-start gap-2 p-3.5 rounded-card border border-danger-line bg-danger-soft text-[13px] text-danger-ink">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" /> Could not load the data summary, so the location and office filters have no options. Search and the other filters still work.
         </div>
       )}
       {summaryState === 'empty' && (
-        <div role="status" className="flex items-start gap-2 p-3.5 rounded-card border border-amber-200 bg-amber-50 text-[13px] text-[#92400E]">
+        <div role="status" className="flex items-start gap-2 p-3.5 rounded-card border border-warn-line bg-warn-soft text-[13px] text-warn-ink">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" /> No DPWH data has been imported yet. An administrator needs to run the initial sync.
         </div>
       )}
-      {summary && (
+      {showSummary && summary && (
         <DpwhSummaryPanel
           summary={summary}
           selectedRegion={filters.region || null}
@@ -342,22 +334,24 @@ export function DpwhDirectory({ initial }: { initial?: DirectoryInitialState } =
           onSelectStatus={(v) => update({ status: v ?? '' })}
         />
       )}
+      {!showSummary && summaryState !== 'loading' && <DataScopeNote summary={summary} />}
 
-      <section aria-label="Search and filter projects" className={`${panelClass} p-4 sm:p-6`}>
-        <div className="flex items-end gap-2">
-          <label className="block flex-1 min-w-0">
-            <span className="block mb-1.5 text-[13px] font-semibold text-ink">Search projects</span>
-            <span className="relative block">
-              <Search className="w-4 h-4 text-muted absolute left-3.5 top-1/2 -translate-y-1/2" aria-hidden="true" />
-              <input
-                type="search"
-                value={filters.q}
-                onChange={(e) => update({ q: e.target.value })}
-                placeholder="Project name, contract or project ID, contractor…"
-                aria-describedby={searchHintId}
-                maxLength={200}
-                className={`${controlBaseClass} w-full h-12 pl-10 pr-4 rounded-full text-[15px]`}
-              />
+      <section aria-label="Search and filter projects" className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="relative flex-1 min-w-[min(100%,16rem)]">
+            <span className="sr-only">Search projects</span>
+            <Search className="w-4 h-4 text-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
+            <input
+              type="search"
+              value={filters.q}
+              onChange={(e) => update({ q: e.target.value })}
+              placeholder="Search by project name, ID, contractor or office"
+              aria-describedby={searchHintId}
+              maxLength={200}
+              className={`${controlBaseClass} w-full h-11 pl-10 pr-4 rounded-full text-[15px]`}
+            />
+            <span id={searchHintId} className="sr-only">
+              Searches project name, contract or project ID, contractor, description, and implementing office.
             </span>
           </label>
           <button
@@ -365,22 +359,23 @@ export function DpwhDirectory({ initial }: { initial?: DirectoryInitialState } =
             onClick={() => setFiltersOpen((o) => !o)}
             aria-expanded={filtersOpen}
             aria-controls={filtersId}
-            className={`${secondaryButtonLgClass} md:hidden`}
+            className={`${secondaryButtonLgClass} !h-11 ${filtersOpen ? '!bg-sunken' : ''}`}
           >
             <SlidersHorizontal className="w-4 h-4" aria-hidden="true" /> Filters
-            {activeFilters.length > 0 && <span className="ml-0.5 tabular-nums">({activeFilters.length})</span>}
+            {activeFilters.length > 0 && (
+              <span className="ml-0.5 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-ink text-on-ink text-[11px] tabular-nums">
+                {activeFilters.length}
+              </span>
+            )}
           </button>
         </div>
-        <p id={searchHintId} className="mt-2 text-xs text-muted">
-          Searches project name, contract or project ID, contractor, description, and implementing office.
-        </p>
 
-        <div id={filtersId} className={`${filtersOpen ? 'block' : 'hidden'} md:block mt-6 space-y-4`}>
-          <FilterGroup title="Location">
+        <div id={filtersId} hidden={!filtersOpen} className={`${panelClass} p-4 sm:p-5`}>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Field label="Region (project location)">
               <select className={controlClass} value={filters.region} onChange={(e) => update({ region: e.target.value })}>
                 <option value="">All regions</option>
-                {regionOptions.map((r) => <option key={r} value={r}>{r}</option>)}
+                {regionOptions.map((r) => <option key={r} value={r}>{regionDisplayName(r)}</option>)}
               </select>
             </Field>
             <Field label="Province">
@@ -401,9 +396,6 @@ export function DpwhDirectory({ initial }: { initial?: DirectoryInitialState } =
                 {municipalityOptions.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             </Field>
-          </FilterGroup>
-
-          <FilterGroup title="Project">
             <Field label="Category">
               <select className={controlClass} value={filters.category} onChange={(e) => update({ category: e.target.value })}>
                 <option value="">All categories</option>
@@ -422,10 +414,7 @@ export function DpwhDirectory({ initial }: { initial?: DirectoryInitialState } =
                 {PROJECT_SOURCE_IDS.map((s) => <option key={s} value={s}>{PROJECT_SOURCES[s].label}</option>)}
               </select>
             </Field>
-          </FilterGroup>
-
-          <FilterGroup title="Implementation">
-            <Field label="Implementing office" className="sm:col-span-2">
+            <Field label="Implementing office">
               <select className={controlClass} value={filters.office} onChange={(e) => update({ office: e.target.value })}>
                 <option value="">All offices</option>
                 {officeGroups.map(([region, offices]) => (
@@ -444,15 +433,15 @@ export function DpwhDirectory({ initial }: { initial?: DirectoryInitialState } =
                 className={controlClass}
               />
             </Field>
-          </FilterGroup>
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 mt-5 pt-4 border-t border-line">
-          {isFiltered ? (
-            <ul className="flex flex-wrap items-center gap-1.5" aria-label="Active filters">
+        {isFiltered && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <ul className="contents" aria-label="Active filters">
               {searchActive && (
                 <li>
-                  <button type="button" onClick={() => update({ q: '' })} className="inline-flex items-center gap-1.5 h-8 pl-3 pr-2 rounded-full bg-accent-soft text-[13px] text-ink hover:bg-[#FFE4CF] focus-visible:outline-2 focus-visible:outline-accent-ink" aria-label={`Remove search “${filters.q.trim()}”`}>
+                  <button type="button" onClick={() => update({ q: '' })} className={chipClass} aria-label={`Remove search “${filters.q.trim()}”`}>
                     <span className="text-muted">Search</span> <span className="max-w-[14rem] truncate font-medium">{filters.q.trim()}</span>
                     <X className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
@@ -460,29 +449,30 @@ export function DpwhDirectory({ initial }: { initial?: DirectoryInitialState } =
               )}
               {activeFilters.map((f) => (
                 <li key={f.key}>
-                  <button type="button" onClick={() => update({ [f.key]: '' })} className="inline-flex items-center gap-1.5 h-8 pl-3 pr-2 rounded-full bg-accent-soft text-[13px] text-ink hover:bg-[#FFE4CF] focus-visible:outline-2 focus-visible:outline-accent-ink" aria-label={`Remove filter ${f.label}: ${f.value}`}>
+                  <button type="button" onClick={() => update({ [f.key]: '' })} className={chipClass} aria-label={`Remove filter ${f.label}: ${f.value}`}>
+                    {f.key === 'region' && (
+                      <span className="w-2 h-2 rounded-[2px]" style={{ backgroundColor: regionColor(filters.region) }} aria-hidden="true" />
+                    )}
                     <span className="text-muted">{f.label}</span> <span className="max-w-[14rem] truncate font-medium">{f.value}</span>
                     <X className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                 </li>
               ))}
             </ul>
-          ) : (
-            <span className="text-xs text-muted">No filters applied</span>
-          )}
-          <button type="button" onClick={resetFilters} disabled={!isFiltered} className={secondaryButtonSmClass}>
-            <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" /> Clear all
-          </button>
-        </div>
+            <button type="button" onClick={resetFilters} className={`${secondaryButtonSmClass} !h-8`}>
+              <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" /> Clear all
+            </button>
+          </div>
+        )}
       </section>
 
       <section aria-labelledby={resultsId} className="space-y-4">
-        <div className={`md:sticky md:top-[72px] z-20 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 px-4 py-3 rounded-card ${glassBarClass}`}>
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
           <div className="min-w-0">
-            <h2 id={resultsId} className="text-lg font-semibold tracking-tight text-ink">
+            <h2 id={resultsId} className="text-[15px] font-semibold text-ink">
               <span aria-live="polite">
                 {listState === 'ready'
-                  ? `${formatCount(total)} record${total === 1 ? '' : 's'} match`
+                  ? `${formatCount(total)} ${total === 1 ? 'record' : 'records'}`
                   : listState === 'loading'
                     ? 'Searching…'
                     : 'Projects'}
@@ -492,24 +482,27 @@ export function DpwhDirectory({ initial }: { initial?: DirectoryInitialState } =
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <label className="flex items-center gap-2 text-xs font-medium text-subtle">
-              <span className="sr-only sm:not-sr-only">Sort by</span>
-              <select className={`${controlBaseClass} h-10 pl-3.5 pr-8 max-w-[15rem] rounded-full text-sm`} value={filters.sort} onChange={(e) => update({ sort: e.target.value })} aria-label="Sort by">
+              <span className="sr-only sm:not-sr-only">Sort</span>
+              <select className={`${controlBaseClass} h-10 pl-3.5 pr-8 w-[16.5rem] max-w-full rounded-full text-sm`} value={filters.sort} onChange={(e) => update({ sort: e.target.value })} aria-label="Sort by">
                 {SORT_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
             </label>
             {view === 'list' && <ColumnToggle table={table} />}
             <div role="group" aria-label="Results layout" className="inline-flex items-center gap-1 h-10 p-1 rounded-full bg-sunken">
-              {viewButton('list', List, 'Table')}
               {viewButton('grid', LayoutGrid, 'Grid')}
+              {viewButton('list', List, 'Table')}
             </div>
           </div>
         </div>
 
         {listState === 'error' ? (
-          <div role="alert" className={`${panelClass} p-8 text-center text-sm text-red-800 space-y-3`}>
+          <div role="alert" className={`${panelClass} p-8 text-center text-sm text-danger-ink space-y-3`}>
             <AlertTriangle className="w-6 h-6 mx-auto" aria-hidden="true" />
             <p>Could not load projects ({listError}).</p>
-            <button type="button" onClick={() => setReload((n) => n + 1)} className="h-9 px-4 rounded-full border border-red-200 font-medium hover:bg-red-50">
+            {filters.status && (
+              <p className="text-xs text-muted">Filters on rare statuses can time out on the hosted database. Removing the status filter usually helps.</p>
+            )}
+            <button type="button" onClick={() => setReload((n) => n + 1)} className={secondaryButtonSmClass}>
               Try again
             </button>
           </div>
@@ -528,12 +521,12 @@ export function DpwhDirectory({ initial }: { initial?: DirectoryInitialState } =
                 <DpwhProjectTable table={table} loading={listState === 'loading'} onOpenContract={setSelectedId} />
               </div>
             ) : (
-              <ul className="grid gap-4 sm:gap-5 grid-cols-[repeat(auto-fill,minmax(min(100%,300px),1fr))]">
+              <ul className="grid gap-4 sm:gap-5 grid-cols-[repeat(auto-fill,minmax(min(100%,290px),1fr))]">
                 {listState === 'loading' && rows.length === 0
                   ? Array.from({ length: 6 }, (_, i) => <li key={i} className="flex [&>*]:flex-1"><DpwhProjectCardSkeleton /></li>)
-                  : rows.map((row) => (
+                  : rows.map((row, i) => (
                       <li key={row.id} className="flex [&>*]:flex-1">
-                        <DpwhProjectCard item={row.original} image={cardImages.get(recordKey(row.original))} onOpenContract={setSelectedId} />
+                        <DpwhProjectCard item={row.original} image={cardImages.get(recordKey(row.original))} onOpenContract={setSelectedId} eager={i < 4} />
                       </li>
                     ))}
               </ul>

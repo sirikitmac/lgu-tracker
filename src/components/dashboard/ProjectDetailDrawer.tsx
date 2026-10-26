@@ -65,9 +65,9 @@ export function ProjectDetailDrawer({
       />
 
       {/* Slide-over Panel */}
-      <div className="relative z-10 w-full max-w-2xl bg-white h-full shadow-2xl border-l border-line flex flex-col overflow-hidden">
+      <div className="relative z-10 w-full max-w-2xl bg-surface h-full shadow-2xl border-l border-line flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="px-5 sm:px-6 py-5 bg-ink text-white flex items-start justify-between gap-4">
+        <div className="px-5 sm:px-6 py-5 bg-night text-white flex items-start justify-between gap-4">
           <div className="space-y-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300">
               <span className="tabular-nums font-semibold text-[#F59E0B]">
@@ -107,7 +107,7 @@ export function ProjectDetailDrawer({
               />
             ) : (
               <div className="flex flex-col items-center justify-center text-center">
-                <div className="w-11 h-11 rounded-card bg-white border border-line flex items-center justify-center mb-2 text-accent-ink">
+                <div className="w-11 h-11 rounded-card bg-surface border border-line flex items-center justify-center mb-2 text-accent-ink">
                   <ImageIcon className="w-5 h-5" aria-hidden="true" />
                 </div>
                 <span className="text-xs font-semibold text-ink">
@@ -202,10 +202,10 @@ export function ProjectDetailDrawer({
                     key={stage.id}
                     className={`p-3 rounded-lg border text-xs ${
                       isCurrent
-                        ? 'bg-ink text-white border-ink'
+                        ? 'bg-ink text-on-ink border-ink'
                         : isCompleted
                         ? 'bg-ground text-[#16A34A] border-line'
-                        : 'bg-white text-muted border-line'
+                        : 'bg-surface text-muted border-line'
                     }`}
                   >
                     <div
@@ -344,7 +344,7 @@ export function ProjectDetailDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="min-h-[38px] px-4 py-2 text-xs font-semibold text-white bg-ink hover:bg-ink-soft rounded-lg transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
+            className="min-h-[38px] px-4 py-2 text-xs font-semibold text-on-ink bg-ink hover:bg-ink-soft rounded-lg transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
           >
             Close Details
           </button>

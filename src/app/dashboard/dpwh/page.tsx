@@ -43,7 +43,7 @@ function DpwhPageContent() {
             </div>
             <DpwhSyncButton />
           </div>
-          <DpwhDirectory />
+          <DpwhDirectory showSummary />
         </main>
       </div>
     </div>
