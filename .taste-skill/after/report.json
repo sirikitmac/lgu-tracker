@@ -1,0 +1,1869 @@
+{
+ "url": "http://localhost:3123/projects?view=list",
+ "at": "2026-10-26T03:54:01.376Z",
+ "allow": [
+  "font-not-dealt"
+ ],
+ "viewports": [
+  {
+   "width": 1440,
+   "height": 900,
+   "load": "load",
+   "screens": 7,
+   "filled": [
+    0.69,
+    0.77,
+    0.76,
+    0.73,
+    0.76,
+    0.72,
+    0.77
+   ],
+   "motion": {
+    "elements": 3,
+    "css": 1,
+    "transitions": 1,
+    "scripted": 1,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "page": {
+     "height": 5513,
+     "screens": 6.1,
+     "words": 2241,
+     "img": 0,
+     "video": 0,
+     "canvas": 0,
+     "svg": 39,
+     "sections": 6,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Project Directory",
+     "words": 2,
+     "chars": 17,
+     "lines": 1,
+     "size": 30,
+     "vw": 2.1,
+     "font": "Plus Jakarta Sans",
+     "weight": 700,
+     "tracking": -0.02,
+     "leading": 1.25,
+     "top": 100,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Project Directory",
+     "words": 2,
+     "lines": 1,
+     "size": 30,
+     "font": "Plus Jakarta Sans"
+    },
+    "headings": [
+     {
+      "text": "Project Directory",
+      "words": 2,
+      "chars": 17,
+      "lines": 1,
+      "size": 30,
+      "vw": 2.1,
+      "font": "Plus Jakarta Sans",
+      "weight": 700,
+      "tracking": -0.025,
+      "leading": 1.25,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.53,
+      "top": 100,
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "₱2.35T",
+      "words": 1,
+      "chars": 6,
+      "lines": 1,
+      "size": 28,
+      "vw": 1.9,
+      "font": "Plus Jakarta Sans",
+      "weight": 700,
+      "tracking": 0,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.07,
+      "top": 477,
+      "tag": "span",
+      "kind": "statement"
+     },
+     {
+      "text": "92,581",
+      "words": 1,
+      "chars": 6,
+      "lines": 1,
+      "size": 28,
+      "vw": 1.9,
+      "font": "Plus Jakarta Sans",
+      "weight": 700,
+      "tracking": 0,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.26,
+      "top": 481,
+      "tag": "dd",
+      "kind": "statement"
+     }
+    ],
+    "headingSummary": {
+     "count": 3,
+     "maxLines": 1,
+     "over2Lines": 0,
+     "statements": 2,
+     "centered": 0,
+     "medianWords": 1,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Public Sans",
+       "share": 0.98,
+       "mono": false
+      },
+      {
+       "family": "Plus Jakarta Sans",
+       "share": 0.02,
+       "mono": false
+      }
+     ],
+     "familyCount": 2,
+     "sizes": [
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      18,
+      20,
+      28,
+      30
+     ],
+     "sizeCount": 10,
+     "notLoaded": [],
+     "body": {
+      "font": "Public Sans",
+      "size": 14,
+      "leading": 1.38,
+      "weight": 500,
+      "tracking": 0,
+      "contrast": 14.1
+     },
+     "measureChars": 73,
+     "max": {
+      "size": 30,
+      "vw": 2.1,
+      "font": "Plus Jakarta Sans",
+      "text": "Project Directory"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0.33,
+     "centerShare": 0,
+     "smallText": 73
+    },
+    "eyebrows": [
+     {
+      "text": "Total reported contract amount",
+      "above": "₱2.35T",
+      "upper": false,
+      "tracked": false,
+      "mono": false,
+      "pill": false,
+      "size": 13,
+      "top": 453
+     },
+     {
+      "text": "Contracts in directory",
+      "above": "92,581",
+      "upper": false,
+      "tracked": false,
+      "mono": false,
+      "pill": false,
+      "size": 13,
+      "top": 453
+     }
+    ],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#f8fafc",
+     "bodyBgHsl": {
+      "h": 210,
+      "s": 0.4,
+      "l": 0.98
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#f8fafc",
+       "top": 0,
+       "hsl": {
+        "h": 210,
+        "s": 0.4,
+        "l": 0.98
+       }
+      },
+      {
+       "color": "#ffffff",
+       "top": 617,
+       "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 1
+       }
+      },
+      {
+       "color": "#172b4d",
+       "top": 5149,
+       "hsl": {
+        "h": 218,
+        "s": 0.54,
+        "l": 0.2
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#172b4d",
+       "share": 0.35
+      },
+      {
+       "color": "#64748b",
+       "share": 0.28
+      },
+      {
+       "color": "#0f172a",
+       "share": 0.16
+      },
+      {
+       "color": "#475569",
+       "share": 0.07
+      },
+      {
+       "color": "#cad5e2",
+       "share": 0.06
+      }
+     ],
+     "button": {
+      "bg": "#ffffff",
+      "hsl": {
+       "h": 0,
+       "s": 0,
+       "l": 1
+      },
+      "fg": "#172b4d"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 7,
+     "inHero": 3,
+     "radius": 8,
+     "height": 40,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "LGU Sign In",
+      "Talk to BP",
+      "Open project map"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 1,
+     "shadowOverlay": 2,
+     "shadowSamples": [
+      "button.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0"
+     ],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 4,
+     "hairlineSamples": [
+      "div.mt-auto.pt-3 566px",
+      "div.grid.gap-3 1190px",
+      "div.grid.gap-3 1190px",
+      "div.flex.flex-wrap 1190px"
+     ],
+     "outlinedBoxes": 7,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 7,
+     "boxRadius": 12,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 7,
+     "fixed": true,
+     "height": 68,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "plus jakarta sans",
+     "plus jakarta sans fallback",
+     "public sans",
+     "public sans fallback"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "pageH": 5513,
+    "margins": {
+     "left": 104,
+     "right": 117
+    },
+    "sections": [
+     {
+      "sel": "header.flex.flex-col",
+      "tag": "header",
+      "top": 100,
+      "height": 170,
+      "words": 61,
+      "media": 0,
+      "middle": 189,
+      "heading": {
+       "text": "Project Directory",
+       "size": 30,
+       "tag": "h1"
+      },
+      "left": 104,
+      "right": 120,
+      "textLeft": 104,
+      "textRight": 120,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "div.space-y-4",
+      "tag": "div",
+      "top": 294,
+      "height": 963,
+      "words": 245,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "92,581",
+       "size": 28,
+       "tag": "span"
+      },
+      "left": 117,
+      "right": 117,
+      "textLeft": 125,
+      "textRight": 125,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "section.bg-white.border",
+      "tag": "section",
+      "top": 1280,
+      "height": 479,
+      "words": 41,
+      "media": 0,
+      "middle": 0,
+      "heading": null,
+      "left": 125,
+      "right": 125,
+      "textLeft": 125,
+      "textRight": 142,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "section.space-y-3",
+      "tag": "section",
+      "top": 1783,
+      "height": 3334,
+      "words": 1142,
+      "media": 0,
+      "middle": 32,
+      "heading": {
+       "text": "103,953 records match",
+       "size": 18,
+       "tag": "h2"
+      },
+      "left": 104,
+      "right": 104,
+      "textLeft": 104,
+      "textRight": 121,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "footer.bg-[#172B4D].text-white",
+      "tag": "footer",
+      "top": 5149,
+      "height": 365,
+      "words": 129,
+      "media": 0,
+      "middle": 122,
+      "heading": {
+       "text": "System Navigation",
+       "size": 14,
+       "tag": "h3"
+      },
+      "left": 104,
+      "right": 104,
+      "textLeft": 104,
+      "textRight": 104,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Project Directory",
+      "size": 30,
+      "top": 100,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 104,
+      "n": 3
+     },
+     {
+      "x": 749,
+      "n": 2
+     },
+     {
+      "x": 125,
+      "n": 1
+     }
+    ],
+    "leftBlocks": 6,
+    "bodySize": 14,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0.08,
+    "voidBox": {
+     "x": 1020,
+     "y": 180,
+     "w": 420,
+     "h": 240
+    }
+   },
+   "app": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "dark": false,
+    "ground": "#f8fafc",
+    "sidebar": null,
+    "topbar": {
+     "h": 68
+    },
+    "canvas": {
+     "left": 104,
+     "right": 117
+    },
+    "hero": {
+     "text": "Project Directory",
+     "words": 2,
+     "chars": 17,
+     "lines": 1,
+     "size": 30,
+     "vw": 2.1,
+     "font": "Plus Jakarta Sans",
+     "weight": 700,
+     "tracking": -0.02,
+     "leading": 1.25,
+     "top": 100,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 7,
+     "firstScreen": 4,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 9,
+     "radii": [
+      [
+       12,
+       7
+      ],
+      [
+       0,
+       2
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 0,
+     "hues": 0,
+     "samples": []
+    },
+    "numbers": {
+     "cells": 25,
+     "leftAligned": 0,
+     "figures": 64,
+     "tabularShare": 1,
+     "kpiMax": 28
+    },
+    "rows": {
+     "count": 25,
+     "median": 133
+    },
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.24,
+     "tiny": 0,
+     "tinySamples": [],
+     "sizes": [
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      18,
+      20,
+      28,
+      30
+     ]
+    },
+    "title": {
+     "text": "Project Directory",
+     "size": 30,
+     "top": 100
+    },
+    "colourShare": 0.029
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 768,
+   "height": 1024,
+   "load": "load",
+   "screens": 8,
+   "filled": [
+    0.8,
+    0.86,
+    0.79,
+    0.86,
+    0.88,
+    0.86,
+    0.87,
+    0.89
+   ],
+   "motion": {
+    "elements": 3,
+    "css": 1,
+    "transitions": 1,
+    "scripted": 1,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "page": {
+     "height": 7665,
+     "screens": 7.5,
+     "words": 2241,
+     "img": 0,
+     "video": 0,
+     "canvas": 0,
+     "svg": 39,
+     "sections": 6,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 1,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Project Directory",
+     "words": 2,
+     "chars": 17,
+     "lines": 1,
+     "size": 30,
+     "vw": 3.9,
+     "font": "Plus Jakarta Sans",
+     "weight": 700,
+     "tracking": -0.02,
+     "leading": 1.25,
+     "top": 100,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Project Directory",
+     "words": 2,
+     "lines": 1,
+     "size": 30,
+     "font": "Plus Jakarta Sans"
+    },
+    "headings": [
+     {
+      "text": "Project Directory",
+      "words": 2,
+      "chars": 17,
+      "lines": 1,
+      "size": 30,
+      "vw": 3.9,
+      "font": "Plus Jakarta Sans",
+      "weight": 700,
+      "tracking": -0.025,
+      "leading": 1.25,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.94,
+      "top": 100,
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "92,581",
+      "words": 1,
+      "chars": 6,
+      "lines": 1,
+      "size": 28,
+      "vw": 3.6,
+      "font": "Plus Jakarta Sans",
+      "weight": 700,
+      "tracking": 0,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.26,
+      "top": 537,
+      "tag": "dd",
+      "kind": "statement"
+     },
+     {
+      "text": "₱2.35T",
+      "words": 1,
+      "chars": 6,
+      "lines": 1,
+      "size": 28,
+      "vw": 3.6,
+      "font": "Plus Jakarta Sans",
+      "weight": 700,
+      "tracking": 0,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.13,
+      "top": 552,
+      "tag": "span",
+      "kind": "statement"
+     }
+    ],
+    "headingSummary": {
+     "count": 3,
+     "maxLines": 1,
+     "over2Lines": 0,
+     "statements": 2,
+     "centered": 0,
+     "medianWords": 1,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Public Sans",
+       "share": 0.98,
+       "mono": false
+      },
+      {
+       "family": "Plus Jakarta Sans",
+       "share": 0.02,
+       "mono": false
+      }
+     ],
+     "familyCount": 2,
+     "sizes": [
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      18,
+      20,
+      28,
+      30
+     ],
+     "sizeCount": 10,
+     "notLoaded": [],
+     "body": {
+      "font": "Public Sans",
+      "size": 14,
+      "leading": 1.38,
+      "weight": 500,
+      "tracking": 0,
+      "contrast": 14.1
+     },
+     "measureChars": 41,
+     "max": {
+      "size": 30,
+      "vw": 3.9,
+      "font": "Plus Jakarta Sans",
+      "text": "Project Directory"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0.33,
+     "centerShare": 0,
+     "smallText": 73
+    },
+    "eyebrows": [
+     {
+      "text": "Contracts in directory",
+      "above": "92,581",
+      "upper": false,
+      "tracked": false,
+      "mono": false,
+      "pill": false,
+      "size": 13,
+      "top": 509
+     },
+     {
+      "text": "Total reported contract amount",
+      "above": "₱2.35T",
+      "upper": false,
+      "tracked": false,
+      "mono": false,
+      "pill": false,
+      "size": 13,
+      "top": 509
+     }
+    ],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#f8fafc",
+     "bodyBgHsl": {
+      "h": 210,
+      "s": 0.4,
+      "l": 0.98
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#f8fafc",
+       "top": 0,
+       "hsl": {
+        "h": 210,
+        "s": 0.4,
+        "l": 0.98
+       }
+      },
+      {
+       "color": "#ffffff",
+       "top": 712,
+       "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 1
+       }
+      },
+      {
+       "color": "#172b4d",
+       "top": 7183,
+       "hsl": {
+        "h": 218,
+        "s": 0.54,
+        "l": 0.2
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#172b4d",
+       "share": 0.35
+      },
+      {
+       "color": "#64748b",
+       "share": 0.28
+      },
+      {
+       "color": "#0f172a",
+       "share": 0.16
+      },
+      {
+       "color": "#475569",
+       "share": 0.07
+      },
+      {
+       "color": "#cad5e2",
+       "share": 0.06
+      }
+     ],
+     "button": {
+      "bg": "#ffffff",
+      "hsl": {
+       "h": 0,
+       "s": 0,
+       "l": 1
+      },
+      "fg": "#172b4d"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 7,
+     "inHero": 3,
+     "radius": 8,
+     "height": 40,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "LGU Sign In",
+      "Talk to BP",
+      "Open project map"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 1,
+     "shadowOverlay": 2,
+     "shadowSamples": [
+      "button.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0"
+     ],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 4,
+     "hairlineSamples": [
+      "div.mt-auto.pt-3 678px",
+      "div.grid.gap-3 678px",
+      "div.grid.gap-3 678px",
+      "div.flex.flex-wrap 678px"
+     ],
+     "outlinedBoxes": 7,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 7,
+     "boxRadius": 12,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 7,
+     "fixed": true,
+     "height": 68,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "plus jakarta sans",
+     "plus jakarta sans fallback",
+     "public sans",
+     "public sans fallback"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "pageH": 7665,
+    "margins": {
+     "left": 24,
+     "right": 37
+    },
+    "sections": [
+     {
+      "sel": "header.flex.flex-col",
+      "tag": "header",
+      "top": 100,
+      "height": 226,
+      "words": 61,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Project Directory",
+       "size": 30,
+       "tag": "h1"
+      },
+      "left": 24,
+      "right": 32,
+      "textLeft": 24,
+      "textRight": 32,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "div.space-y-4",
+      "tag": "div",
+      "top": 350,
+      "height": 1594,
+      "words": 245,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "92,581",
+       "size": 28,
+       "tag": "span"
+      },
+      "left": 37,
+      "right": 37,
+      "textLeft": 45,
+      "textRight": 45,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "section.bg-white.border",
+      "tag": "section",
+      "top": 1968,
+      "height": 795,
+      "words": 41,
+      "media": 0,
+      "middle": 0,
+      "heading": null,
+      "left": 45,
+      "right": 45,
+      "textLeft": 45,
+      "textRight": 62,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "section.space-y-3",
+      "tag": "section",
+      "top": 2787,
+      "height": 4364,
+      "words": 1116,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "103,953 records match",
+       "size": 18,
+       "tag": "h2"
+      },
+      "left": 24,
+      "right": 24,
+      "textLeft": 24,
+      "textRight": 48,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "footer.bg-[#172B4D].text-white",
+      "tag": "footer",
+      "top": 7183,
+      "height": 482,
+      "words": 129,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "System Navigation",
+       "size": 14,
+       "tag": "h3"
+      },
+      "left": 24,
+      "right": 26,
+      "textLeft": 24,
+      "textRight": 26,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Project Directory",
+      "size": 30,
+      "top": 100,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 24,
+      "n": 3
+     },
+     {
+      "x": 45,
+      "n": 3
+     }
+    ],
+    "leftBlocks": 6,
+    "bodySize": 14,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "dark": false,
+    "ground": "#f8fafc",
+    "sidebar": null,
+    "topbar": {
+     "h": 68
+    },
+    "canvas": {
+     "left": 24,
+     "right": -48
+    },
+    "hero": {
+     "text": "Project Directory",
+     "words": 2,
+     "chars": 17,
+     "lines": 1,
+     "size": 30,
+     "vw": 3.9,
+     "font": "Plus Jakarta Sans",
+     "weight": 700,
+     "tracking": -0.02,
+     "leading": 1.25,
+     "top": 100,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 7,
+     "firstScreen": 3,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 9,
+     "radii": [
+      [
+       12,
+       7
+      ],
+      [
+       0,
+       2
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 0,
+     "hues": 0,
+     "samples": []
+    },
+    "numbers": {
+     "cells": 25,
+     "leftAligned": 0,
+     "figures": 64,
+     "tabularShare": 1,
+     "kpiMax": 28
+    },
+    "rows": {
+     "count": 25,
+     "median": 168
+    },
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.24,
+     "tiny": 0,
+     "tinySamples": [],
+     "sizes": [
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      18,
+      20,
+      28,
+      30
+     ]
+    },
+    "title": {
+     "text": "Project Directory",
+     "size": 30,
+     "top": 100
+    },
+    "colourShare": 0.04
+   },
+   "consoleErrors": []
+  },
+  {
+   "width": 390,
+   "height": 844,
+   "load": "load",
+   "screens": 10,
+   "filled": [
+    0.68,
+    0.92,
+    0.91,
+    0.72,
+    0.87,
+    0.88,
+    0.86,
+    0.88,
+    0.83,
+    0.99
+   ],
+   "motion": {
+    "elements": 3,
+    "css": 1,
+    "transitions": 1,
+    "scripted": 1,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "page": {
+     "height": 7926,
+     "screens": 9.4,
+     "words": 1628,
+     "img": 0,
+     "video": 0,
+     "canvas": 0,
+     "svg": 39,
+     "sections": 6,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 0,
+     "uiAbuse": false,
+     "realPictures": 0,
+     "videoCount": 0,
+     "uiPictures": 0,
+     "pictureSamples": [],
+     "blendText": 0,
+     "sideScrollers": 1,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Project Directory",
+     "words": 2,
+     "chars": 17,
+     "lines": 1,
+     "size": 28,
+     "vw": 7.2,
+     "font": "Plus Jakarta Sans",
+     "weight": 700,
+     "tracking": -0.02,
+     "leading": 1.25,
+     "top": 96,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "h1": {
+     "text": "Project Directory",
+     "words": 2,
+     "lines": 1,
+     "size": 28,
+     "font": "Plus Jakarta Sans"
+    },
+    "headings": [
+     {
+      "text": "Project Directory",
+      "words": 2,
+      "chars": 17,
+      "lines": 1,
+      "size": 28,
+      "vw": 7.2,
+      "font": "Plus Jakarta Sans",
+      "weight": 700,
+      "tracking": -0.025,
+      "leading": 1.25,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.92,
+      "top": 96,
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "92,581",
+      "words": 1,
+      "chars": 6,
+      "lines": 1,
+      "size": 28,
+      "vw": 7.2,
+      "font": "Plus Jakarta Sans",
+      "weight": 700,
+      "tracking": 0,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.83,
+      "top": 728,
+      "tag": "dd",
+      "kind": "statement"
+     },
+     {
+      "text": "₱2.35T",
+      "words": 1,
+      "chars": 6,
+      "lines": 1,
+      "size": 28,
+      "vw": 7.2,
+      "font": "Plus Jakarta Sans",
+      "weight": 700,
+      "tracking": 0,
+      "leading": 1,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.25,
+      "top": 842,
+      "tag": "span",
+      "kind": "statement"
+     }
+    ],
+    "headingSummary": {
+     "count": 3,
+     "maxLines": 1,
+     "over2Lines": 0,
+     "statements": 2,
+     "centered": 0,
+     "medianWords": 1,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Public Sans",
+       "share": 0.98,
+       "mono": false
+      },
+      {
+       "family": "Plus Jakarta Sans",
+       "share": 0.02,
+       "mono": false
+      }
+     ],
+     "familyCount": 2,
+     "sizes": [
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      18,
+      20,
+      28
+     ],
+     "sizeCount": 9,
+     "notLoaded": [],
+     "body": {
+      "font": "Public Sans",
+      "size": 14,
+      "leading": 1.38,
+      "weight": 500,
+      "tracking": 0,
+      "contrast": 14.1
+     },
+     "measureChars": 41,
+     "max": {
+      "size": 28,
+      "vw": 7.2,
+      "font": "Plus Jakarta Sans",
+      "text": "Project Directory"
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0.34,
+     "centerShare": 0.01,
+     "smallText": 69
+    },
+    "eyebrows": [
+     {
+      "text": "Contracts in directory",
+      "above": "92,581",
+      "upper": false,
+      "tracked": false,
+      "mono": false,
+      "pill": false,
+      "size": 13,
+      "top": 700
+     },
+     {
+      "text": "Total reported contract amount",
+      "above": "₱2.35T",
+      "upper": false,
+      "tracked": false,
+      "mono": false,
+      "pill": false,
+      "size": 13,
+      "top": 818
+     }
+    ],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#f8fafc",
+     "bodyBgHsl": {
+      "h": 210,
+      "s": 0.4,
+      "l": 0.98
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#f8fafc",
+       "top": 0,
+       "hsl": {
+        "h": 210,
+        "s": 0.4,
+        "l": 0.98
+       }
+      },
+      {
+       "color": "#ffffff",
+       "top": 683,
+       "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 1
+       }
+      },
+      {
+       "color": "#172b4d",
+       "top": 7131,
+       "hsl": {
+        "h": 218,
+        "s": 0.54,
+        "l": 0.2
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#172b4d",
+       "share": 0.36
+      },
+      {
+       "color": "#64748b",
+       "share": 0.28
+      },
+      {
+       "color": "#0f172a",
+       "share": 0.16
+      },
+      {
+       "color": "#cad5e2",
+       "share": 0.07
+      },
+      {
+       "color": "#475569",
+       "share": 0.06
+      }
+     ],
+     "button": {
+      "bg": "#ffffff",
+      "hsl": {
+       "h": 0,
+       "s": 0,
+       "l": 1
+      },
+      "fg": "#172b4d"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 7,
+     "inHero": 2,
+     "radius": 8,
+     "height": 40,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Talk to BP",
+      "Open project map"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 1,
+     "shadowOverlay": 1,
+     "shadowSamples": [
+      "button.inline-flex.items-center → rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0"
+     ],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 4,
+     "hairlineSamples": [
+      "div.p-4.sm:p-5 356px",
+      "div.p-4.sm:p-5 356px",
+      "div.mt-auto.pt-3 324px",
+      "div.flex.flex-wrap 324px"
+     ],
+     "outlinedBoxes": 7,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 7,
+     "boxRadius": 12,
+     "squareMedia": 0,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [],
+    "nav": {
+     "links": 1,
+     "fixed": true,
+     "height": 72,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "plus jakarta sans",
+     "plus jakarta sans fallback",
+     "public sans",
+     "public sans fallback"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "pageH": 7926,
+    "margins": {
+     "left": 16,
+     "right": 17
+    },
+    "sections": [
+     {
+      "sel": "header.flex.flex-col",
+      "tag": "header",
+      "top": 96,
+      "height": 319,
+      "words": 61,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Project Directory",
+       "size": 28,
+       "tag": "h1"
+      },
+      "left": 16,
+      "right": 19,
+      "textLeft": 16,
+      "textRight": 19,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "div.space-y-4",
+      "tag": "div",
+      "top": 439,
+      "height": 1977,
+      "words": 245,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "92,581",
+       "size": 28,
+       "tag": "span"
+      },
+      "left": 25,
+      "right": 25,
+      "textLeft": 33,
+      "textRight": 33,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "section.bg-white.border",
+      "tag": "section",
+      "top": 2440,
+      "height": 215,
+      "words": 24,
+      "media": 0,
+      "middle": 0,
+      "heading": null,
+      "left": 33,
+      "right": 33,
+      "textLeft": 33,
+      "textRight": 40,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "section.space-y-3",
+      "tag": "section",
+      "top": 2679,
+      "height": 4428,
+      "words": 1012,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "103,953 records match",
+       "size": 18,
+       "tag": "h2"
+      },
+      "left": 16,
+      "right": 16,
+      "textLeft": 16,
+      "textRight": 17,
+      "fullBleed": false,
+      "footer": false,
+      "hero": false,
+      "continues": true,
+      "pinned": false
+     },
+     {
+      "sel": "footer.bg-[#172B4D].text-white",
+      "tag": "footer",
+      "top": 7131,
+      "height": 796,
+      "words": 129,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "System Navigation",
+       "size": 14,
+       "tag": "h3"
+      },
+      "left": 16,
+      "right": 17,
+      "textLeft": 16,
+      "textRight": 17,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Project Directory",
+      "size": 28,
+      "top": 96,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 16,
+      "n": 3
+     },
+     {
+      "x": 33,
+      "n": 3
+     }
+    ],
+    "leftBlocks": 6,
+    "bodySize": 14,
+    "stage": false,
+    "explains": false,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "dark": false,
+    "ground": "#f8fafc",
+    "sidebar": null,
+    "topbar": {
+     "h": 72
+    },
+    "canvas": {
+     "left": 16,
+     "right": -418
+    },
+    "hero": {
+     "text": "Project Directory",
+     "words": 2,
+     "chars": 17,
+     "lines": 1,
+     "size": 28,
+     "vw": 7.2,
+     "font": "Plus Jakarta Sans",
+     "weight": 700,
+     "tracking": -0.02,
+     "leading": 1.25,
+     "top": 96,
+     "tag": "h1",
+     "kind": "heading",
+     "align": "left",
+     "position": "left"
+    },
+    "charts": 0,
+    "layout": {
+     "panels": 7,
+     "firstScreen": 2,
+     "ragged": [],
+     "voids": []
+    },
+    "tiles": 0,
+    "panels": {
+     "count": 7,
+     "radii": [
+      [
+       12,
+       7
+      ]
+     ],
+     "heavyBorders": 0,
+     "borderSamples": [],
+     "heavyShadows": 0,
+     "softShadows": 0,
+     "shadowSamples": [],
+     "glass": 0
+    },
+    "chips": {
+     "count": 0,
+     "hues": 0,
+     "samples": []
+    },
+    "numbers": {
+     "cells": 25,
+     "leftAligned": 0,
+     "figures": 64,
+     "tabularShare": 1,
+     "kpiMax": 28
+    },
+    "rows": {
+     "count": 25,
+     "median": 168
+    },
+    "chartHues": 0,
+    "placeholders": [],
+    "type": {
+     "under13": 0.24,
+     "tiny": 0,
+     "tinySamples": [],
+     "sizes": [
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      18,
+      20,
+      28
+     ]
+    },
+    "title": {
+     "text": "Project Directory",
+     "size": 28,
+     "top": 96
+    },
+    "colourShare": 0.019
+   },
+   "consoleErrors": []
+  }
+ ],
+ "findings": [],
+ "images": [
+  {
+   "viewport": "desktop",
+   "width": 1440,
+   "fold": "C:\\Users\\Admin\\Downloads\\lgu tracker\\.taste-skill\\after\\desktop-fold.jpg",
+   "pages": [
+    "C:\\Users\\Admin\\Downloads\\lgu tracker\\.taste-skill\\after\\desktop-page-01.jpg",
+    "C:\\Users\\Admin\\Downloads\\lgu tracker\\.taste-skill\\after\\desktop-page-02.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "tablet",
+   "width": 768,
+   "fold": "C:\\Users\\Admin\\Downloads\\lgu tracker\\.taste-skill\\after\\tablet-fold.jpg",
+   "pages": [
+    "C:\\Users\\Admin\\Downloads\\lgu tracker\\.taste-skill\\after\\tablet-page-01.jpg",
+    "C:\\Users\\Admin\\Downloads\\lgu tracker\\.taste-skill\\after\\tablet-page-02.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "mobile",
+   "width": 390,
+   "fold": "C:\\Users\\Admin\\Downloads\\lgu tracker\\.taste-skill\\after\\mobile-fold.jpg",
+   "pages": [
+    "C:\\Users\\Admin\\Downloads\\lgu tracker\\.taste-skill\\after\\mobile-page-01.jpg",
+    "C:\\Users\\Admin\\Downloads\\lgu tracker\\.taste-skill\\after\\mobile-page-02.jpg"
+   ],
+   "film": []
+  }
+ ]
+}

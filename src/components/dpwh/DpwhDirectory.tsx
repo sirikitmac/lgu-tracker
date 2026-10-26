@@ -16,7 +16,7 @@ import { DpwhSummaryPanel } from './DpwhSummaryPanel';
 import { DpwhContractDrawer } from './DpwhContractDrawer';
 import { ColumnToggle, DEFAULT_COLUMN_VISIBILITY, DirectoryPager, DpwhProjectTable, PAGE_SIZE_OPTIONS, useDirectoryTable } from './DpwhProjectTable';
 import { DpwhProjectCard, DpwhProjectCardSkeleton } from './DpwhProjectCard';
-import { CATEGORY_PHOTO_CREDITS } from './categoryImages';
+import { assignCardImages, creditsFor, recordKey } from './categoryImages';
 import { categoryLabel, formatCount, statusLabel } from './format';
 import { controlBaseClass, controlClass, glassBarClass, panelClass, secondaryButtonLgClass, secondaryButtonSmClass } from './ui';
 
@@ -299,6 +299,9 @@ export function DpwhDirectory({ initial }: { initial?: DirectoryInitialState } =
     ? `Source: ${sourceLabel(filters.source)}`
     : `Across all sources: ${PROJECT_SOURCE_IDS.map((s) => PROJECT_SOURCES[s].label).join(' and ')}`;
   const rows = table.getRowModel().rows;
+  // One assignment per visible page: no photo repeats on it, and re-sorting the same records keeps their photos.
+  const cardImages = useMemo(() => assignCardImages(items), [items]);
+  const photoCredits = useMemo(() => creditsFor(cardImages), [cardImages]);
 
   const viewButton = (value: DirectoryView, Icon: typeof List, label: string) => (
     <button
@@ -530,7 +533,7 @@ export function DpwhDirectory({ initial }: { initial?: DirectoryInitialState } =
                   ? Array.from({ length: 6 }, (_, i) => <li key={i} className="flex [&>*]:flex-1"><DpwhProjectCardSkeleton /></li>)
                   : rows.map((row) => (
                       <li key={row.id} className="flex [&>*]:flex-1">
-                        <DpwhProjectCard item={row.original} onOpenContract={setSelectedId} />
+                        <DpwhProjectCard item={row.original} image={cardImages.get(recordKey(row.original))} onOpenContract={setSelectedId} />
                       </li>
                     ))}
               </ul>
@@ -540,15 +543,15 @@ export function DpwhDirectory({ initial }: { initial?: DirectoryInitialState } =
 
         {listState !== 'error' && total > Math.min(...PAGE_SIZE_OPTIONS) && <DirectoryPager table={table} total={total} />}
 
-        {view === 'grid' && listState !== 'error' && (
+        {view === 'grid' && listState !== 'error' && photoCredits.length > 0 && (
           <details className="text-xs text-muted">
             <summary className="cursor-pointer w-fit rounded-sm hover:text-ink focus-visible:outline-2 focus-visible:outline-accent-ink">
-              Photos are representative of each category and do not show these projects. Photo credits
+              Photos are representative of each category and do not show these projects. Credits for the {photoCredits.length} photo{photoCredits.length === 1 ? '' : 's'} on this page
             </summary>
             <ul className="mt-2 space-y-1 pl-4 list-disc">
-              {CATEGORY_PHOTO_CREDITS.map(({ category, photo }) => (
-                <li key={category}>
-                  {categoryLabel(category)}: <a href={photo.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-ink">{photo.title}</a> by {photo.creator},{' '}
+              {photoCredits.map((photo) => (
+                <li key={photo.src}>
+                  {categoryLabel(photo.category)}: <a href={photo.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-ink">{photo.title}</a> by {photo.creator},{' '}
                   <a href={photo.licenseUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-ink">{photo.license}</a>, via Wikimedia Commons
                 </li>
               ))}

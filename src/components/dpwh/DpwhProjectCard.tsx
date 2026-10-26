@@ -8,7 +8,7 @@ import type { ProjectListItem } from '@/types/dpwh';
 import { projectHref, sourceLabel } from '@/lib/integrations/bettergov/sources';
 import { categoryLabel, contractMapHref, formatPeso, formatProgress, locationLabel } from './format';
 import { StatusPill } from './StatusPill';
-import { categoryPhoto } from './categoryImages';
+import type { CardImage } from './categoryImages';
 import { textLinkClass } from './ui';
 
 /** Reported progress as a track at its true ratio; values outside 0–100 are clamped for drawing only. */
@@ -29,24 +29,28 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   water_infrastructure: Droplets,
 };
 
-/**
- * The card's picture: a representative photo of the category, labelled as
- * such, or a plain tile when the category has none or the file fails to load.
- * Decorative (empty alt): the category is printed in the card itself.
- */
-function CardMedia({ category }: { category: string | null }) {
-  const photo = categoryPhoto(category);
-  const [failed, setFailed] = useState(false);
+/** Category tile shown when a card has no photo: the category's own icon, never a stand-in photograph. */
+function CardPlaceholder({ category }: { category: string | null }) {
   const Icon = (category && CATEGORY_ICONS[category]) || ImageOff;
+  return (
+    <div className="relative aspect-[5/2] flex flex-col items-center justify-center gap-1.5 bg-sunken text-muted">
+      <Icon className="w-7 h-7 text-line-strong" strokeWidth={1.25} aria-hidden="true" />
+      <span className="text-xs">No photo available</span>
+    </div>
+  );
+}
 
-  if (!photo || failed) {
-    return (
-      <div className="relative aspect-[5/2] flex flex-col items-center justify-center gap-1.5 bg-sunken text-muted">
-        <Icon className="w-6 h-6" strokeWidth={1.5} aria-hidden="true" />
-        <span className="text-xs">No photo for this category</span>
-      </div>
-    );
-  }
+/**
+ * The card's picture, chosen for the whole page by assignCardImages: a
+ * representative photo of the category (labelled, linked to its source and
+ * licence) or the category tile. Decorative (empty alt): the category is
+ * printed in the card, and the label says the photo is not of this project.
+ */
+function CardMedia({ image, category }: { image: CardImage | undefined; category: string | null }) {
+  const [failed, setFailed] = useState(false);
+  if (!image || image.kind === 'placeholder' || failed) return <CardPlaceholder category={category} />;
+  const { photo } = image;
+  const credit = `${photo.title} by ${photo.creator}, ${photo.license}, via Wikimedia Commons`;
   return (
     <div className="relative aspect-[5/2] overflow-hidden bg-sunken">
       <Image
@@ -57,9 +61,16 @@ function CardMedia({ category }: { category: string | null }) {
         className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
         onError={() => setFailed(true)}
       />
-      <span className="absolute left-2 bottom-2 inline-flex items-center h-6 px-2 rounded-full glass-strong text-[11px] font-medium text-ink">
-        Representative photo
-      </span>
+      <a
+        href={photo.sourceUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={`Representative photo, not of this project. ${credit}`}
+        aria-label={`Representative photo, not of this project. Photo source: ${credit} (opens in a new tab)`}
+        className="absolute left-2 bottom-2 z-10 inline-flex items-center gap-1 h-6 px-2 rounded-full glass-strong text-[11px] font-medium text-ink hover:underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-accent-ink"
+      >
+        Representative photo <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
+      </a>
     </div>
   );
 }
@@ -70,7 +81,7 @@ function CardMedia({ category }: { category: string | null }) {
  * is the card's one control and its hit area covers the card; the map link
  * sits above that layer.
  */
-export function DpwhProjectCard({ item, onOpenContract }: { item: ProjectListItem; onOpenContract: (contractId: string) => void }) {
+export function DpwhProjectCard({ item, image, onOpenContract }: { item: ProjectListItem; image?: CardImage; onOpenContract: (contractId: string) => void }) {
   const isContract = item.source === 'dpwh_contracts';
   const mapHref = isContract ? contractMapHref({ ...item, contract_id: item.record_id }) : null;
   const title = item.contract_name ?? item.title;
@@ -80,7 +91,7 @@ export function DpwhProjectCard({ item, onOpenContract }: { item: ProjectListIte
 
   return (
     <article className="group relative flex flex-col min-w-0 overflow-hidden bg-surface border border-line rounded-card transition-[box-shadow,border-color,transform] duration-200 ease-out hover:border-line-strong hover:shadow-raise hover:-translate-y-0.5 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent-ink">
-      <CardMedia category={item.category} />
+      <CardMedia image={image} category={item.category} />
 
       <div className="flex flex-col flex-1 p-4">
         <div className="flex items-center justify-between gap-3">
