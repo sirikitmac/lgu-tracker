@@ -12,17 +12,35 @@ export type MarkerColorMode = 'status' | 'region';
 
 const markerFill = (p: DpwhMapPoint, mode: MarkerColorMode) => (mode === 'region' ? regionColor(p.region) : statusColor(p.status));
 
-/** The selected marker grows and takes an ink ring (dark in light mode, light in dark mode); fills never change. */
-function markerRing(selected: boolean): L.CircleMarkerOptions {
-  if (!selected) return { radius: 6, color: '#FFFFFF', weight: 1.5 };
+/**
+ * The selected marker grows and takes an ink ring (dark in light mode, light
+ * in dark mode); a marker whose list entry is hovered or focused takes a
+ * lighter version of the same ring. Fills never change.
+ */
+function markerRing(state: 'rest' | 'hover' | 'selected'): L.CircleMarkerOptions {
+  if (state === 'rest') return { radius: 6, color: '#FFFFFF', weight: 1.5 };
   const ink = getComputedStyle(document.documentElement).getPropertyValue('--color-ink').trim() || '#1D1D1F';
-  return { radius: 9, color: ink, weight: 3 };
+  return state === 'selected' ? { radius: 9, color: ink, weight: 3 } : { radius: 8, color: ink, weight: 2 };
 }
 
-/** Whole Philippines. */
+/** Whole Philippines, the fallback view. */
 const PH_CENTER: L.LatLngExpression = [12.3, 122.5];
 const PH_ZOOM = 6;
+/** The Visayas and Mindanao, which the contract data covers: the opening view. */
+const DATA_BOUNDS = L.latLngBounds([4.6, 117.4], [12.6, 126.6]);
 const FOCUS_ZOOM = 15;
+
+/** Where the Street View cat was dropped: an accent pin with a cat face, unlike any contract marker. */
+const STREETVIEW_SPOT_ICON = L.divIcon({
+  className: 'streetview-spot',
+  iconSize: [34, 42],
+  iconAnchor: [17, 41],
+  html: `<svg viewBox="0 0 34 42" width="34" height="42" aria-hidden="true">
+    <path d="M17 41S31 27.8 31 16.5a14 14 0 0 0-28 0C3 27.8 17 41 17 41z" fill="var(--color-accent)" stroke="#fff" stroke-width="2"/>
+    <path d="M10 9.5l3.6 4.2h6.8L24 9.5l.6 7.6a7.6 7 0 0 1-15.2 0z" fill="#fff"/>
+    <circle cx="14.4" cy="17.2" r="1.2" fill="#1D1D1F"/><circle cx="19.6" cy="17.2" r="1.2" fill="#1D1D1F"/>
+  </svg>`,
+});
 
 function escapeHtml(text: string): string {
   return text
@@ -76,9 +94,21 @@ interface Props {
   /** Called when a marker is clicked, so the list can highlight the same contract. */
   onMarkerSelect?: (id: string) => void;
   colorMode?: MarkerColorMode;
+  /** Contract whose list entry is hovered or focused; its marker is emphasized. */
+  hoveredId?: string | null;
+  /**
+   * False while the Street View cat is being placed: markers then ignore
+   * clicks and hover, so a drop on top of one is read as a place on the map,
+   * not as choosing that contract.
+   */
+  markersInteractive?: boolean;
+  /** Where the Street View cat was dropped, shown as its own pin; null hides it. */
+  streetViewSpot?: { lat: number; lng: number } | null;
+  /** The Leaflet map once created (and null when it is removed), for overlays that work in its coordinates. */
+  onMapReady?: (map: L.Map | null) => void;
 }
 
-export default function DpwhLeafletMap({ points, focus, selection, onBoundsChange, onMarkerSelect, colorMode = 'status' }: Props) {
+export default function DpwhLeafletMap({ points, focus, selection, onBoundsChange, onMarkerSelect, colorMode = 'status', hoveredId = null, markersInteractive = true, streetViewSpot = null, onMapReady }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.LayerGroup | null>(null);
@@ -92,17 +122,22 @@ export default function DpwhLeafletMap({ points, focus, selection, onBoundsChang
   const colorModeRef = useRef(colorMode);
   colorModeRef.current = colorMode;
   const pointsRef = useRef(new Map<string, DpwhMapPoint>());
+  const hoveredRef = useRef<string | null>(null);
+  const markersInteractiveRef = useRef(markersInteractive);
+  markersInteractiveRef.current = markersInteractive;
+  const onMapReadyRef = useRef(onMapReady);
+  onMapReadyRef.current = onMapReady;
+  const ringFor = (id: string) => markerRing(selectedRef.current === id ? 'selected' : hoveredRef.current === id ? 'hover' : 'rest');
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container || mapRef.current) return;
 
-    const map = L.map(container, {
-      center: focus ? [focus.lat, focus.lng] : PH_CENTER,
-      zoom: focus ? FOCUS_ZOOM : PH_ZOOM,
-      preferCanvas: true,
-      scrollWheelZoom: true,
-    });
+    const map = L.map(container, { preferCanvas: true, scrollWheelZoom: true });
+    if (focus) map.setView([focus.lat, focus.lng], FOCUS_ZOOM);
+    // Fitting needs a laid-out container; a hidden one falls back to the whole country.
+    else if (container.clientWidth > 0 && container.clientHeight > 0) map.fitBounds(DATA_BOUNDS, { padding: [12, 12] });
+    else map.setView(PH_CENTER, PH_ZOOM);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution:
@@ -110,6 +145,7 @@ export default function DpwhLeafletMap({ points, focus, selection, onBoundsChang
     }).addTo(map);
     layerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
+    onMapReadyRef.current?.(map);
 
     const report = () => {
       // A hidden map (the list pane on a small screen) has no size and no meaningful viewport.
@@ -133,6 +169,7 @@ export default function DpwhLeafletMap({ points, focus, selection, onBoundsChang
     resize.observe(container);
     return () => {
       resize.disconnect();
+      onMapReadyRef.current?.(null);
       map.remove();
       mapRef.current = null;
       layerRef.current = null;
@@ -159,9 +196,10 @@ export default function DpwhLeafletMap({ points, focus, selection, onBoundsChang
       if (markersRef.current.has(p.contract_id)) continue;
       const id = p.contract_id;
       const marker = L.circleMarker([p.latitude, p.longitude], {
-        ...markerRing(selectedRef.current === id),
+        ...ringFor(id),
         fillColor: markerFill(p, colorModeRef.current),
         fillOpacity: 0.9,
+        interactive: markersInteractiveRef.current,
       }).bindPopup(popupHtml(p), { maxWidth: 300 });
       marker.on('click', () => onMarkerSelectRef.current?.(id));
       marker.addTo(layer);
@@ -185,20 +223,54 @@ export default function DpwhLeafletMap({ points, focus, selection, onBoundsChang
   }, [colorMode]);
 
   useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !streetViewSpot) return;
+    const pin = L.marker([streetViewSpot.lat, streetViewSpot.lng], {
+      icon: STREETVIEW_SPOT_ICON,
+      interactive: false,
+      keyboard: false,
+      zIndexOffset: 1000,
+    }).addTo(map);
+    return () => {
+      pin.remove();
+    };
+  }, [streetViewSpot]);
+
+  // The canvas renderer reads `interactive` on every hit test, so flipping it in place is enough.
+  useEffect(() => {
+    for (const marker of markersRef.current.values()) marker.options.interactive = markersInteractive;
+    if (!markersInteractive) mapRef.current?.closePopup();
+  }, [markersInteractive]);
+
+  useEffect(() => {
     const previous = selectedRef.current;
     selectedRef.current = selection?.id ?? null;
-    if (previous && previous !== selectedRef.current) markersRef.current.get(previous)?.setStyle(markerRing(false));
+    if (previous && previous !== selectedRef.current) markersRef.current.get(previous)?.setStyle(ringFor(previous));
     const map = mapRef.current;
     if (!map || !selection) return;
     const marker = markersRef.current.get(selection.id);
     if (!marker) return;
-    marker.setStyle(markerRing(true)).bringToFront();
+    marker.setStyle(markerRing('selected')).bringToFront();
     if (!selection.pan) return;
     // The map may have been hidden behind the list on a small screen until this render.
     map.invalidateSize();
     map.setView(marker.getLatLng(), Math.max(map.getZoom(), 13));
     marker.openPopup();
   }, [selection]);
+
+  useEffect(() => {
+    const previous = hoveredRef.current;
+    hoveredRef.current = hoveredId;
+    if (previous && previous !== hoveredId) markersRef.current.get(previous)?.setStyle(ringFor(previous));
+    if (!hoveredId) return;
+    const marker = markersRef.current.get(hoveredId);
+    if (!marker) return;
+    marker.setStyle(ringFor(hoveredId)).bringToFront();
+    // The selected marker stays on top of a hovered neighbour.
+    if (selectedRef.current) markersRef.current.get(selectedRef.current)?.bringToFront();
+    // ringFor reads refs only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hoveredId]);
 
   // A new focus (e.g. "View on map" from another contract while this page is
   // open) recenters the existing map.

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { LguMark } from '@/components/layout/Navbar';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/ui/Toast';
 import {
   Eye,
   EyeOff,
@@ -28,6 +29,7 @@ interface FormErrors {
 
 export default function LoginPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -86,7 +88,9 @@ export default function LoginPage() {
         });
         // Only navigate once Supabase Auth has actually confirmed the
         // session; router.refresh() makes the next /dashboard render pick
-        // up the new session cookie in Server Components.
+        // up the new session cookie in Server Components. The toast lives in
+        // the root layout, so it stays up across the navigation.
+        toast({ id: 'auth', tone: 'success', title: 'Signed in', description: 'Opening the LGU monitoring workspace.' });
         router.push('/dashboard');
         router.refresh();
       } else if (!result.configured) {
@@ -132,7 +136,10 @@ export default function LoginPage() {
     setIsSendingRecovery(true);
     try {
       const result = await requestLGUPasswordReset(recoveryEmail.trim());
-      setRecoveryNotice(result.message);
+      // Only a confirmed request is reported as sent; a refusal (rate limit,
+      // unconfigured auth) is shown as the error it is.
+      if (result.success) setRecoveryNotice(result.message);
+      else setRecoveryError(result.configured ? 'We could not send recovery instructions right now. Please try again in a few minutes.' : result.message);
     } catch {
       setRecoveryError('Unable to process password reset request at this time.');
     } finally {

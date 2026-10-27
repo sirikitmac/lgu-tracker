@@ -71,7 +71,7 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 civic-glass-nav border-b border-line">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 h-14 px-4 sm:px-6">
+      <div className="site-frame max-w-7xl mx-auto flex items-center justify-between gap-4 h-14 px-4 sm:px-6">
         <Link href="/" className={`flex items-center gap-2.5 shrink-0 rounded-lg ${focusRing}`} aria-label="LGU Tracker home">
           <LguMark />
           <span className="text-[17px] font-bold tracking-[-0.02em] text-ink whitespace-nowrap">LGU Tracker</span>

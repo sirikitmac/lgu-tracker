@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useId, useMemo, useState } from 'react';
-import { AlertTriangle, LayoutGrid, List, RotateCcw, Search, SearchX, SlidersHorizontal, X } from 'lucide-react';
+import { FolderSearch, LayoutGrid, List, RotateCcw, Search, SearchX, SlidersHorizontal, X } from 'lucide-react';
 import type { ColumnVisibilityState as VisibilityState, PaginationState } from '@tanstack/react-table';
 import {
   DPWH_CATEGORIES,
@@ -13,8 +13,12 @@ import {
 } from '@/types/dpwh';
 import { PROJECT_SOURCES, PROJECT_SOURCE_IDS, sourceLabel } from '@/lib/integrations/bettergov/sources';
 import { regionColor, regionDisplayName } from '@/lib/regionPalette';
+import { errorMessage, fetchJson } from '@/lib/http';
+import { useToast } from '@/components/ui/Toast';
+import { EmptyState, ErrorState, Notice } from '@/components/ui/StateViews';
 import { DpwhSummaryPanel } from './DpwhSummaryPanel';
 import { DataScopeNote } from './DataScopeNote';
+import { DataFreshness } from './DataFreshness';
 import { DpwhContractDrawer } from './DpwhContractDrawer';
 import { ColumnToggle, DEFAULT_COLUMN_VISIBILITY, DirectoryPager, DpwhProjectTable, PAGE_SIZE_OPTIONS, useDirectoryTable } from './DpwhProjectTable';
 import { DpwhProjectCard, DpwhProjectCardSkeleton } from './DpwhProjectCard';
@@ -113,6 +117,7 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
   const [view, setView] = useState<DirectoryView>(initial?.view ?? 'grid');
+  const { toast } = useToast();
   // Filters start folded away unless a shared link already applies some.
   const [filtersOpen, setFiltersOpen] = useState(() =>
     FILTER_KEYS.some((key) => (initial?.filters?.[key] ?? '').trim() !== '')
@@ -160,11 +165,9 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
 
   useEffect(() => {
     let active = true;
-    fetch('/api/dpwh/summary')
-      .then(async (res) => {
-        const body = await res.json();
+    fetchJson<{ summary: DpwhSummary | null }>('/api/dpwh/summary')
+      .then((body) => {
         if (!active) return;
-        if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
         setSummary(body.summary);
         setSummaryState(body.summary ? 'ready' : 'empty');
       })
@@ -197,17 +200,16 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
   useEffect(() => {
     const controller = new AbortController();
     setListState('loading');
-    fetch(`/api/dpwh/contracts?${params}`, { signal: controller.signal })
-      .then(async (res) => {
-        const body = await res.json();
-        if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
+    // Aborting on every change means a slow, superseded response can never overwrite newer results.
+    fetchJson<{ items: ProjectListItem[]; total: number }>(`/api/dpwh/contracts?${params}`, { signal: controller.signal })
+      .then((body) => {
         setItems(body.items);
         setTotal(body.total);
         setListState('ready');
       })
-      .catch((error: Error) => {
-        if (error.name === 'AbortError') return;
-        setListError(error.message);
+      .catch((error: unknown) => {
+        if ((error as Error)?.name === 'AbortError') return;
+        setListError(errorMessage(error, 'Could not load projects. Please try again.'));
         setListState('error');
       });
     return () => controller.abort();
@@ -266,6 +268,7 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
   const resetFilters = () => {
     setFilters((prev) => ({ ...EMPTY_FILTERS, sort: prev.sort }));
     firstPage();
+    toast({ id: 'directory-filters', tone: 'info', title: 'Search and filters cleared', description: 'Showing all projects.' });
   };
 
   const table = useDirectoryTable({
@@ -314,14 +317,12 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
   return (
     <div className="space-y-5">
       {summaryState === 'error' && (
-        <div role="alert" className="flex items-start gap-2 p-3.5 rounded-card border border-danger-line bg-danger-soft text-[13px] text-danger-ink">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" /> Could not load the data summary, so the location and office filters have no options. Search and the other filters still work.
-        </div>
+        <Notice tone="danger">
+          Could not load the data summary, so the location and office filters have no options. Search and the other filters still work.
+        </Notice>
       )}
       {summaryState === 'empty' && (
-        <div role="status" className="flex items-start gap-2 p-3.5 rounded-card border border-warn-line bg-warn-soft text-[13px] text-warn-ink">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" /> No DPWH data has been imported yet. An administrator needs to run the initial sync.
-        </div>
+        <Notice tone="warn">No DPWH data has been imported yet. An administrator needs to run the initial sync.</Notice>
       )}
       {showSummary && summary && (
         <DpwhSummaryPanel
@@ -478,7 +479,10 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
                     : 'Projects'}
               </span>
             </h2>
-            <p className="text-xs text-muted">{scopeNote}</p>
+            <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <p className="text-xs text-muted">{scopeNote}</p>
+              <DataFreshness summary={summary} />
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <label className="flex items-center gap-2 text-xs font-medium text-subtle">
@@ -496,24 +500,39 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
         </div>
 
         {listState === 'error' ? (
-          <div role="alert" className={`${panelClass} p-8 text-center text-sm text-danger-ink space-y-3`}>
-            <AlertTriangle className="w-6 h-6 mx-auto" aria-hidden="true" />
-            <p>Could not load projects ({listError}).</p>
-            {filters.status && (
-              <p className="text-xs text-muted">Filters on rare statuses can time out on the hosted database. Removing the status filter usually helps.</p>
+          <ErrorState
+            className={panelClass}
+            title="Projects could not be loaded"
+            description={listError}
+            onRetry={() => setReload((n) => n + 1)}
+          >
+            {(filters.status || filters.sort !== EMPTY_FILTERS.sort) && (
+              <p className="max-w-sm text-xs text-muted">
+                Rare status filters and some sort orders can time out on the hosted database. Removing the status filter or using the default sort usually helps.
+              </p>
             )}
-            <button type="button" onClick={() => setReload((n) => n + 1)} className={secondaryButtonSmClass}>
-              Try again
-            </button>
-          </div>
+          </ErrorState>
         ) : listState === 'ready' && items.length === 0 ? (
-          <div className={`${panelClass} p-10 text-center space-y-3`}>
-            <SearchX className="w-7 h-7 mx-auto text-muted" aria-hidden="true" />
-            <p className="text-sm font-semibold text-ink">No projects match these filters.</p>
-            {isFiltered && (
-              <button type="button" onClick={resetFilters} className="text-sm font-medium text-ink underline underline-offset-2">Clear all filters</button>
-            )}
-          </div>
+          isFiltered ? (
+            <EmptyState
+              className={panelClass}
+              icon={SearchX}
+              title="No projects found"
+              description="No projects match your current search or filters. Try fewer filters or a different search term."
+              action={
+                <button type="button" onClick={resetFilters} className={secondaryButtonSmClass}>
+                  <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" /> Clear search and filters
+                </button>
+              }
+            />
+          ) : (
+            <EmptyState
+              className={panelClass}
+              icon={FolderSearch}
+              title="No projects available yet"
+              description="There are no project records to show. Records appear here once the DPWH data has been imported."
+            />
+          )
         ) : (
           <div className={`transition-opacity duration-200 ${listState === 'loading' ? 'opacity-60' : ''}`} aria-busy={listState === 'loading'}>
             {view === 'list' ? (

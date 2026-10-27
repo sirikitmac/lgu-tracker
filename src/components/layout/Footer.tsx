@@ -15,7 +15,7 @@ const LINKS = [
 export function Footer() {
   return (
     <footer className="bg-sunken text-ink border-t border-line">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 lg:py-12">
+      <div className="site-frame max-w-7xl mx-auto px-4 sm:px-6 py-10 lg:py-12">
         <div className="grid gap-8 md:grid-cols-12">
           <div className="md:col-span-5 space-y-3">
             <Link href="/" className="inline-flex items-center gap-2.5 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink">

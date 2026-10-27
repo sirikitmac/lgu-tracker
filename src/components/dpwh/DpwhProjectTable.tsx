@@ -18,6 +18,7 @@ import {
 } from '@tanstack/react-table';
 import type { ProjectListItem } from '@/types/dpwh';
 import { projectHref, sourceLabel } from '@/lib/integrations/bettergov/sources';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { categoryLabel, contractMapHref, formatCount, formatDate, formatPeso, formatProgress, locationLabel } from './format';
 import { StatusPill } from './StatusPill';
 import { ProgressBar } from './DpwhProjectCard';
@@ -297,10 +298,10 @@ export function DpwhProjectTable({
           <tbody className="divide-y divide-line">
             {loading && rows.length === 0
               ? Array.from({ length: 6 }, (_, i) => (
-                  <tr key={i}>
+                  <tr key={i} aria-hidden="true">
                     {visibleColumns.map((col) => (
                       <td key={col.id} className={`px-4 py-4 ${COLUMN_CLASS[col.id] ?? ''}`}>
-                        <div className={`h-3.5 rounded bg-sunken ${col.id === 'project' ? 'w-4/5' : 'w-16'} ${COLUMN_CLASS[col.id]?.includes('text-right') ? 'ml-auto' : ''}`} />
+                        <div className={`h-3.5 rounded bg-sunken motion-safe:animate-pulse ${col.id === 'project' ? 'w-4/5' : 'w-16'} ${COLUMN_CLASS[col.id]?.includes('text-right') ? 'ml-auto' : ''}`} />
                       </td>
                     ))}
                   </tr>
@@ -393,21 +394,29 @@ export function DirectoryPager({ table, total }: { table: DirectoryTable; total:
         </label>
       </div>
       <div className="flex items-center gap-1.5">
-        <button type="button" className={btn} onClick={() => table.firstPage()} disabled={!table.getCanPreviousPage()} aria-label="First page">
-          <ChevronsLeft className="w-4 h-4" aria-hidden="true" />
-        </button>
-        <button type="button" className={btn} onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} aria-label="Previous page">
-          <ChevronLeft className="w-4 h-4" aria-hidden="true" />
-        </button>
+        <Tooltip content="First page">
+          <button type="button" className={btn} onClick={() => table.firstPage()} disabled={!table.getCanPreviousPage()} aria-label="First page">
+            <ChevronsLeft className="w-4 h-4" aria-hidden="true" />
+          </button>
+        </Tooltip>
+        <Tooltip content="Previous page">
+          <button type="button" className={btn} onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} aria-label="Previous page">
+            <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+          </button>
+        </Tooltip>
         <span className="px-2 tabular-nums text-ink" aria-live="polite">
           Page {formatCount(pageIndex + 1)} of {formatCount(pageCount)}
         </span>
-        <button type="button" className={btn} onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} aria-label="Next page">
-          <ChevronRight className="w-4 h-4" aria-hidden="true" />
-        </button>
-        <button type="button" className={btn} onClick={() => table.lastPage()} disabled={!table.getCanLastPage()} aria-label="Last page">
-          <ChevronsRight className="w-4 h-4" aria-hidden="true" />
-        </button>
+        <Tooltip content="Next page">
+          <button type="button" className={btn} onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} aria-label="Next page">
+            <ChevronRight className="w-4 h-4" aria-hidden="true" />
+          </button>
+        </Tooltip>
+        <Tooltip content="Last page">
+          <button type="button" className={btn} onClick={() => table.lastPage()} disabled={!table.getCanLastPage()} aria-label="Last page">
+            <ChevronsRight className="w-4 h-4" aria-hidden="true" />
+          </button>
+        </Tooltip>
       </div>
     </nav>
   );

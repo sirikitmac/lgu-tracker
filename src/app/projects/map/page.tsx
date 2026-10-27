@@ -25,16 +25,20 @@ export default async function PublicProjectMapPage({ searchParams }: PageProps<'
   const focus = parseFocus(await searchParams);
 
   return (
-    <>
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div data-frame="wide" className="space-y-6">
+      <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="min-w-0">
-          <h1 className="page-title text-[30px] sm:text-[36px] text-ink">Project Map</h1>
-          <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-subtle">
-            DPWH contracts across the Visayas and Mindanao, placed at the coordinates DPWH reports. Select a marker or a
-            contract for details.
+          <p className="inline-flex items-center gap-2 text-[13px] font-semibold text-subtle">
+            <span className="w-2 h-2 rounded-full bg-accent" aria-hidden="true" />
+            DPWH contracts · Visayas and Mindanao
+          </p>
+          <h1 className="mt-2 page-title text-[30px] sm:text-[40px] text-ink">Project Map</h1>
+          <p className="mt-2 max-w-[60ch] text-[15px] leading-relaxed text-subtle">
+            Contracts placed at the coordinates DPWH reports. Move the map or filter to update the list; select a contract
+            or a marker to see it on both.
           </p>
         </div>
-        <nav aria-label="Other views" className="flex flex-wrap items-center gap-2 sm:shrink-0">
+        <nav aria-label="Other views" className="flex flex-wrap items-center gap-2 md:shrink-0">
           <Link href="/projects/dashboard" className={secondaryButtonClass}>
             <BarChart3 className="w-4 h-4" aria-hidden="true" /> Dashboard
           </Link>
@@ -44,6 +48,6 @@ export default async function PublicProjectMapPage({ searchParams }: PageProps<'
         </nav>
       </header>
       <DpwhPublicMap focus={focus} />
-    </>
+    </div>
   );
 }

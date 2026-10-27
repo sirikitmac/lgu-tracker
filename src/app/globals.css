@@ -174,6 +174,13 @@
   }
 }
 
+/* The navigation, footer and page frame share one width (max-w-7xl). A page that needs
+   the room, like the project map, sets data-frame="wide" and all three widen together,
+   so their edges stay aligned. */
+:root:has([data-frame="wide"]) .site-frame {
+  max-width: 100rem;
+}
+
 /* Page titles on internal screens: the sans, semibold and tightly tracked. */
 .page-title {
   font-family: var(--font-display);
@@ -319,6 +326,39 @@
   from { transform: translate3d(24px, 0, 0); opacity: 0.6; }
   to { transform: none; opacity: 1; }
 }
+/* Toasts rise in and fade out; tooltips only fade. All are used with motion-safe:. */
+@keyframes toast-in {
+  from { opacity: 0; transform: translate3d(0, 8px, 0) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes toast-out {
+  to { opacity: 0; transform: translate3d(0, 4px, 0) scale(0.98); }
+}
+@keyframes tooltip-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* The Street View cat: a little wiggle on hover (fine pointers only), none with reduced motion. */
+@keyframes cat-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-12deg) translateY(-1px); }
+  60% { transform: rotate(9deg); }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .streetview-cat:not(:disabled):hover .streetview-cat-icon {
+    animation: cat-wiggle 520ms ease-in-out;
+  }
+}
+.map-frame .leaflet-container.streetview-placing,
+.map-frame .leaflet-container.streetview-placing .leaflet-interactive {
+  cursor: crosshair;
+}
+.streetview-spot {
+  background: none;
+  border: 0;
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.3));
+}
 
 /* Leaflet's zoom buttons in the app face, on a rounded glass bar (map pages). */
 .leaflet-bar {
@@ -337,20 +377,57 @@
   backdrop-filter: blur(12px);
 }
 
-/* The public project map's frame: Leaflet controls line up with the overlays' 12px inset,
-   the attribution stays legible, and keyboard focus on the map shows inside the frame. */
+/* The public project map's frame: Leaflet controls line up with the overlays' 12px inset
+   and wear the same glass as the other floating controls, the attribution stays legible,
+   and keyboard focus on the map shows inside the frame. */
 .map-frame .leaflet-top .leaflet-control {
   margin-top: 12px;
 }
 .map-frame .leaflet-left .leaflet-control {
   margin-left: 12px;
 }
+.map-frame .leaflet-bar {
+  border-color: color-mix(in srgb, var(--color-line) 80%, transparent) !important;
+  border-radius: 14px !important;
+  box-shadow: var(--shadow-raise) !important;
+}
+.map-frame .leaflet-bar a {
+  width: 36px !important;
+  height: 36px !important;
+  line-height: 34px !important;
+  font-size: 18px !important;
+  background-color: color-mix(in srgb, var(--color-surface) 90%, transparent) !important;
+  -webkit-backdrop-filter: saturate(1.6) blur(24px);
+  backdrop-filter: saturate(1.6) blur(24px);
+  transition: background-color 0.15s;
+}
+.map-frame .leaflet-bar a:hover {
+  background-color: var(--color-sunken) !important;
+}
+.map-frame .leaflet-bar a:focus-visible {
+  outline: 2px solid var(--color-accent-ink);
+  outline-offset: -2px;
+}
+.map-frame .leaflet-bar a.leaflet-disabled {
+  color: var(--color-muted) !important;
+}
 .map-frame .leaflet-control-attribution {
   font-family: var(--font-sans);
   font-size: 11px;
   line-height: 1.5;
-  padding: 1px 8px;
-  border-top-left-radius: 8px;
+  padding: 2px 10px;
+  border-top-left-radius: 10px;
+  background-color: color-mix(in srgb, var(--color-surface) 85%, transparent) !important;
+  color: var(--color-subtle);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+.map-frame .leaflet-popup-content-wrapper {
+  border-radius: 16px;
+  box-shadow: var(--shadow-float);
+}
+.map-frame .leaflet-popup-content {
+  margin: 14px 16px;
 }
 .map-frame .leaflet-container:focus-visible {
   outline: 2px solid var(--color-accent-ink);
