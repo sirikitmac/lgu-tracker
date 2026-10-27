@@ -2,7 +2,7 @@
 
 import React, { Suspense, useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import {
   LGUProject,
   ProjectCategory,
@@ -25,6 +25,40 @@ import {
 import { ProjectTable } from '@/components/dashboard/ProjectTable';
 import { ProjectCardGrid } from '@/components/dashboard/ProjectCardGrid';
 import { ProjectDetailDrawer } from '@/components/dashboard/ProjectDetailDrawer';
+import { Skeleton } from '@/components/ui/StateViews';
+
+/** The KPI row and project cards' shapes while records load, so the page does not jump when they arrive. */
+function WorkspaceSkeleton() {
+  return (
+    <div className="space-y-6" aria-hidden="true">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }, (_, i) => (
+          <div key={i} className="bg-surface border border-line rounded-card p-5 min-h-[124px] flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-3 w-28" />
+              <Skeleton className="h-8 w-8 !rounded-lg" />
+            </div>
+            <div className="space-y-2.5">
+              <Skeleton className="h-8 w-16" />
+              <Skeleton className="h-3 w-40" />
+            </div>
+          </div>
+        ))}
+      </div>
+      <Skeleton className="h-12 w-full !rounded-card" />
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {Array.from({ length: 6 }, (_, i) => (
+          <div key={i} className="bg-surface border border-line rounded-card p-5 space-y-3">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-1.5 w-full mt-4" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -271,16 +305,16 @@ function DashboardContent() {
                 {!isSupabaseConfigured
                   ? 'Supabase is not connected in this environment — displaying bundled sample/demo data, not live LGU records.'
                   : dataError
-                  ? `Unable to load live data from Supabase (${dataError}) — displaying bundled sample/demo data instead.`
+                  ? 'Live LGU records could not be loaded right now — displaying bundled sample/demo data instead. Reload the page to try again.'
                   : 'Displaying bundled sample/demo data, not live LGU records.'}
               </span>
             </div>
           )}
 
           {isLoadingData ? (
-            <div className="flex items-center justify-center gap-2.5 py-20 text-sm font-medium text-muted">
-              <Loader2 className="w-4 h-4 animate-spin text-accent-ink" />
-              <span>Loading project records from Supabase...</span>
+            <div role="status" aria-busy="true">
+              <span className="sr-only">Loading project records…</span>
+              <WorkspaceSkeleton />
             </div>
           ) : (
             <>

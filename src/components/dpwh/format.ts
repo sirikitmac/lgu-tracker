@@ -57,6 +57,51 @@ export function formatProgress(value: number | string | null | undefined): strin
   return Number.isFinite(n) ? `${n.toFixed(n % 1 === 0 ? 0 : 1)}%` : 'Not reported';
 }
 
+// Joining words lowercased inside a title; place-name particles ("Zamboanga del Norte", "Cagayan de Oro") included.
+const TITLE_PARTICLES = new Set([
+  'A', 'ALONG', 'AN', 'AND', 'AS', 'AT', 'BY', 'DE', 'DEL', 'FOR', 'FROM', 'IN', 'INTO', 'OF', 'ON', 'OR', 'THE', 'TO', 'UNDER', 'VIA', 'WITH',
+]);
+// Acronyms in DPWH titles that contain a vowel, so the no-vowel rule below does not catch them.
+const TITLE_ACRONYMS = new Set(['ADB', 'BARMM', 'IGCMRSP', 'JICA', 'KOICA', 'LGU', 'NEP', 'NIR', 'ODA', 'PHI', 'ROW', 'RROW']);
+
+function titleWord(word: string, first: boolean): string {
+  const core = word.replace(/\./g, '');
+  if (
+    /\d/.test(word) || // codes and chainages: PR-08, K1769+648.00, 3631-PHI
+    TITLE_ACRONYMS.has(core) ||
+    /^[IVX]{1,4}$/.test(core) || // roman numerals: Region VII, Phase II
+    /^([A-Z]\.)+[A-Z]?$/.test(word) || // initials: R.T.
+    (!/[AEIOUY]/.test(core) && core.length > 1 && !word.endsWith('.')) // DPWH, PR, RCDG (but Jct., Brgy.)
+  ) {
+    return word;
+  }
+  if (!first && TITLE_PARTICLES.has(core)) return word.toLowerCase();
+  return word.charAt(0) + word.slice(1).toLowerCase();
+}
+
+/**
+ * Display casing for a project title the source publishes in capitals, so a
+ * long title reads as words instead of a block. Words keep capitals where
+ * lowercasing could misstate them: place names stay capitalized (which is
+ * why this is title case, not sentence case), and acronyms, codes,
+ * chainages, initials and roman numerals are left as published. Titles that
+ * already use mixed case are returned unchanged. Display only: the stored
+ * name is never altered, and screens that show it should keep it available
+ * (for example as the element's title).
+ */
+export function readableTitle(value: string): string {
+  const letters = value.replace(/[^A-Za-z]/g, '');
+  const upper = letters.replace(/[^A-Z]/g, '').length;
+  if (letters.length < 4 || upper / letters.length < 0.9) return value;
+  let first = true;
+  return value.replace(/[A-Za-z0-9.+']+/g, (word) => {
+    if (!/[A-Za-z]/.test(word)) return word;
+    const out = titleWord(word.toUpperCase(), first);
+    first = false;
+    return out;
+  });
+}
+
 /** Days between two ISO dates, or null. */
 export function durationDays(start: string | null, end: string | null): number | null {
   if (!start || !end) return null;

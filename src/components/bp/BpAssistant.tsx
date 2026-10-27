@@ -7,6 +7,8 @@ import { AlertTriangle, ArrowUpRight, Bot, Loader2, RotateCcw, Send, Sparkles, X
 import { formatPeso } from '@/components/dpwh/format';
 import { StatusPill } from '@/components/dpwh/StatusPill';
 import { secondaryButtonClass } from '@/components/dpwh/ui';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 /**
  * "Ask BP" button and the floating, non-modal chat panel. The page stays
@@ -124,6 +126,7 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
   const [input, setInput] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
   const nextId = useRef(1);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -251,20 +254,33 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
               </h2>
               <p className="text-xs text-muted">Your guide to public infrastructure data.</p>
             </div>
-            <button
-              type="button"
-              onClick={reset}
-              disabled={messages.length === 0 && !error}
-              className="p-2 rounded-lg text-subtle hover:bg-sunken disabled:opacity-40 disabled:hover:bg-transparent focus-visible:outline-2 focus-visible:outline-accent-ink"
-              aria-label="Start a new conversation"
-              title="New conversation"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
-            <button type="button" onClick={close} className="p-2 rounded-lg text-subtle hover:bg-sunken focus-visible:outline-2 focus-visible:outline-accent-ink" aria-label="Close BP">
-              <X className="w-4 h-4" />
-            </button>
+            <Tooltip content="New conversation" side="bottom">
+              <button
+                type="button"
+                // Only a conversation with questions in it is worth asking about; an error alone just clears.
+                onClick={() => (messages.length > 0 ? setConfirmReset(true) : reset())}
+                disabled={messages.length === 0 && !error}
+                className="p-2 rounded-lg text-subtle hover:bg-sunken disabled:opacity-40 disabled:hover:bg-transparent focus-visible:outline-2 focus-visible:outline-accent-ink"
+                aria-label="Start a new conversation"
+              >
+                <RotateCcw className="w-4 h-4" aria-hidden="true" />
+              </button>
+            </Tooltip>
+            <Tooltip content="Close (Esc)" side="bottom">
+              <button type="button" onClick={close} className="p-2 rounded-lg text-subtle hover:bg-sunken focus-visible:outline-2 focus-visible:outline-accent-ink" aria-label="Close BP">
+                <X className="w-4 h-4" aria-hidden="true" />
+              </button>
+            </Tooltip>
           </header>
+          <ConfirmDialog
+            open={confirmReset}
+            onOpenChange={setConfirmReset}
+            title="Start a new conversation?"
+            description="This clears the questions and answers in this BP conversation. It cannot be undone."
+            confirmLabel="Clear conversation"
+            tone="danger"
+            onConfirm={reset}
+          />
 
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 text-sm" aria-live="polite" aria-busy={pending}>
             <div className="max-w-[90%] rounded-2xl rounded-tl-sm bg-surface border border-line px-3.5 py-2.5 text-ink space-y-2 leading-relaxed">
@@ -360,6 +376,9 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
               {pending ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Send className="w-4 h-4" aria-hidden="true" />}
             </button>
           </form>
+          <p className="px-4 pb-3 -mt-1 text-[11.5px] leading-snug text-muted">
+            With AI answers on, questions are sent to Google Gemini, so leave out personal details. The conversation is kept only in this browser tab.
+          </p>
         </section>,
         document.body
       )}

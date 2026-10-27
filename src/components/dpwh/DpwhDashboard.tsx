@@ -1,11 +1,15 @@
 'use client';
 
-import React, { useEffect, useId, useMemo, useState } from 'react';
+import React, { useEffect, useId, useMemo, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, ArrowRight, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowRight, BarChart3, CalendarX, Info, MapPinned, PieChart, X } from 'lucide-react';
 import type { DpwhCount, DpwhStatus, DpwhSummary } from '@/types/dpwh';
 import { regionColor, regionDisplayName } from '@/lib/regionPalette';
 import { DataScopeNote } from './DataScopeNote';
+import { DataFreshness } from './DataFreshness';
+import { EmptyState, ErrorState } from '@/components/ui/StateViews';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { categoryLabel, formatCount, formatPeso, formatPesoCompact, formatShare, statusColor, statusLabel } from './format';
 import { controlBaseClass, panelClass, secondaryButtonClass, secondaryButtonSmClass } from './ui';
 
@@ -35,11 +39,24 @@ function Panel({ title, note, children, className = '', action }: { title: strin
   );
 }
 
-/** A KPI is a figure and its denominator in words, not a tile with an icon. */
-function Figure({ label, value, detail, title }: { label: string; value: React.ReactNode; detail: React.ReactNode; title?: string }) {
+/** A KPI is a figure and its denominator in words, not a tile with an icon. `hint` adds a short explanation on hover or focus. */
+function Figure({ label, value, detail, title, hint }: { label: string; value: React.ReactNode; detail: React.ReactNode; title?: string; hint?: string }) {
   return (
     <div className="min-w-0 px-5 py-4 sm:px-6 sm:py-5">
-      <dt className="text-[13px] font-medium text-muted">{label}</dt>
+      <dt className="flex items-center gap-1 text-[13px] font-medium text-muted">
+        {label}
+        {hint && (
+          <Tooltip content={hint}>
+            <button
+              type="button"
+              aria-label={`About ${label}`}
+              className="grid place-items-center w-6 h-6 -my-1 rounded-full text-muted hover:text-ink hover:bg-sunken focus-visible:outline-2 focus-visible:outline-accent-ink"
+            >
+              <Info className="w-3.5 h-3.5" aria-hidden="true" />
+            </button>
+          </Tooltip>
+        )}
+      </dt>
       <dd className="mt-1.5 text-[28px] sm:text-[32px] font-semibold leading-none tracking-[-0.025em] text-ink tabular-nums" title={title}>
         {value}
       </dd>
@@ -163,7 +180,7 @@ function StatusDonut({ rows, total }: { rows: DpwhCount<DpwhStatus>[]; total: nu
   const shown = ordered.find((r) => r.value === active) ?? null;
   const summary = ordered.map((r) => `${statusLabel(r.value)} ${formatCount(r.count)} (${formatShare(r.count, total)})`).join(', ');
 
-  if (total === 0) return <p className="text-sm text-muted">No contracts to show.</p>;
+  if (total === 0) return <EmptyState compact icon={PieChart} title="No data available" description="There are no contracts with a reported status to chart." />;
 
   return (
     <div className="h-full flex flex-col sm:flex-row lg:flex-col items-center justify-center gap-6">
@@ -227,7 +244,7 @@ function YearColumns({ rows }: { rows: DpwhCount<number | null>[] }) {
   const years = rows.filter((r): r is DpwhCount<number> => r.value !== null).sort((a, b) => a.value - b.value);
   const unknown = rows.find((r) => r.value === null)?.count ?? 0;
   const max = Math.max(1, ...years.map((y) => y.count));
-  if (years.length === 0) return <p className="text-sm text-muted">No infrastructure years reported.</p>;
+  if (years.length === 0) return <EmptyState compact icon={CalendarX} title="No data available" description="The source reports no infrastructure years for these contracts." />;
   return (
     <div>
       <ul className="flex items-end gap-1.5 sm:gap-2 h-40" aria-label="Contracts by infrastructure year">
@@ -275,6 +292,8 @@ export function DpwhDashboard({
   const stats = summary?.stats;
   const regions = useMemo(() => stats?.by_region ?? [], [stats]);
   const [region, setRegion] = useState<string | null>(() => (regions.some((r) => r.value === initialRegion) ? initialRegion : null));
+  const router = useRouter();
+  const [retrying, startRetry] = useTransition();
 
   // Mirror the region into the address bar so the view can be shared.
   useEffect(() => {
@@ -284,14 +303,27 @@ export function DpwhDashboard({
     if (url.href !== window.location.href) window.history.replaceState(window.history.state, '', url);
   }, [region]);
 
+  // A failed query and a database with nothing imported look different: only the first offers a retry.
   if (!stats || !summary) {
     return (
       <div className="space-y-6">
         <DashboardHeader />
-        <div role="alert" className="flex items-start gap-2 p-4 rounded-card border border-warn-line bg-warn-soft text-sm text-warn-ink">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
-          {error ?? 'No DPWH contracts have been imported yet, so there is nothing to chart.'}
-        </div>
+        {error ? (
+          <ErrorState
+            className={panelClass}
+            title="The dashboard could not be loaded"
+            description={`${error} The figures come from the published summary; nothing has been changed.`}
+            onRetry={() => startRetry(() => router.refresh())}
+            retrying={retrying}
+          />
+        ) : (
+          <EmptyState
+            className={panelClass}
+            icon={BarChart3}
+            title="No data available yet"
+            description="No DPWH contracts have been imported yet, so there is nothing to chart. Figures appear here after the first sync."
+          />
+        )}
       </div>
     );
   }
@@ -341,13 +373,17 @@ export function DpwhDashboard({
         )}
       </DashboardHeader>
 
-      <DataScopeNote summary={summary} />
+      <div className="space-y-2">
+        <DataFreshness summary={summary} className="px-1" />
+        <DataScopeNote summary={summary} />
+      </div>
 
       <section aria-label={`Summary: ${scopeWord}`} className={`${panelClass} overflow-hidden`}>
         <dl className="grid grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_minmax(0,1.2fr)] gap-px bg-line [&>*]:bg-surface">
           <Figure label="Contracts" value={formatCount(regionCount)} detail={region ? `${formatShare(regionCount, total)} of ${formatCount(total)} contracts` : 'Unique DPWH contract IDs'} />
           <Figure
             label="Reported contract value"
+            hint="The sum of award amounts DPWH reports for these contracts. It is not money released or spent."
             value={formatPesoCompact(amount)}
             title={formatPeso(amount)}
             detail={
@@ -360,11 +396,13 @@ export function DpwhDashboard({
           />
           <Figure
             label="Completed"
+            hint="Contracts DPWH reports as completed. The LGU has not verified these in the field."
             value={formatCount(completed)}
             detail={scoped ? `${formatShare(completed, breakdownTotal)} of contracts` : `All regions (${formatShare(completed, breakdownTotal)})`}
           />
           <Figure
             label="On-going"
+            hint="Contracts DPWH reports as on-going, whatever their reported progress."
             value={formatCount(ongoing)}
             detail={scoped ? `${formatShare(ongoing, breakdownTotal)} of contracts` : `All regions (${formatShare(ongoing, breakdownTotal)})`}
           />
@@ -414,7 +452,7 @@ export function DpwhDashboard({
                 <RankedBars rows={provinces} total={regionCount} label={(v) => v} color={() => regionColor(region)} />
               </div>
             ) : (
-              <p className="text-sm text-muted">No provinces reported for this region.</p>
+              <EmptyState compact icon={MapPinned} title="No provinces in this region" description="The source reports no provinces for this region. Try another region, or show all regions." />
             )}
           </Panel>
         ) : (

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Public_Sans, JetBrains_Mono } from 'next/font/google';
 import { themeInitScript } from '@/lib/theme';
+import { ToastProvider } from '@/components/ui/Toast';
 import './globals.css';
 
 const publicSans = Public_Sans({
@@ -47,7 +48,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-screen flex flex-col bg-ground text-ink">
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
   );

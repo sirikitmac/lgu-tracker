@@ -9,6 +9,7 @@ import {
   watchSystemTheme,
   type ThemePreference,
 } from '@/lib/theme';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 const OPTIONS: { value: ThemePreference; label: string; Icon: typeof Sun }[] = [
   { value: 'light', label: 'Light', Icon: Sun },
@@ -86,19 +87,20 @@ export function ThemeToggle() {
 
   return (
     <div className="relative">
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-controls={open ? menuId : undefined}
-        aria-label={`Theme: ${current.label}`}
-        title="Change theme"
-        className={`inline-flex items-center justify-center w-10 h-10 rounded-full text-subtle hover:text-ink hover:bg-sunken transition-colors ${focusRing}`}
-      >
-        <current.Icon className="w-[18px] h-[18px]" aria-hidden="true" />
-      </button>
+      <Tooltip content="Change theme" side="bottom" disabled={open}>
+        <button
+          ref={buttonRef}
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-controls={open ? menuId : undefined}
+          aria-label={`Theme: ${current.label}`}
+          className={`inline-flex items-center justify-center w-10 h-10 rounded-full text-subtle hover:text-ink hover:bg-sunken transition-colors ${focusRing}`}
+        >
+          <current.Icon className="w-[18px] h-[18px]" aria-hidden="true" />
+        </button>
+      </Tooltip>
       {open && (
         <div
           ref={menuRef}
