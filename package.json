@@ -10,10 +10,13 @@
     "lint": "tsc --noEmit",
     "dpwh:iligan-export": "tsx --conditions=react-server scripts/dpwh-iligan-export.ts",
     "dpwh:sync": "tsx --conditions=react-server --max-old-space-size=4096 scripts/dpwh-sync.ts",
-    "test": "tsx --conditions=react-server --test \"tests/dpwh/*.test.ts\" \"tests/bettergov/*.test.ts\" \"tests/bp/*.test.ts\"",
+    "test": "tsx --conditions=react-server --test \"tests/dpwh/*.test.ts\" \"tests/bettergov/*.test.ts\" \"tests/bp/*.test.ts\" \"tests/subaybayan/*.test.ts\"",
     "test:db": "tsx --conditions=react-server --test \"tests/db/*.test.ts\"",
     "test:db:full": "tsx --conditions=react-server --max-old-space-size=6144 tests/db/full-import.ts",
-    "bettergov:sync": "tsx --conditions=react-server scripts/bettergov-sync.ts"
+    "bettergov:sync": "tsx --conditions=react-server scripts/bettergov-sync.ts",
+    "subaybayan:build": "tsx --conditions=react-server --max-old-space-size=4096 scripts/subaybayan/build.ts",
+    "subaybayan:dedupe": "tsx --conditions=react-server --max-old-space-size=4096 scripts/subaybayan/dedupe.ts",
+    "subaybayan:import": "tsx --conditions=react-server scripts/subaybayan/import.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -31,7 +34,8 @@
     "postcss": "^8.5.31",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "supercluster": "^9.1.0"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.3.7",
@@ -39,6 +43,8 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.4.21",
+    "fflate": "^0.8.3",
+    "polylabel": "^2.1.0",
     "tailwindcss": "^4.3.3",
     "tsx": "4.20.6",
     "typescript": "^7.0.2"

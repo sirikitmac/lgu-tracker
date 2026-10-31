@@ -22,3 +22,7 @@ next-env.d.ts
 
 # AI Studio workspace artifacts
 .aistudio/
+
+# SubayBAYAN pipeline: downloaded boundaries, gazetteer and generated rows
+# (regenerate with npm run subaybayan:build)
+/.cache/
