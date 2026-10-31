@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { before, test } from 'node:test';
 import type { PGlite } from '@electric-sql/pglite';
-import { as, createTestDb } from './pglite';
+import { USERS, as, createTestDb } from './pglite';
 
 /**
  * Migration 20261103000100 (subaybayan_projects + subaybayan_dpwh_matches)
@@ -82,7 +82,7 @@ test('updated_at is maintained by the shared trigger', async () => {
   assert.equal(res.rows[0].recent, true);
 });
 
-test('duplicate flags: service role writes, public reads, review status survives a re-flag', async () => {
+test('duplicate flags: service role writes, only admins read, review status survives a re-flag', async () => {
   const flag = (score: number) =>
     as(db, 'service_role', null, `
       insert into public.subaybayan_dpwh_matches (subaybayan_id, dpwh_contract_id, match_class, rank, score, reasons, evidence)
@@ -91,8 +91,15 @@ test('duplicate flags: service role writes, public reads, review status survives
   assert.equal((await flag(0.75)).error, undefined);
   await db.exec(`update public.subaybayan_dpwh_matches set review_status = 'same_project'`);
   assert.equal((await flag(0.8)).error, undefined);
-  const res = await as<{ review_status: string; score: string }>(db, 'anon', null, `select review_status, score from public.subaybayan_dpwh_matches`);
+  const res = await as<{ review_status: string; score: string }>(db, 'authenticated', USERS.admin, `select review_status, score from public.subaybayan_dpwh_matches`);
   assert.deepEqual(res.rows, [{ review_status: 'same_project', score: '0.800' }]);
+  // Not public: anon has no privilege at all; a signed-in non-admin sees no rows.
+  const anonRead = await as(db, 'anon', null, `select * from public.subaybayan_dpwh_matches`);
+  assert.equal(anonRead.error?.code, '42501');
+  const citizenRead = await as(db, 'authenticated', USERS.citizen, `select * from public.subaybayan_dpwh_matches`);
+  assert.deepEqual(citizenRead.rows, []);
+  const plannerRead = await as(db, 'authenticated', USERS.planner, `select * from public.subaybayan_dpwh_matches`);
+  assert.deepEqual(plannerRead.rows, []);
   const anonWrite = await as(db, 'anon', null, `delete from public.subaybayan_dpwh_matches`);
   assert.equal(anonWrite.error?.code, '42501');
   const badClass = await as(db, 'service_role', null, `insert into public.subaybayan_dpwh_matches values ('RLIP-1', 'X', 'merged', 1, 0.5, '{}', '{}')`);

@@ -9,7 +9,7 @@
 -- no foreign key, so nothing here constrains or cascades into dpwh_contracts.
 --
 -- Data: written only by the service role (scripts/subaybayan/import.ts).
--- Read: public (anon + authenticated), like the other imported public data.
+-- Read: projects are public (anon + authenticated); duplicate flags are admin-only.
 -- Not stored (privacy and the 500 MB plan): PCAB licence, contractor address,
 -- Google Drive / MOV links, remarks and findings text, the raw source row.
 -- =============================================================================
@@ -116,16 +116,21 @@ comment on table public.subaybayan_dpwh_matches is
 create index subaybayan_dpwh_matches_contract_idx on public.subaybayan_dpwh_matches (dpwh_contract_id);
 
 -- -----------------------------------------------------------------------------
--- RLS and grants: public read, writes only by the service role
+-- RLS and grants
+--   subaybayan_projects:      public read (anon + authenticated), writes only by the service role
+--   subaybayan_dpwh_matches:  NOT public. Review flags are unconfirmed and could be read as an
+--                             accusation of double reporting, so only signed-in administrators
+--                             (private.is_admin()) can read them; writes only by the service role.
 -- -----------------------------------------------------------------------------
 alter table public.subaybayan_projects enable row level security;
 alter table public.subaybayan_dpwh_matches enable row level security;
 
 revoke all on public.subaybayan_projects, public.subaybayan_dpwh_matches from anon, authenticated;
-grant select on public.subaybayan_projects, public.subaybayan_dpwh_matches to anon, authenticated;
+grant select on public.subaybayan_projects to anon, authenticated;
+grant select on public.subaybayan_dpwh_matches to authenticated;
 grant select, insert, update, delete on public.subaybayan_projects, public.subaybayan_dpwh_matches to service_role;
 
 create policy "subaybayan projects: public read"
   on public.subaybayan_projects for select to anon, authenticated using (true);
-create policy "subaybayan dpwh matches: public read"
-  on public.subaybayan_dpwh_matches for select to anon, authenticated using (true);
+create policy "subaybayan dpwh matches: admins read"
+  on public.subaybayan_dpwh_matches for select to authenticated using ((select private.is_admin()));
