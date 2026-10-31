@@ -464,3 +464,43 @@ select optgroup {
   background-color: var(--color-raised);
   color: var(--color-ink);
 }
+
+/* SubayBAYAN clusters: a ring split by category share, the count on the theme surface. */
+.sb-cluster {
+  background: transparent;
+  border: 0;
+}
+.sb-cluster-ring {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  padding: 4px;
+  box-shadow: var(--shadow-raise);
+  cursor: pointer;
+  transition: transform 0.15s var(--ease-out);
+}
+.sb-cluster:hover .sb-cluster-ring,
+.sb-cluster:focus-visible .sb-cluster-ring {
+  transform: scale(1.08);
+}
+.sb-cluster:focus-visible {
+  outline: 2px solid var(--color-accent-ink);
+  outline-offset: 2px;
+  border-radius: 9999px;
+}
+.sb-cluster-count {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: 700 12px/1 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sb-cluster-ring { transition: none; }
+}
