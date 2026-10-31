@@ -222,7 +222,7 @@ const columns = helper.columns([
       return (
         <>
           <span className="font-medium text-ink">{formatPeso(info.getValue())}</span>
-          {!isContract(item) && <span className="block text-xs font-normal text-muted">{item.amount_label}</span>}
+          <span className="block text-xs font-normal text-muted">{item.amount_label}</span>
           {isDilg(item) && <DilgAmountNotes item={item} className="justify-end mt-0.5" />}
         </>
       );

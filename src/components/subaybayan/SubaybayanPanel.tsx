@@ -104,7 +104,7 @@ function ProjectRow({ id, row, selected, onSelect }: { id: string; row: Subaybay
             </span>
           </span>
           <span className="text-right">
-            <span className="block text-[11px] leading-none text-muted">FY {row.funding_year ?? '—'}</span>
+            <span className="block text-[11px] leading-none text-muted">FY {row.funding_year ?? '—'} · Total cost</span>
             <span className="block mt-1 text-[14px] font-semibold leading-none text-ink tabular-nums">{row.total_cost === null ? 'No cost' : formatPeso(row.total_cost)}</span>
             {row.total_cost_basis && (
               <span className="block mt-1 text-[11px] leading-none text-warn-ink" title="The reported total looked like a data-entry error; open the project to see it.">
