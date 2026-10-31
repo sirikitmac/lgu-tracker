@@ -52,7 +52,22 @@ function CardPlaceholder({ category }: { category: string | null }) {
  * printed in the card, and the label says the photo is not of this project.
  * The reported status sits on the picture, where the eye lands first.
  */
-function CardMedia({ image, category, status, eager }: { image: CardImage | undefined; category: string | null; status: string | null; eager: boolean }) {
+export function CardMedia({
+  image,
+  category,
+  status,
+  eager,
+  placeholder,
+  statusLabel,
+}: {
+  image: CardImage | undefined;
+  category: string | null;
+  status: string | null;
+  eager: boolean;
+  /** Shown instead of the category tile when there is no photo (DILG cards use an illustrated header). */
+  placeholder?: React.ReactNode;
+  statusLabel?: string;
+}) {
   const [failed, setFailed] = useState(false);
   const photo = image?.kind === 'representative' && !failed ? image.photo : null;
   const credit = photo ? `${photo.title} by ${photo.creator}, ${photo.license}, via Wikimedia Commons` : '';
@@ -69,10 +84,10 @@ function CardMedia({ image, category, status, eager }: { image: CardImage | unde
           onError={() => setFailed(true)}
         />
       ) : (
-        <CardPlaceholder category={category} />
+        placeholder ?? <CardPlaceholder category={category} />
       )}
       <span className="absolute left-3 top-3 z-10 rounded-full bg-surface shadow-raise">
-        <StatusPill status={status} />
+        <StatusPill status={status} label={statusLabel} />
       </span>
       {photo && (
         <a

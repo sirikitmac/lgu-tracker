@@ -1,6 +1,7 @@
 import { DPWH_CATEGORIES, DPWH_STATUSES } from '@/types/dpwh';
 import { DPWH_SORTS } from '@/lib/integrations/dpwh/nationwide/query';
 import { PROJECT_SOURCE_IDS } from '@/lib/integrations/bettergov/sources';
+import { SUBAYBAYAN_CATEGORIES } from '@/lib/subaybayan/categories';
 import { BP_MAX_RESULTS, getDirectoryOverview, searchProjects, type BpRecord, type BpSupabase, type DirectoryOverview } from './data';
 
 /**
@@ -24,14 +25,15 @@ export function toolDeclarations(overview: DirectoryOverview | null) {
       description:
         'Exact, precomputed statistics of the DPWH contracts in the directory: total contracts, sum of reported contract amounts, ' +
         'and contract counts by region, category, status, infrastructure year, and province; plus record counts of the other sources ' +
-        '(DPWH FY 2027 NEP budget proposals). Use for any count, total, or ranking question that has no search text or contractor filter.',
+        '(DPWH FY 2027 NEP budget proposals; DILG SubayBAYAN Locally Funded and LIME 20% DF LGU projects). Use for any count, total, or ranking question that has no search text or contractor filter.',
       parametersJsonSchema: { type: 'object', properties: {} },
     },
     {
       name: TOOL_SEARCH,
       description:
-        `Search the project directory (DPWH contracts and NEP 2027 proposals). Returns the exact number of matches and up to ${BP_MAX_RESULTS} records. ` +
-        'Without `source`, total_matches counts contracts AND budget proposals together; set source to "dpwh_contracts" when the user asks about contracts. ' +
+        `Search the project directory (DPWH contracts, DPWH NEP 2027 proposals, and DILG SubayBAYAN LGU projects). Returns the exact number of matches and up to ${BP_MAX_RESULTS} records. ` +
+        'Without `source` or `agency`, total_matches counts every source together; set source to "dpwh_contracts" when the user asks about contracts, and agency to "DILG" for LGU / SubayBAYAN projects. ' +
+        'DILG records report a total project cost (amount_not_verified marks totals that may be data-entry errors) and the physical accomplishment (OWPA) as progress. ' +
         'Cities and municipalities are NOT a filter (the DPWH source does not report them): to find projects in a city, town, or barangay, ' +
         'put its distinctive name in `query` (for example "iligan"), which matches words in project titles, IDs, contractors, and implementing offices.',
       parametersJsonSchema: {
@@ -42,7 +44,17 @@ export function toolDeclarations(overview: DirectoryOverview | null) {
           province: enumOrString(provinces, 'Project-location province, exact name.'),
           category: { type: 'string', enum: [...DPWH_CATEGORIES], description: 'Work category assigned by LGU Tracker.' },
           status: { type: 'string', enum: [...DPWH_STATUSES], description: '"proposed" is used only by NEP budget proposals.' },
-          source: { type: 'string', enum: [...PROJECT_SOURCE_IDS], description: 'dpwh_contracts = awarded DPWH contracts; dpwh_nep_2027 = FY 2027 NEP budget proposals.' },
+          source: {
+            type: 'string',
+            enum: [...PROJECT_SOURCE_IDS],
+            description: 'dpwh_contracts = awarded DPWH contracts; dpwh_nep_2027 = FY 2027 NEP budget proposals; subaybayan_lgsf = DILG Locally Funded; subaybayan_rlip = DILG LIME 20% DF.',
+          },
+          agency: { type: 'string', enum: ['DPWH', 'DILG'], description: 'DPWH = contracts and NEP proposals; DILG = SubayBAYAN LGU projects.' },
+          sector: {
+            type: 'string',
+            enum: [...SUBAYBAYAN_CATEGORIES],
+            description: 'DILG projects only: LGU Tracker category (infrastructure, community, health = health and social services, environment, disaster, uncategorized).',
+          },
           contractor: { type: 'string', description: 'Contractor name prefix (DPWH contracts only).' },
           sort: { type: 'string', enum: Object.keys(DPWH_SORTS), description: 'Default contract_amount-desc.' },
           limit: { type: 'integer', minimum: 1, maximum: BP_MAX_RESULTS, description: `Records to return (default 5, max ${BP_MAX_RESULTS}).` },

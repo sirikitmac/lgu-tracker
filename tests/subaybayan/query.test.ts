@@ -78,7 +78,7 @@ const row = (id: string, patch: Partial<IndexRow> = {}): IndexRow => ({
   id, project_code: id, title: 'Concreting of Farm to Market Road', sector_category: 'infrastructure', sector_subcategory: 'Roads and bridges',
   region: 'R10', province: 'P1', citymun: 'C1', latitude: 8.123456, longitude: 124.654321, location_precision: 'barangay_centroid',
   funding_year: 2025, status: 'completed', source_dataset: 'rlip', project_type: 'Local Roads and Bridges', program: 'LIME', sector: 'Economic Services',
-  mode_of_implementation: 'Contract', total_cost: 1000000.4, ...patch,
+  mode_of_implementation: 'Contract', total_cost: 1000000.4, total_cost_review: false, ...patch,
 });
 const index: IndexRow[] = [
   row('A'),
@@ -95,6 +95,8 @@ test('points: counts by precision; approx toggle hides approximate markers but n
   assert.equal(all.rows, 5);
   assert.deepEqual(all.columns.lat, [8.12346, 8.12346, 8.12346, null, 8.12346]);
   assert.equal(all.columns.cost[0], 1000000);
+  assert.deepEqual(all.columns.review, [0, 0, 0, 0, 0]);
+  assert.deepEqual(buildPoints([row('R', { total_cost_review: true })], EMPTY_FILTERS).columns.review, [1]);
   const exact = buildPoints(index, { ...EMPTY_FILTERS, approx: false });
   assert.equal(exact.total, 5);
   assert.deepEqual(exact.columns.id, ['A', 'D', 'E']);

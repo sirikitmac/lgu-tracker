@@ -11,7 +11,21 @@ import {
   type DpwhSummary,
   type ProjectListItem,
 } from '@/types/dpwh';
-import { PROJECT_SOURCES, PROJECT_SOURCE_IDS, sourceLabel } from '@/lib/integrations/bettergov/sources';
+import {
+  AGENCY_SCOPE,
+  AGENCY_SOURCES,
+  PROJECT_SOURCES,
+  PROJECT_SOURCE_IDS,
+  agencyOf,
+  isProjectAgency,
+  sourceLabel,
+  type ProjectAgency,
+} from '@/lib/integrations/bettergov/sources';
+import { SUBAYBAYAN_CATEGORIES, SUBAYBAYAN_CATEGORY_SHORT, isSubaybayanCategory } from '@/lib/subaybayan/categories';
+import { SUBAYBAYAN_RETRIEVED_LABEL } from '@/lib/subaybayan/source';
+import { directoryProvinceLabel, directoryRegionLabel } from '@/lib/subaybayan/ui';
+import type { FacetsPayload } from '@/lib/subaybayan/query';
+import { DilgProjectCard } from '@/components/subaybayan/DilgDirectoryCard';
 import { regionColor, regionDisplayName } from '@/lib/regionPalette';
 import { errorMessage, fetchJson } from '@/lib/http';
 import { useToast } from '@/components/ui/Toast';
@@ -22,10 +36,11 @@ import { DataFreshness } from './DataFreshness';
 import { DpwhContractDrawer } from './DpwhContractDrawer';
 import { ColumnToggle, DEFAULT_COLUMN_VISIBILITY, DirectoryPager, DpwhProjectTable, PAGE_SIZE_OPTIONS, useDirectoryTable } from './DpwhProjectTable';
 import { DpwhProjectCard, DpwhProjectCardSkeleton } from './DpwhProjectCard';
-import { assignCardImages, creditsFor, recordKey } from './categoryImages';
+import { assignCardImages, creditsFor, photoSubjects, recordKey } from './categoryImages';
 import { categoryLabel, formatCount, statusLabel } from './format';
 import { controlBaseClass, controlClass, panelClass, secondaryButtonLgClass, secondaryButtonSmClass } from './ui';
 
+/** Every sort the API accepts, labelled for DPWH records (the labels before DILG rows joined the directory). */
 export const SORT_OPTIONS = [
   ['contract_amount-desc', 'Contract amount: high to low'],
   ['contract_amount-asc', 'Contract amount: low to high'],
@@ -43,6 +58,28 @@ export const SORT_OPTIONS = [
   ['title-desc', 'Project name: Z to A'],
 ] as const;
 
+/** Sorts that only order DPWH fields: DILG rows have no budget or contract date. */
+const DPWH_ONLY_SORTS = new Set<string>(['budget-desc', 'budget-asc', 'contract_date-desc', 'contract_date-asc']);
+
+/**
+ * Sort menu for the chosen agency. The amount sort orders DPWH contract
+ * amounts and DILG total project costs (unverified DILG totals last); the
+ * labels say which amount is meant.
+ */
+export function sortOptionsFor(agency: string): (readonly [string, string])[] {
+  return SORT_OPTIONS.filter(([value]) => agency !== 'DILG' || !DPWH_ONLY_SORTS.has(value)).map(([value, label]) => {
+    if (value.startsWith('contract_amount-')) {
+      const dir = value.endsWith('desc') ? 'high to low' : 'low to high';
+      if (agency === 'DILG') return [value, `Total project cost: ${dir}`] as const;
+      if (agency === '') return [value, `Contract amount / total cost: ${dir}`] as const;
+    }
+    if (agency === 'DILG' && value.startsWith('progress-')) {
+      return [value, `Physical accomplishment: ${value.endsWith('desc') ? 'high to low' : 'low to high'}`] as const;
+    }
+    return [value, label] as const;
+  });
+}
+
 export interface Filters {
   q: string;
   region: string;
@@ -53,6 +90,10 @@ export interface Filters {
   office: string;
   contractor: string;
   source: string;
+  /** '' (all), 'DPWH' or 'DILG'. */
+  agency: string;
+  /** DILG category (LGU Tracker classification); only with agency DILG. */
+  sector: string;
   sort: string;
 }
 
@@ -68,17 +109,18 @@ export interface DirectoryInitialState {
 
 const EMPTY_FILTERS: Filters = {
   q: '', region: '', province: '', municipality: '', category: '', status: '', office: '', contractor: '', source: '',
-  sort: 'contract_amount-desc',
+  agency: '', sector: '', sort: 'contract_amount-desc',
 };
 const DEFAULT_PAGE_SIZE = 25;
 // v2: the grid became the default; choices saved while the table was the default are not carried over.
 const VIEW_STORAGE_KEY = 'lgu-tracker:directory-view:v2';
 const COLUMNS_STORAGE_KEY = 'lgu-tracker:directory-columns';
-const FILTER_KEYS = ['region', 'province', 'municipality', 'category', 'status', 'office', 'contractor', 'source'] as const;
+const FILTER_KEYS = ['agency', 'region', 'province', 'municipality', 'category', 'sector', 'status', 'office', 'contractor', 'source'] as const;
 const FILTER_LABELS: Record<(typeof FILTER_KEYS)[number], string> = {
-  region: 'Region', province: 'Province', municipality: 'City / municipality', category: 'Category',
-  status: 'Status', office: 'Office', contractor: 'Contractor', source: 'Source',
+  agency: 'Agency', region: 'Region', province: 'Province', municipality: 'City / municipality', category: 'Category',
+  sector: 'DILG category', status: 'Status', office: 'Office', contractor: 'Contractor', source: 'Source',
 };
+const AGENCY_OPTIONS = [['', 'All'], ['DPWH', 'DPWH'], ['DILG', 'DILG']] as const;
 
 function useDebounced<T>(value: T, ms: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -120,7 +162,8 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
   const { toast } = useToast();
   // Filters start folded away unless a shared link already applies some.
   const [filtersOpen, setFiltersOpen] = useState(() =>
-    FILTER_KEYS.some((key) => (initial?.filters?.[key] ?? '').trim() !== '')
+    // The agency switch sits outside the panel, so ?agency= alone does not open it.
+    FILTER_KEYS.some((key) => key !== 'agency' && (initial?.filters?.[key] ?? '').trim() !== '')
   );
   const filtersId = useId();
   const searchHintId = useId();
@@ -177,6 +220,46 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
     };
   }, []);
 
+  // DILG regions (nationwide) for the region filter, and the selected region's DILG provinces.
+  // Raw SubayBAYAN labels are mapped to the directory's ("REGION X - ..." -> "Region X").
+  const includesDilg = filters.agency !== 'DPWH';
+  const [dilgRegions, setDilgRegions] = useState<Map<string, string>>(new Map());
+  const [dilgProvinces, setDilgProvinces] = useState<string[]>([]);
+  useEffect(() => {
+    if (!includesDilg || dilgRegions.size > 0) return;
+    let active = true;
+    fetchJson<FacetsPayload>('/api/subaybayan/facets')
+      .then((f) => {
+        if (!active) return;
+        const m = new Map<string, string>();
+        for (const r of f.regions) {
+          const label = directoryRegionLabel(r.value);
+          if (label) m.set(label, r.value);
+        }
+        setDilgRegions(m);
+      })
+      .catch(() => {
+        // DPWH region options still work.
+      });
+    return () => {
+      active = false;
+    };
+  }, [includesDilg, dilgRegions.size]);
+  const dilgRawRegion = filters.region ? dilgRegions.get(filters.region) : undefined;
+  useEffect(() => {
+    if (!includesDilg || !dilgRawRegion) {
+      setDilgProvinces([]);
+      return;
+    }
+    let active = true;
+    fetchJson<FacetsPayload>(`/api/subaybayan/facets?region=${encodeURIComponent(dilgRawRegion)}`)
+      .then((f) => active && setDilgProvinces(f.provinces.map((p) => directoryProvinceLabel(p.value)).filter((p): p is string => !!p)))
+      .catch(() => active && setDilgProvinces([]));
+    return () => {
+      active = false;
+    };
+  }, [includesDilg, dilgRawRegion]);
+
   /** Server query for one page; the same values (minus defaults) are mirrored into the address bar. */
   const query = useMemo(() => {
     const p = new URLSearchParams();
@@ -190,11 +273,13 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
     set('status', filters.status);
     set('office', filters.office);
     set('source', filters.source);
+    set('agency', filters.agency);
+    set('sector', filters.sector);
     p.set('sort', filters.sort);
     p.set('page', String(pagination.pageIndex + 1));
     p.set('pageSize', String(pagination.pageSize));
     return p;
-  }, [q, contractor, filters.region, filters.province, filters.municipality, filters.category, filters.status, filters.office, filters.source, filters.sort, pagination]);
+  }, [q, contractor, filters.region, filters.province, filters.municipality, filters.category, filters.status, filters.office, filters.source, filters.agency, filters.sector, filters.sort, pagination]);
   const params = query.toString();
 
   useEffect(() => {
@@ -229,14 +314,16 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
 
   // Dependent location options from the cached summary.
   const stats = summary?.stats;
-  const regionOptions = useMemo(
-    () => (stats?.by_region ?? []).filter((r) => r.value !== null).map((r) => r.value as string).sort(),
-    [stats]
-  );
+  const regionOptions = useMemo(() => {
+    const dpwh = filters.agency === 'DILG' ? [] : (stats?.by_region ?? []).filter((r) => r.value !== null).map((r) => r.value as string);
+    const dilg = filters.agency === 'DPWH' ? [] : [...dilgRegions.keys()];
+    return [...new Set([...dpwh, ...dilg])].sort();
+  }, [stats, filters.agency, dilgRegions]);
   const provinceOptions = useMemo(() => {
-    const rows = (stats?.provinces ?? []).filter((p) => !filters.region || p.region === filters.region);
-    return [...new Set(rows.map((p) => p.province))].sort();
-  }, [stats, filters.region]);
+    const rows = filters.agency === 'DILG' ? [] : (stats?.provinces ?? []).filter((p) => !filters.region || p.region === filters.region);
+    const dilg = filters.agency === 'DPWH' || !filters.region ? [] : dilgProvinces;
+    return [...new Set([...rows.map((p) => p.province), ...dilg])].sort();
+  }, [stats, filters.region, filters.agency, dilgProvinces]);
   const municipalityOptions = useMemo(
     () => (stats?.municipalities ?? []).filter((m) => !filters.province || m.province === filters.province).map((m) => m.municipality),
     [stats, filters.province]
@@ -261,6 +348,25 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
         next.municipality = '';
       }
       if (patch.province !== undefined && patch.province !== prev.province) next.municipality = '';
+      // Agency and source go together: DPWH = contracts or NEP 2027, DILG = Locally Funded or LIME 20% DF.
+      if (patch.agency !== undefined && patch.agency !== prev.agency) {
+        if (next.source && next.agency && agencyOf(next.source) !== next.agency) next.source = '';
+        if (next.agency === 'DPWH') next.sector = '';
+        if (next.agency === 'DILG') {
+          next.category = '';
+          next.office = '';
+          if (DPWH_ONLY_SORTS.has(next.sort)) next.sort = EMPTY_FILTERS.sort;
+        }
+      }
+      // A DPWH source cannot be combined with a DILG category.
+      if (patch.source !== undefined && patch.source && agencyOf(patch.source) === 'DPWH') next.sector = '';
+      if (patch.sector !== undefined && patch.sector && next.agency !== 'DILG') {
+        next.agency = 'DILG';
+        next.category = '';
+        next.office = '';
+        if (next.source && agencyOf(next.source) !== 'DILG') next.source = '';
+        if (DPWH_ONLY_SORTS.has(next.sort)) next.sort = EMPTY_FILTERS.sort;
+      }
       return next;
     });
     firstPage();
@@ -271,6 +377,11 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
     toast({ id: 'directory-filters', tone: 'info', title: 'Search and filters cleared', description: 'Showing all projects.' });
   };
 
+  // The DILG category column is all dashes with DPWH alone; hide it there without changing the saved choice.
+  const shownColumns = useMemo(
+    () => (filters.agency === 'DPWH' ? { ...columnVisibility, dilg_category: false } : columnVisibility),
+    [columnVisibility, filters.agency]
+  );
   const table = useDirectoryTable({
     items,
     total,
@@ -278,14 +389,22 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
     onSortChange: (sort) => update({ sort }),
     pagination,
     onPaginationChange: setPagination,
-    columnVisibility,
+    columnVisibility: shownColumns,
     onColumnVisibilityChange: changeColumns,
   });
 
   const activeFilters = FILTER_KEYS.filter((key) => filters[key].trim() !== '').map((key) => {
     const value = filters[key];
     const shown =
-      key === 'category' ? categoryLabel(value) : key === 'status' ? statusLabel(value) : key === 'source' ? sourceLabel(value) : value;
+      key === 'category'
+        ? categoryLabel(value)
+        : key === 'status'
+          ? statusLabel(value)
+          : key === 'source'
+            ? sourceLabel(value)
+            : key === 'sector' && isSubaybayanCategory(value)
+              ? SUBAYBAYAN_CATEGORY_SHORT[value]
+              : value;
     return { key, label: FILTER_LABELS[key], value: shown };
   });
   const searchActive = filters.q.trim() !== '';
@@ -293,10 +412,14 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
   // The directory mixes sources; say which ones the count covers so it is not read as the contract total above.
   const scopeNote = filters.source
     ? `Source: ${sourceLabel(filters.source)}`
-    : `Across all sources: ${PROJECT_SOURCE_IDS.map((s) => PROJECT_SOURCES[s].label).join(' and ')}`;
+    : isProjectAgency(filters.agency)
+      ? `${filters.agency} only: ${AGENCY_SCOPE[filters.agency]}`
+      : `Across all sources: ${AGENCY_SCOPE.DPWH}, and ${AGENCY_SCOPE.DILG}`;
+  const sourceOptions = isProjectAgency(filters.agency) ? AGENCY_SOURCES[filters.agency as ProjectAgency] : PROJECT_SOURCE_IDS;
+  const sortOptions = sortOptionsFor(filters.agency);
   const rows = table.getRowModel().rows;
   // One assignment per visible page: no photo repeats on it, and re-sorting the same records keeps their photos.
-  const cardImages = useMemo(() => assignCardImages(items), [items]);
+  const cardImages = useMemo(() => assignCardImages(photoSubjects(items)), [items]);
   const photoCredits = useMemo(() => creditsFor(cardImages), [cardImages]);
 
   const viewButton = (value: DirectoryView, Icon: typeof List, label: string) => (
@@ -346,13 +469,13 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
               type="search"
               value={filters.q}
               onChange={(e) => update({ q: e.target.value })}
-              placeholder="Search by project name, ID, contractor or office"
+              placeholder="Search by project name, ID, contractor, office or place"
               aria-describedby={searchHintId}
               maxLength={200}
               className={`${controlBaseClass} w-full h-11 pl-10 pr-4 rounded-full text-[15px]`}
             />
             <span id={searchHintId} className="sr-only">
-              Searches project name, contract or project ID, contractor, description, and implementing office.
+              Searches project name, contract or project ID, contractor, description, and implementing office; for DILG projects also the city, barangay and province.
             </span>
           </label>
           <button
@@ -369,6 +492,27 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
               </span>
             )}
           </button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <span id={`${filtersId}-agency`} className="text-xs font-medium text-subtle">Agency</span>
+          <div role="radiogroup" aria-labelledby={`${filtersId}-agency`} className="inline-flex items-center gap-1 h-10 p-1 rounded-full bg-sunken">
+            {AGENCY_OPTIONS.map(([value, label]) => (
+              <button
+                key={value || 'all'}
+                type="button"
+                role="radio"
+                aria-checked={filters.agency === value}
+                onClick={() => update({ agency: value })}
+                title={value ? AGENCY_SCOPE[value] : 'Every agency and source'}
+                className={`inline-flex items-center h-8 px-3.5 rounded-full text-[13px] font-medium transition-[background-color,color,box-shadow] duration-200 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent-ink ${
+                  filters.agency === value ? 'bg-surface text-ink shadow-raise' : 'text-subtle hover:text-ink'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div id={filtersId} hidden={!filtersOpen} className={`${panelClass} p-4 sm:p-5`}>
@@ -391,18 +535,27 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
                 value={filters.municipality}
                 onChange={(e) => update({ municipality: e.target.value })}
                 disabled={!hasMunicipalityData}
-                title={hasMunicipalityData ? undefined : 'The DPWH source does not report city or municipality.'}
+                title={hasMunicipalityData ? undefined : filters.agency === 'DPWH' ? 'The DPWH source does not report city or municipality.' : 'DPWH does not report city or municipality; for DILG projects, type the city in the search box.'}
               >
-                <option value="">{hasMunicipalityData ? 'All cities / municipalities' : 'Not reported by source'}</option>
+                <option value="">{hasMunicipalityData ? 'All cities / municipalities' : filters.agency === 'DPWH' ? 'Not reported by source' : 'Use search for a city (DILG)'}</option>
                 {municipalityOptions.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             </Field>
-            <Field label="Category">
-              <select className={controlClass} value={filters.category} onChange={(e) => update({ category: e.target.value })}>
-                <option value="">All categories</option>
-                {DPWH_CATEGORIES.map((c) => <option key={c} value={c}>{DPWH_CATEGORY_LABELS[c]}</option>)}
-              </select>
-            </Field>
+            {filters.agency === 'DILG' ? (
+              <Field label="DILG category (LGU Tracker classification)">
+                <select className={controlClass} value={filters.sector} onChange={(e) => update({ sector: e.target.value })}>
+                  <option value="">All DILG categories</option>
+                  {SUBAYBAYAN_CATEGORIES.map((c) => <option key={c} value={c}>{SUBAYBAYAN_CATEGORY_SHORT[c]}</option>)}
+                </select>
+              </Field>
+            ) : (
+              <Field label={filters.agency === 'DPWH' ? 'Category' : 'Category (work type)'}>
+                <select className={controlClass} value={filters.category} onChange={(e) => update({ category: e.target.value })}>
+                  <option value="">All categories</option>
+                  {DPWH_CATEGORIES.map((c) => <option key={c} value={c}>{DPWH_CATEGORY_LABELS[c]}</option>)}
+                </select>
+              </Field>
+            )}
             <Field label="Status">
               <select className={controlClass} value={filters.status} onChange={(e) => update({ status: e.target.value })}>
                 <option value="">All statuses</option>
@@ -411,13 +564,19 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
             </Field>
             <Field label="Source">
               <select className={controlClass} value={filters.source} onChange={(e) => update({ source: e.target.value })}>
-                <option value="">All sources</option>
-                {PROJECT_SOURCE_IDS.map((s) => <option key={s} value={s}>{PROJECT_SOURCES[s].label}</option>)}
+                <option value="">{filters.agency ? `All ${filters.agency} sources` : 'All sources'}</option>
+                {sourceOptions.map((s) => <option key={s} value={s}>{PROJECT_SOURCES[s].label}</option>)}
               </select>
             </Field>
-            <Field label="Implementing office">
-              <select className={controlClass} value={filters.office} onChange={(e) => update({ office: e.target.value })}>
-                <option value="">All offices</option>
+            <Field label="Implementing office (DPWH)">
+              <select
+                className={controlClass}
+                value={filters.office}
+                onChange={(e) => update({ office: e.target.value })}
+                disabled={filters.agency === 'DILG'}
+                title={filters.agency === 'DILG' ? 'DILG projects are implemented by LGUs, not DPWH offices.' : undefined}
+              >
+                <option value="">{filters.agency === 'DILG' ? 'DPWH only' : 'All offices'}</option>
                 {officeGroups.map(([region, offices]) => (
                   <optgroup key={region} label={region}>
                     {offices.map((o) => <option key={o} value={o}>{o}</option>)}
@@ -481,14 +640,15 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
             </h2>
             <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1">
               <p className="text-xs text-muted">{scopeNote}</p>
-              <DataFreshness summary={summary} />
+              {filters.agency !== 'DILG' && <DataFreshness summary={summary} />}
+              {filters.agency !== 'DPWH' && <p className="text-xs text-muted">DILG SubayBAYAN retrieved {SUBAYBAYAN_RETRIEVED_LABEL}</p>}
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <label className="flex items-center gap-2 text-xs font-medium text-subtle">
               <span className="sr-only sm:not-sr-only">Sort</span>
               <select className={`${controlBaseClass} h-10 pl-3.5 pr-8 w-[16.5rem] max-w-full rounded-full text-sm`} value={filters.sort} onChange={(e) => update({ sort: e.target.value })} aria-label="Sort by">
-                {SORT_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                {sortOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
             </label>
             {view === 'list' && <ColumnToggle table={table} />}
@@ -508,7 +668,7 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
           >
             {(filters.status || filters.sort !== EMPTY_FILTERS.sort) && (
               <p className="max-w-sm text-xs text-muted">
-                Rare status filters and some sort orders can time out on the hosted database. Removing the status filter or using the default sort usually helps.
+                Some sort orders can time out on the hosted database when every agency is shown. Choosing one agency or using the default sort usually helps.
               </p>
             )}
           </ErrorState>
@@ -545,7 +705,11 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
                   ? Array.from({ length: 6 }, (_, i) => <li key={i} className="flex [&>*]:flex-1"><DpwhProjectCardSkeleton /></li>)
                   : rows.map((row, i) => (
                       <li key={row.id} className="flex [&>*]:flex-1">
-                        <DpwhProjectCard item={row.original} image={cardImages.get(recordKey(row.original))} onOpenContract={setSelectedId} eager={i < 4} />
+                        {row.original.agency === 'DILG' ? (
+                          <DilgProjectCard item={row.original} image={cardImages.get(recordKey(row.original))} eager={i < 4} />
+                        ) : (
+                          <DpwhProjectCard item={row.original} image={cardImages.get(recordKey(row.original))} onOpenContract={setSelectedId} eager={i < 4} />
+                        )}
                       </li>
                     ))}
               </ul>
@@ -558,7 +722,7 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
         {view === 'grid' && listState !== 'error' && photoCredits.length > 0 && (
           <details className="text-xs text-muted">
             <summary className="cursor-pointer w-fit rounded-sm hover:text-ink focus-visible:outline-2 focus-visible:outline-accent-ink">
-              Photos are representative of each category and do not show these projects. Credits for the {photoCredits.length} photo{photoCredits.length === 1 ? '' : 's'} on this page
+              Photos are representative of the kind of work and do not show these projects; DILG projects with no fitting photo show an illustration. Credits for the {photoCredits.length} photo{photoCredits.length === 1 ? '' : 's'} on this page
             </summary>
             <ul className="mt-2 space-y-1 pl-4 list-disc">
               {photoCredits.map((photo) => (

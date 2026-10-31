@@ -3,6 +3,8 @@
  * and related tables (supabase/migrations/20261026000100_dpwh_nationwide.sql).
  */
 
+import type { LocationPrecision, SubaybayanCategory } from '@/lib/subaybayan/categories';
+
 export const DPWH_CATEGORIES = [
   'roads_highways',
   'bridges',
@@ -164,12 +166,40 @@ export const DPWH_LIST_COLUMNS = [
 ] as const;
 export type DpwhContractListItem = Pick<DpwhContract, (typeof DPWH_LIST_COLUMNS)[number]>;
 
+/**
+ * Columns appended to public.project_directory by migration 20261105000100 for
+ * DILG SubayBAYAN rows (null / false on DPWH rows). For DILG, contract_amount
+ * holds the total project cost only when it is verified (it sorts), and
+ * total_cost always holds it (it is displayed).
+ */
+export const DIRECTORY_DILG_COLUMNS = [
+  'agency', 'sector_category', 'sector_subcategory', 'location_precision', 'cost_adjusted', 'amount_needs_review',
+  'total_cost', 'project_owner', 'project_code', 'barangay', 'municipality',
+] as const;
+
 /** Columns of public.project_directory returned by the directory list endpoint (every source). */
-export const PROJECT_LIST_COLUMNS = ['source', 'record_id', 'amount_label', ...DPWH_LIST_COLUMNS.filter((c) => c !== 'contract_id')] as const;
+export const PROJECT_LIST_COLUMNS = [
+  'source', 'record_id', 'amount_label', ...DPWH_LIST_COLUMNS.filter((c) => c !== 'contract_id'), ...DIRECTORY_DILG_COLUMNS,
+] as const;
 export type ProjectListItem = Omit<DpwhContractListItem, 'contract_id'> & {
   source: string;
   record_id: string;
   amount_label: string;
+  agency: 'DPWH' | 'DILG';
+  /** DILG only (LGU Tracker classification of SubayBAYAN projects). */
+  sector_category: SubaybayanCategory | null;
+  sector_subcategory: string | null;
+  location_precision: LocationPrecision | null;
+  /** DILG: the reported total looked like a data-entry error and another amount is used. */
+  cost_adjusted: boolean;
+  /** DILG: the total is extreme for its subcategory and has not been verified. */
+  amount_needs_review: boolean;
+  total_cost: number | string | null;
+  /** DILG: Province, Citymun or Barangay. */
+  project_owner: string | null;
+  project_code: string | null;
+  barangay: string | null;
+  municipality: string | null;
 };
 
 /** Columns returned by the map endpoint (contracts with coordinates). */

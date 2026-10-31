@@ -143,7 +143,8 @@ async function main() {
 
   let written = 0;
   for (let i = 0; i < changed.length; i += BATCH) {
-    const batch = changed.slice(i, i + BATCH);
+    // total_cost_review is only present on flagged rows; write false explicitly so a row can be unflagged.
+    const batch = changed.slice(i, i + BATCH).map((r) => ({ ...r, total_cost_review: r.total_cost_review ?? false }));
     const { error } = await client.from('subaybayan_projects').upsert(batch, { onConflict: 'id' });
     if (error) throw new Error(`Upsert failed at row ${i}: ${error.message}`);
     written += batch.length;

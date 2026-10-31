@@ -163,3 +163,64 @@ Stored as null and listed in `.cache/subaybayan/out/parse-issues.csv`; never gue
   - `RLIP-25-10-43-08-000-1` ₱1,475,655,520 — ROAD CONCRETING
   - `LIME-25-16-02-00-000-1` ₱1,034,398,239 — UPGRADING/ IMPROVEMENT OF KITCHARAO-ANIBONGAN PROVINCIAL ROAD
   - `RLIP-25-10-43-08-000-4` ₱1,030,413,517 — REPAIR OF CLASSROOM AT ALAGATAN ES
+
+## Totals that need review
+
+Rule: a total project cost is flagged when it is at least ₱100,000,000 **and** at least 100× the median total of its subcategory (LGU Tracker classification; positive totals only).
+Values are not changed. Flagged rows (`total_cost_review`) show "Amount not verified" on directory cards, the table, the detail page and the map
+panel, and the directory's amount sorts rank them after every verified amount. Subcategory medians are ₱1.2M–₱5M, so the bar is ₱120M–₱500M;
+a decimal-entry slip (two or three extra digits) lands far above it, while a per-subcategory percentile would flag a fixed share of every group,
+errors or not. The rule lives in `scripts/subaybayan/lib/review.ts`; migration `20261105000100` backfilled the same rule in SQL.
+
+| Subcategory | Median total | Flagged from |
+|---|---:|---:|
+| Community development programs | ₱1,999,000 | ₱199,899,999 |
+| Community facilities | ₱2,000,000 | ₱200,000,000 |
+| Disaster mitigation and preparedness | ₱1,250,000 | ₱125,000,000 |
+| Environmental protection | ₱1,500,000 | ₱150,000,000 |
+| Evacuation centers | ₱1,930,000 | ₱193,000,000 |
+| Health facilities | ₱2,500,000 | ₱250,000,000 |
+| Livelihood initiatives | ₱1,480,951 | ₱148,095,110 |
+| Markets and multipurpose buildings | ₱1,993,263 | ₱199,326,332 |
+| Other public infrastructure | ₱1,212,749 | ₱121,274,877 |
+| Public buildings | ₱2,000,000 | ₱200,000,000 |
+| Roads and bridges | ₱1,994,157 | ₱199,415,705 |
+| Social services | ₱5,000,000 | ₱500,000,000 |
+| Uncategorized | ₱3,213,600 | ₱321,360,000 |
+| Waste and sanitation | ₱1,500,000 | ₱150,000,000 |
+| Water supply systems | ₱2,196,261 | ₱219,626,084 |
+
+Flagged: **25** rows.
+
+| Id | Subcategory | Total project cost | × median | National subsidy | Title |
+|---|---|---:|---:|---:|---|
+| LIME-26-11-23-17-000-11 | Markets and multipurpose buildings | ₱8,789,534,586 | 4410× | – | Improvement of Samal Island Integrated Public Market and Transport Terminal |
+| RLIP-25-10-13-01-000-2 | Water supply systems | ₱7,160,000,000 | 3260× | – | Construction of Water System at Libon-libon Lingating, Baungon, Bukidnon |
+| LIME-26-01-29-08-000-2 | Livelihood initiatives | ₱2,500,000,000 | 1688× | – | Construction of Tourism Scenic Stand Points & Signages |
+| RLIP-25-10-43-08-000-1 | Roads and bridges | ₱1,475,655,520 | 740× | – | ROAD CONCRETING |
+| LIME-25-16-02-00-000-1 | Roads and bridges | ₱1,034,398,239 | 519× | – | UPGRADING/ IMPROVEMENT OF KITCHARAO-ANIBONGAN PROVINCIAL ROAD |
+| RLIP-25-10-43-08-000-4 | Public buildings | ₱1,030,413,517 | 515× | – | REPAIR OF CLASSROOM AT ALAGATAN ES |
+| LIME-25-06-19-03-000-3 | Disaster mitigation and preparedness | ₱752,892,040 | 602× | – | CONSTRUCTION OF SLOPE PROTECTION |
+| RLIP-25-10-43-08-000-5 | Public buildings | ₱632,438,938 | 316× | – | ADDTIONAL CONSTRUCTION OF CLASSROOM @ KISANDI |
+| RLIP-25-10-13-20-000-17 | Community facilities | ₱629,375,000 | 315× | – | Land Development for Apartment Type Cemetery Phase 2, San Isidro |
+| RLIP-25-10-43-08-000-3 | Water supply systems | ₱623,094,948 | 284× | – | WATER WORKS |
+| FALGU-25-13-06-00-000-1 | Markets and multipurpose buildings | ₱500,000,000 | 251× | ₱500,000,000 | Multi-purpose building: Construction of Pamantasan ng Lungsod ng Maynila (PLM) C |
+| FALGU-26-04-10-00-000-2 | Markets and multipurpose buildings | ₱500,000,000 | 251× | ₱500,000,000 | Construction of Multipurpose buildings in Barangay Talisay, City of Lipa (Phase  |
+| FALGU-25-05-17-24-000-4 | Evacuation centers | ₱450,000,000 | 233× | ₱450,000,000 | Multi-purpose building: Comprehensive Retrofitting and Rehabilitation of the Jes |
+| LIME-25-06-19-14-000-5 | Public buildings | ₱436,410,608 | 218× | – | CONSTRUCTION OF A THREE (3) STOREY ROXAS CITY HALL BUILDING |
+| LIME-26-12-63-19-000-1 | Markets and multipurpose buildings | ₱392,930,848 | 197× | – | CONSTRUCTION OF 2-STOREY MULTIPURPOSE BUILDING BRGY. LAMCADE, LAKE SEBU |
+| FALGU-25-08-60-00-000-2 | Markets and multipurpose buildings | ₱326,986,094 | 164× | ₱30,000,000 | Construction of multi-purpose building, Barangay San Policarpo in City of Calbay |
+| FALGU-25-13-16-00-000-9 | Roads and bridges | ₱300,000,000 | 150× | ₱300,000,000 | Improvement of Local Road in City of Valenzuela, National Capital Region (NCR) |
+| LIME-25-16-04-00-000-5 | Roads and bridges | ₱236,043,137 | 118× | – | Improvement of Various Rural Roads in Butuan City Phase IV with Exception (Ampay |
+| LIME-25-09-01-01-000-12 | Roads and bridges | ₱203,019,307 | 102× | – | Concreting of Road at Kud Pasangen, Barangay Binuangan |
+| FALGU-25-06-79-00-000-1 | Markets and multipurpose buildings | ₱200,000,000 | 100× | ₱200,000,000 | Construction of Phase 2 of Multi-Purpose Building |
+| FALGU-25-02-57-00-000-1 | Markets and multipurpose buildings | ₱200,000,000 | 100× | ₱200,000,000 | Construction of Multi-Purpose Building in Sta. Maria, Maddela, Quirino |
+| FALGU-26-04-10-28-000-2 | Markets and multipurpose buildings | ₱200,000,000 | 100× | ₱200,000,000 | Construction of multipurpose building in Barangay San Antonio, City of Sto. Toma |
+| FALGU-26-03-49-00-000-2 | Roads and bridges | ₱200,000,000 | 100× | ₱200,000,000 | Construction of Local Road in Barangay Santa Ines, Cabiao to Barangay Concepcion |
+| LIME-25-16-04-00-000-7 | Other public infrastructure | ₱170,249,863 | 140× | – | Construction of Butuan City Urban Drainage (Phase 8) with Exception |
+| FALGU-26-08-37-38-000-4 | Waste and sanitation | ₱164,000,000 | 109× | ₱164,000,000 | Construction of Water supply and sanitation project in Barangay Hibunawon, Ormoc |
+
+Checked and not flagged: 51 FALGU food-assistance / rice-distribution rows of ₱100M or more (up to ₱462,999,900),
+including `FALGU-26-01-55-00-000-1` (₱384,000,000, national subsidy ₱384,000,000). Each total matches its national subsidy and the
+amounts form one continuous range across provinces and cities, which reads as a program allocation rather than a typing slip; they stay
+below the Social services bar (₱500,000,000). Lowering the bar to catch them would flag the whole program.

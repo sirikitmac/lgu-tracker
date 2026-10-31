@@ -4,7 +4,10 @@ import { notFound } from 'next/navigation';
 import { AlertTriangle, ArrowLeft, ExternalLink, MapPinOff } from 'lucide-react';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { hubFileUrl } from '@/lib/integrations/bettergov/hub';
-import { PROJECT_SOURCES, isProjectSource } from '@/lib/integrations/bettergov/sources';
+import { PROJECT_SOURCES, isProjectSource, subaybayanDataset } from '@/lib/integrations/bettergov/sources';
+import { getSubaybayanDetail, SubaybayanUnavailableError } from '@/lib/subaybayan/server';
+import { readableTitle } from '@/components/dpwh/format';
+import { DilgProjectDetail } from '@/components/subaybayan/DilgProjectDetail';
 import { categoryLabel, formatDate, formatPeso, warningLabel } from '@/components/dpwh/format';
 import { StatusPill } from '@/components/dpwh/StatusPill';
 import type { InfrastructureProject } from '@/types/infrastructureProject';
@@ -13,7 +16,37 @@ const RECORD_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{2,79}$/;
 
 export async function generateMetadata({ params }: PageProps<'/projects/source/[source]/[recordId]'>): Promise<Metadata> {
   const { source, recordId } = await params;
+  if (subaybayanDataset(source) && RECORD_ID.test(recordId)) {
+    const p = await getSubaybayanDetail(recordId).catch(() => null);
+    if (p) return { title: `${readableTitle(p.title).slice(0, 80)} · DILG SubayBAYAN · LGU Tracker` };
+  }
   return { title: `${isProjectSource(source) ? PROJECT_SOURCES[source].label : 'Project'} ${recordId} · LGU Tracker` };
+}
+
+/** DILG SubayBAYAN record: read from subaybayan_projects (public read), checked against the dataset in the URL. */
+async function DilgRecord({ dataset, recordId, back }: { dataset: 'lgsf' | 'rlip'; recordId: string; back: React.ReactNode }) {
+  let project;
+  try {
+    project = await getSubaybayanDetail(recordId);
+  } catch (error) {
+    if (!(error instanceof SubaybayanUnavailableError)) console.error('[LGU Tracker] SubayBAYAN project page failed:', error);
+    return (
+      <>
+        {back}
+        <div role="alert" className="flex items-start gap-2 p-4 rounded-card border border-danger-line bg-danger-soft text-sm text-danger-ink">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          {error instanceof SubaybayanUnavailableError ? 'The project database is not configured.' : 'Could not load this project. Please try again later.'}
+        </div>
+      </>
+    );
+  }
+  if (!project || project.source_dataset !== dataset) notFound();
+  return (
+    <>
+      {back}
+      <DilgProjectDetail p={project} />
+    </>
+  );
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -35,6 +68,9 @@ export default async function SourceProjectPage({ params }: PageProps<'/projects
       <ArrowLeft className="w-4 h-4" /> Project directory
     </Link>
   );
+  const dataset = subaybayanDataset(source);
+  if (dataset) return <DilgRecord dataset={dataset} recordId={recordId} back={back} />;
+
   const supabase = await createSupabaseServerClient();
   const { data, error } = supabase
     ? await supabase.from('infrastructure_projects').select('*').eq('source', source).eq('source_id', recordId).maybeSingle()

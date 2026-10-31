@@ -71,7 +71,7 @@ function emptyHint(f: SubaybayanFilters): string | null {
   return `Try loosening ${list}.`;
 }
 
-export function SubaybayanMap({ initialFilters }: { initialFilters: SubaybayanFilters }) {
+export function SubaybayanMap({ initialFilters, focusId = null }: { initialFilters: SubaybayanFilters; focusId?: string | null }) {
   const [filters, setFilters] = useState<SubaybayanFilters>(initialFilters);
   const [points, setPoints] = useState<PointsPayload | null>(null);
   const [facets, setFacets] = useState<FacetsPayload | null>(null);
@@ -151,7 +151,8 @@ export function SubaybayanMap({ initialFilters }: { initialFilters: SubaybayanFi
       }
       if (!bounds || (lat >= bounds.south && lat <= bounds.north && lng >= bounds.west && lng <= bounds.east)) inView.push(i);
     }
-    inView.sort((a, b) => (c.cost[b] ?? -1) - (c.cost[a] ?? -1));
+    // Unverified totals (extreme for their kind of project) rank after every verified one.
+    inView.sort((a, b) => (c.review[a] ?? 0) - (c.review[b] ?? 0) || (c.cost[b] ?? -1) - (c.cost[a] ?? -1));
     return { inViewIds: inView.map((i) => c.id[i]), unmappedIds: unmapped };
   }, [points, bounds]);
 
@@ -170,6 +171,19 @@ export function SubaybayanMap({ initialFilters }: { initialFilters: SubaybayanFi
     },
     [positions, points]
   );
+  // ?focus=<id> (e.g. the directory's Map link): open that project once the points are in, and fly to it.
+  const focusHandled = useRef(false);
+  useEffect(() => {
+    if (!focusId || focusHandled.current || !points) return;
+    focusHandled.current = true;
+    const i = positions.get(focusId);
+    setMode({ kind: 'detail', id: focusId, back: { kind: 'list' } });
+    if (i === undefined) return;
+    const lat = points.columns.lat[i];
+    const lng = points.columns.lng[i];
+    if (lat !== null && lng !== null) setFocus({ lat, lng, zoom: 14 });
+  }, [focusId, points, positions]);
+
   const selectFromMarker = useCallback(
     (id: string) => {
       openDetail(id, false);

@@ -2,6 +2,7 @@ import React from 'react';
 import { ChevronDown, Info } from 'lucide-react';
 import type { DpwhSummary } from '@/types/dpwh';
 import { PROJECT_SOURCES } from '@/lib/integrations/bettergov/sources';
+import { SUBAYBAYAN_RETRIEVED_LABEL } from '@/lib/subaybayan/source';
 import { formatCount, formatDate } from './format';
 
 /**
@@ -20,7 +21,7 @@ export function DataScopeNote({ summary, className = '' }: { summary: DpwhSummar
         <span className="min-w-0 flex-1">
           <span className="font-semibold">About this data.</span>{' '}
           <span className="text-subtle">
-            Published by BetterGov.ph; values are as reported and not verified by the LGU.
+            Published by BetterGov.ph and DILG SubayBAYAN; values are as reported and not verified by the LGU.
             {summary && !complete && ' The contract import is incomplete.'}
           </span>
         </span>
@@ -44,6 +45,16 @@ export function DataScopeNote({ summary, className = '' }: { summary: DpwhSummar
           <p>
             DPWH projects proposed in the FY 2027 National Expenditure Program (nationwide). These are budget items, not contracts: they
             are never added to contract totals, and the source gives them no coordinates, so they do not appear on the map.
+          </p>
+        </div>
+        <div className="sm:col-span-2">
+          <p className="font-semibold text-ink">DILG SubayBAYAN LGU projects</p>
+          <p>
+            Locally Funded (LGSF) and LIME 20% Development Fund projects reported by LGUs to DILG SubayBAYAN, nationwide; a one-time
+            export retrieved {SUBAYBAYAN_RETRIEVED_LABEL}. Locations are the centre of the barangay, city or province, not the project
+            site. Categories are LGU Tracker&apos;s own keyword classification, not DILG&apos;s. Totals that are extreme for their kind
+            of project are marked &ldquo;Amount not verified&rdquo; and listed after verified amounts. DILG and DPWH may report the same
+            project; records are never merged.
           </p>
         </div>
         {summary && (

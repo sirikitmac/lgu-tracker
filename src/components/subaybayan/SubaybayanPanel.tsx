@@ -3,12 +3,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowUpRight, Crosshair, Info, Layers, MapPin, RotateCcw, SearchX, X } from 'lucide-react';
 import { errorMessage, fetchJson } from '@/lib/http';
+import { projectHref } from '@/lib/integrations/bettergov/sources';
 import {
   SUBAYBAYAN_CATEGORY_COLORS,
   SUBAYBAYAN_CATEGORY_LABELS,
   SUBAYBAYAN_STATUS_LABELS,
 } from '@/lib/subaybayan/categories';
-import type { CostBasis, SubaybayanDetail, SubaybayanSummary } from '@/lib/subaybayan/query';
+import type { SubaybayanDetail, SubaybayanSummary } from '@/lib/subaybayan/query';
+import { CostNote, ReviewNote } from './CostNotes';
 import { SUBAYBAYAN_DATASET_INFO, SUBAYBAYAN_RETRIEVED_LABEL } from '@/lib/subaybayan/source';
 import { isApproximate, placeLine, precisionLabel, precisionNote, subaybayanStatusBadge } from '@/lib/subaybayan/ui';
 import { formatCount, formatDate, formatPeso, readableTitle } from '@/components/dpwh/format';
@@ -109,6 +111,11 @@ function ProjectRow({ id, row, selected, onSelect }: { id: string; row: Subaybay
                 adjusted
               </span>
             )}
+            {row.total_cost_review && (
+              <span className="block mt-1 text-[11px] leading-none text-warn-ink" title="Extreme for this kind of project; not verified. Listed after verified amounts.">
+                not verified
+              </span>
+            )}
           </span>
         </span>
       </button>
@@ -157,20 +164,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <dt className="text-muted">{label}</dt>
       <dd className="text-ink break-words">{children ?? <span className="text-muted">Not reported</span>}</dd>
     </>
-  );
-}
-
-/** The source reported a different total; say so and show what it said. */
-function CostNote({ reported, basis }: { reported: number; basis: CostBasis }) {
-  const used = basis === 'contract_amount' ? 'contract amount' : 'subsidy amount (national subsidy + LGU counterpart)';
-  return (
-    <span role="note" className="mt-1.5 flex items-start gap-1.5 rounded-lg border border-warn-line bg-warn-soft px-2.5 py-2 text-[12px] leading-snug text-warn-ink">
-      <Info className="w-3.5 h-3.5 mt-px shrink-0" aria-hidden="true" />
-      <span>
-        Reported total looked like a data-entry error; showing the {used} instead. SubayBAYAN reports{' '}
-        <strong className="font-semibold tabular-nums">{formatPeso(reported)}</strong>.
-      </span>
-    </span>
   );
 }
 
@@ -249,6 +242,7 @@ function DetailView({ id, onBack, onLocate }: { id: string; onBack: () => void; 
             <>
               <span className="font-semibold tabular-nums">{formatPeso(p.total_cost)}</span>
               {p.total_cost_reported !== null && p.total_cost_basis && <CostNote reported={p.total_cost_reported} basis={p.total_cost_basis} />}
+              {p.total_cost_review && <ReviewNote />}
             </>
           )}
         </Field>
@@ -287,6 +281,10 @@ function DetailView({ id, onBack, onLocate }: { id: string; onBack: () => void; 
         <p className="mt-0.5">Retrieved {SUBAYBAYAN_RETRIEVED_LABEL} (snapshot). The portal needs a sign-in; check it for the latest status.</p>
         {p.source_file && <p className="mt-0.5 text-muted">Export file {p.source_file}, row {p.source_row}.</p>}
       </div>
+      <a href={projectHref(`subaybayan_${p.source_dataset}`, p.id)} className={`mt-4 inline-flex items-center gap-1 text-[12.5px] font-semibold ${textLinkClass}`}>
+        Full project page <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
+      </a>
+      <br />
       <button type="button" onClick={onBack} className={`${secondaryButtonSmClass} mt-5`}>
         <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" /> Back to list
       </button>

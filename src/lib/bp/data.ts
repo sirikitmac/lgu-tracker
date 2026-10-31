@@ -1,5 +1,6 @@
 import { applyDirectoryFilters, applyDirectoryQuery, parseDirectoryQuery, type FilterBuilder } from '@/lib/integrations/dpwh/nationwide/query';
-import { PROJECT_SOURCES, PROJECT_SOURCE_IDS, projectHref, sourceLabel } from '@/lib/integrations/bettergov/sources';
+import { PROJECT_SOURCES, PROJECT_SOURCE_IDS, agencyOf, projectHref, sourceLabel, subaybayanDataset } from '@/lib/integrations/bettergov/sources';
+import { SUBAYBAYAN_CATEGORY_LABELS, isSubaybayanCategory } from '@/lib/subaybayan/categories';
 import { DPWH_CATEGORY_LABELS, DPWH_STATUS_LABELS, type DpwhCategory, type DpwhDirectoryStats, type DpwhStatus } from '@/types/dpwh';
 
 /**
@@ -55,9 +56,12 @@ export async function getDirectoryOverview(supabase: BpSupabase): Promise<BpResu
     (table(supabase, 'dpwh_directory_stats').select('computed_at, last_successful_sync_at, stats') as unknown as SingleBuilder)
       .eq('id', 1)
       .maybeSingle(),
-    ...others.map((source) =>
-      table(supabase, 'infrastructure_projects').select('source_id', { count: 'exact', head: true }).eq('source', source)
-    ),
+    ...others.map((source) => {
+      const dataset = subaybayanDataset(source);
+      return dataset
+        ? table(supabase, 'subaybayan_projects').select('id', { count: 'exact', head: true }).eq('source_dataset', dataset)
+        : table(supabase, 'infrastructure_projects').select('source_id', { count: 'exact', head: true }).eq('source', source);
+    }),
   ]);
   if (statsRes.error) return { ok: false, error: 'database_error' };
 
@@ -100,6 +104,8 @@ export interface SearchArgs {
   category?: unknown;
   status?: unknown;
   source?: unknown;
+  agency?: unknown;
+  sector?: unknown;
   contractor?: unknown;
   sort?: unknown;
   limit?: unknown;
@@ -109,6 +115,8 @@ export interface SearchArgs {
 export interface BpRecord {
   source: string;
   source_label: string;
+  /** DPWH or DILG. */
+  agency: string;
   record_id: string;
   title: string;
   href: string;
@@ -119,6 +127,11 @@ export interface BpRecord {
   status_id: DpwhStatus | null;
   amount_php: number | null;
   amount_label: string;
+  /** DILG: the total is extreme for its kind of project and has not been verified. */
+  amount_not_verified: boolean;
+  /** DILG: LGU Tracker classification (Infrastructure, Community, ...), null for DPWH. */
+  dilg_category: string | null;
+  dilg_subcategory: string | null;
   progress_percent: number | null;
   implementing_office: string | null;
   contractor: string | null;
@@ -139,6 +152,7 @@ export interface SearchResult {
 const SEARCH_COLUMNS = [
   'source', 'record_id', 'title', 'contract_name', 'region', 'province', 'category', 'status', 'contract_amount',
   'budget', 'amount_label', 'progress', 'implementing_office', 'contractor', 'start_date', 'completion_date', 'infra_year',
+  'agency', 'total_cost', 'amount_needs_review', 'sector_category', 'sector_subcategory',
 ].join(',');
 
 const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
@@ -154,6 +168,8 @@ export function toDirectoryParams(args: SearchArgs): URLSearchParams {
   set('category', args.category);
   set('status', args.status);
   set('source', args.source);
+  set('agency', args.agency);
+  set('sector', args.sector);
   set('contractor', args.contractor);
   set('sort', args.sort);
   const limit = Math.trunc(Number(args.limit));
@@ -177,10 +193,14 @@ export async function searchProjects(supabase: BpSupabase, args: SearchArgs): Pr
   const records = ((list.data ?? []) as Record<string, unknown>[]).map((r): BpRecord => {
     const source = String(r.source);
     const isContract = source === 'dpwh_contracts';
+    const agency = String(r.agency ?? agencyOf(source) ?? 'DPWH');
+    const isDilg = agency === 'DILG';
     const status = (r.status as DpwhStatus | null) ?? null;
+    const sector = isSubaybayanCategory(r.sector_category) ? r.sector_category : null;
     return {
       source,
       source_label: sourceLabel(source),
+      agency,
       record_id: String(r.record_id),
       title: String(r.contract_name ?? r.title ?? r.record_id),
       href: projectHref(source, String(r.record_id)),
@@ -189,9 +209,12 @@ export async function searchProjects(supabase: BpSupabase, args: SearchArgs): Pr
       category: label(DPWH_CATEGORY_LABELS, (r.category as DpwhCategory | null) ?? null),
       status: label(DPWH_STATUS_LABELS, status),
       status_id: status,
-      amount_php: num(isContract ? r.contract_amount : r.budget),
+      amount_php: num(isContract ? r.contract_amount : isDilg ? r.total_cost : r.budget),
       amount_label: String(r.amount_label ?? (isContract ? 'Contract amount' : 'Amount')),
-      progress_percent: isContract ? num(r.progress) : null,
+      amount_not_verified: r.amount_needs_review === true,
+      dilg_category: sector ? SUBAYBAYAN_CATEGORY_LABELS[sector] : null,
+      dilg_subcategory: isDilg ? ((r.sector_subcategory as string | null) ?? null) : null,
+      progress_percent: isContract || isDilg ? num(r.progress) : null,
       implementing_office: (r.implementing_office as string | null) ?? null,
       contractor: (r.contractor as string | null) ?? null,
       start_date: (r.start_date as string | null) ?? null,
@@ -201,7 +224,7 @@ export async function searchProjects(supabase: BpSupabase, args: SearchArgs): Pr
   });
 
   const filters: Record<string, string> = {};
-  for (const key of ['q', 'region', 'province', 'category', 'status', 'source', 'contractor'] as const) {
+  for (const key of ['q', 'region', 'province', 'category', 'status', 'source', 'agency', 'sector', 'contractor'] as const) {
     if (query[key]) filters[key === 'q' ? 'query' : key] = String(query[key]);
   }
   return {

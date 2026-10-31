@@ -1,5 +1,6 @@
 import { DPWH_CATEGORIES, DPWH_STATUSES, type DpwhCategory, type DpwhStatus } from '@/types/dpwh';
-import { isProjectSource, type ProjectSource } from '@/lib/integrations/bettergov/sources';
+import { agencyOf, isProjectAgency, isProjectSource, type ProjectAgency, type ProjectSource } from '@/lib/integrations/bettergov/sources';
+import { isSubaybayanCategory, type SubaybayanCategory } from '@/lib/subaybayan/categories';
 
 /**
  * Parses and validates directory query parameters, and applies them to a
@@ -40,6 +41,10 @@ export interface DirectoryQuery {
   office: string | null;
   /** project_directory only: limit to one source. */
   source: ProjectSource | null;
+  /** project_directory only: DPWH (contracts + NEP 2027) or DILG (SubayBAYAN). */
+  agency: ProjectAgency | null;
+  /** project_directory only: DILG SubayBAYAN category (LGU Tracker classification); implies DILG rows. */
+  sector: SubaybayanCategory | null;
   sort: DpwhSort;
   page: number;
   pageSize: number;
@@ -57,7 +62,7 @@ function cleanParam(value: string | null, max = 200): string | null {
 export function parseDirectoryQuery(params: URLSearchParams): { ok: true; query: DirectoryQuery } | { ok: false; error: string } {
   const query: DirectoryQuery = {
     q: null, region: null, province: null, municipality: null, category: null, status: null,
-    contractor: null, office: null, source: null, sort: 'contract_amount-desc', page: 1, pageSize: DEFAULT_PAGE_SIZE,
+    contractor: null, office: null, source: null, agency: null, sector: null, sort: 'contract_amount-desc', page: 1, pageSize: DEFAULT_PAGE_SIZE,
   };
 
   const q = params.get('q');
@@ -85,6 +90,22 @@ export function parseDirectoryQuery(params: URLSearchParams): { ok: true; query:
   if (source) {
     if (!isProjectSource(source)) return { ok: false, error: 'Unknown source.' };
     query.source = source;
+  }
+  const agency = params.get('agency');
+  if (agency) {
+    if (!isProjectAgency(agency)) return { ok: false, error: 'Unknown agency.' };
+    query.agency = agency;
+  }
+  if (query.agency && query.source && agencyOf(query.source) !== query.agency) {
+    return { ok: false, error: 'That source belongs to another agency.' };
+  }
+  const sector = params.get('sector');
+  if (sector) {
+    if (!isSubaybayanCategory(sector)) return { ok: false, error: 'Unknown DILG category.' };
+    if (query.agency === 'DPWH' || (query.source && agencyOf(query.source) !== 'DILG')) {
+      return { ok: false, error: 'The DILG category filter applies to DILG records only.' };
+    }
+    query.sector = sector;
   }
   const sort = params.get('sort');
   if (sort) {
@@ -147,6 +168,9 @@ export function applyDirectoryFilters<T extends FilterBuilder<T>>(builder: T, qu
   if (query.status) b = b.eq('status_key', query.status);
   if (query.office) b = b.eq('implementing_office', query.office);
   if (query.source) b = b.eq('source', query.source);
+  // agency is a constant per view arm, so Postgres drops the other agency's tables from the plan.
+  if (query.agency) b = b.eq('agency', query.agency);
+  if (query.sector) b = b.eq('sector_category', query.sector);
   if (query.contractor) {
     const pattern = toContractorPrefix(query.contractor);
     if (pattern) b = b.ilike('contractor', pattern);

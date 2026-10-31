@@ -5,7 +5,7 @@ import { secondaryButtonClass } from '@/components/dpwh/ui';
 import { CONTRACT_ID_PATTERN } from '@/lib/integrations/dpwh/nationwide/detail';
 import { DpwhPublicMap, type MapFocus } from '@/components/dpwh/DpwhPublicMap';
 import { SubaybayanMap } from '@/components/subaybayan/SubaybayanMap';
-import { EMPTY_FILTERS, parseSubaybayanQuery } from '@/lib/subaybayan/query';
+import { EMPTY_FILTERS, ID_PATTERN, parseSubaybayanQuery } from '@/lib/subaybayan/query';
 
 export const metadata: Metadata = {
   title: 'Project Map · LGU Tracker',
@@ -38,12 +38,16 @@ export default async function PublicProjectMapPage({ searchParams }: PageProps<'
     const usp = new URLSearchParams();
     for (const [k, v] of Object.entries(params)) {
       const value = first(v);
-      if (value !== undefined && k !== 'layer') usp.set(k, value);
+      if (value !== undefined && k !== 'layer' && k !== 'focus') usp.set(k, value);
     }
     const parsed = parseSubaybayanQuery(usp);
     // An invalid shared link falls back to no filters rather than an error page.
     if (parsed.ok) initialFilters = parsed.filters;
   }
+
+  // ?layer=subaybayan&focus=<project id> opens that project.
+  const sbFocus = layer === 'subaybayan' ? first(params.focus) : undefined;
+  const focusId = sbFocus && ID_PATTERN.test(sbFocus) ? sbFocus : null;
 
   return (
     <div data-frame="wide" className="space-y-6">
@@ -81,7 +85,7 @@ export default async function PublicProjectMapPage({ searchParams }: PageProps<'
         </div>
       </nav>
 
-      {layer === 'dpwh' ? <DpwhPublicMap focus={parseFocus(params)} /> : <SubaybayanMap initialFilters={initialFilters} />}
+      {layer === 'dpwh' ? <DpwhPublicMap focus={parseFocus(params)} /> : <SubaybayanMap initialFilters={initialFilters} focusId={focusId} />}
     </div>
   );
 }

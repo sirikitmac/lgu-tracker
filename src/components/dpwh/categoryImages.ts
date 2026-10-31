@@ -1,4 +1,6 @@
 import type { DpwhCategory } from '@/types/dpwh';
+import { isDilgSource } from '@/lib/integrations/bettergov/sources';
+import { dilgPhotoCategory } from '@/lib/subaybayan/ui';
 import { CATEGORY_PHOTO_POOLS, type CategoryPhoto } from './categoryPhotoCatalog';
 
 /**
@@ -35,6 +37,20 @@ export interface ImageSubject {
 }
 
 export const recordKey = (r: Pick<ImageSubject, 'source' | 'record_id'>) => `${r.source}:${r.record_id}`;
+
+/**
+ * Which photo pool a directory row draws from. DPWH rows use their category.
+ * DILG SubayBAYAN rows use a pool only when its pictures show the same kind
+ * of work (see dilgPhotoCategory); otherwise null, so the card shows its
+ * illustrated header rather than an unrelated infrastructure photo.
+ */
+export function cardPhotoCategory(item: { source: string; category: string | null; title: string; sector_subcategory?: string | null }): string | null {
+  return isDilgSource(item.source) ? dilgPhotoCategory(item.sector_subcategory ?? null, item.title) : item.category;
+}
+
+/** Subjects for assignCardImages from directory rows. */
+export const photoSubjects = (items: readonly { source: string; record_id: string; category: string | null; title: string; sector_subcategory?: string | null }[]): ImageSubject[] =>
+  items.map((i) => ({ source: i.source, record_id: i.record_id, category: cardPhotoCategory(i) }));
 
 /** 32-bit FNV-1a: small, fast, and stable across browsers and builds. */
 export function hashKey(key: string): number {

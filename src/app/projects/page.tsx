@@ -3,13 +3,14 @@ import Link from 'next/link';
 import { BarChart3, MapPin } from 'lucide-react';
 import { DpwhDirectory } from '@/components/dpwh/DpwhDirectory';
 import { secondaryButtonClass } from '@/components/dpwh/ui';
-import { isProjectSource } from '@/lib/integrations/bettergov/sources';
+import { agencyOf, isProjectAgency, isProjectSource } from '@/lib/integrations/bettergov/sources';
+import { isSubaybayanCategory } from '@/lib/subaybayan/categories';
 import { DPWH_SORTS } from '@/lib/integrations/dpwh/nationwide/query';
 import { DPWH_CATEGORIES, DPWH_STATUSES } from '@/types/dpwh';
 
 export const metadata: Metadata = {
   title: 'Projects · LGU Tracker',
-  description: 'Search, filter, and sort infrastructure projects from BetterGov.ph datasets: DPWH contracts and DPWH FY 2027 NEP proposals.',
+  description: 'Search, filter, and sort public projects: DPWH contracts, DPWH FY 2027 NEP proposals, and DILG SubayBAYAN LGU projects.',
 };
 
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? '';
@@ -22,6 +23,12 @@ export default async function PublicProjectsPage({ searchParams }: PageProps<'/p
   const page = Number(first(params.page));
   const pageSize = Number(first(params.pageSize));
   const sort = first(params.sort);
+  // Unknown or inconsistent values are dropped rather than sent to the API, which rejects them.
+  const agency = isProjectAgency(first(params.agency)) ? first(params.agency) : '';
+  const rawSource = first(params.source);
+  const source = isProjectSource(rawSource) && (!agency || agencyOf(rawSource) === agency) ? rawSource : '';
+  const rawSector = first(params.sector);
+  const sector = isSubaybayanCategory(rawSector) && agency !== 'DPWH' && (!source || agencyOf(source) === 'DILG') ? rawSector : '';
 
   return (
     <>
@@ -29,7 +36,7 @@ export default async function PublicProjectsPage({ searchParams }: PageProps<'/p
         <div className="min-w-0">
           <h1 className="page-title text-[30px] sm:text-[36px] text-ink">Projects</h1>
           <p className="mt-1.5 text-[15px] text-subtle">
-            DPWH contracts across the Visayas and Mindanao, and FY 2027 budget proposals nationwide.
+            DPWH contracts across the Visayas and Mindanao, FY 2027 budget proposals nationwide, and DILG SubayBAYAN LGU projects.
           </p>
         </div>
         <nav aria-label="Other views" className="flex flex-wrap items-center gap-2 sm:shrink-0">
@@ -46,11 +53,13 @@ export default async function PublicProjectsPage({ searchParams }: PageProps<'/p
           view: view === 'grid' || view === 'list' ? view : undefined,
           page: Number.isInteger(page) && page > 0 ? page : undefined,
           pageSize: PAGE_SIZES.includes(pageSize) ? pageSize : undefined,
-          // Unknown values are dropped rather than sent to the API, which rejects them.
           filters: {
             q: first(params.q), region: first(params.region), province: first(params.province),
             municipality: first(params.municipality), office: first(params.office), contractor: first(params.contractor),
-            source: isProjectSource(first(params.source)) ? first(params.source) : '',
+            source,
+            // A DILG category implies the DILG agency.
+            agency: sector ? 'DILG' : agency,
+            sector,
             status: oneOf(first(params.status), DPWH_STATUSES),
             category: oneOf(first(params.category), DPWH_CATEGORIES),
             ...(sort in DPWH_SORTS ? { sort } : {}),

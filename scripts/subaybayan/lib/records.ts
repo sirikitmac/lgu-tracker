@@ -38,6 +38,8 @@ export interface ProjectRow {
   /** Present only when the reported total was replaced (keeps unaffected rows' hashes unchanged). */
   total_cost_reported?: number;
   total_cost_basis?: RawRecord['total_cost_basis'];
+  /** Present (true) only when the total needs review (lib/review.ts), so unflagged rows keep their hashes. */
+  total_cost_review?: true;
   national_subsidy: number | null;
   lgu_counterpart: number | null;
   owpa: number | null;
@@ -81,6 +83,14 @@ export function assignIds(records: Pick<RawRecord, 'source_dataset' | 'project_c
 /** Stable hash of every stored field except the hash itself (key order fixed by the object literal). */
 export function rowHash(row: Omit<ProjectRow, 'source_hash'>): string {
   return createHash('sha256').update(JSON.stringify(row)).digest('hex').slice(0, 32);
+}
+
+/** The row with the "needs review" flag set, re-hashed. */
+export function withCostReview(row: ProjectRow): ProjectRow {
+  const { source_hash: previous, ...rest } = row;
+  void previous;
+  const flagged = { ...rest, total_cost_review: true as const };
+  return { ...flagged, source_hash: rowHash(flagged) };
 }
 
 export function toProjectRow(id: string, r: RawRecord, c: Classification, loc: LocationResult): ProjectRow {

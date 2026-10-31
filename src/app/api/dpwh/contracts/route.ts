@@ -5,10 +5,11 @@ import { PROJECT_LIST_COLUMNS, type ProjectListItem } from '@/types/dpwh';
 
 /**
  * GET /api/dpwh/contracts?q=&region=&province=&municipality=&category=&status=
- *                         &contractor=&office=&source=&sort=&page=&pageSize=
+ *                         &contractor=&office=&source=&agency=&sector=&sort=&page=&pageSize=
  *
  * One page of the project directory (public.project_directory: DPWH
- * contracts plus the other BetterGov.ph sources, each row with its `source`). Filtering, sorting, and
+ * contracts, DPWH NEP 2027 proposals and DILG SubayBAYAN projects, each row
+ * with its `source` and `agency`; `sector` is the DILG category). Filtering, sorting, and
  * pagination run in Postgres (indexed); the browser never receives the
  * full dataset. Public data: RLS allows reads for everyone.
  */

@@ -111,3 +111,22 @@ test('contractor prefix strips wildcard characters', () => {
   assert.equal(toContractorPrefix('ab%c_d*'), 'ABCD%');
   assert.equal(toContractorPrefix('%%'), null);
 });
+
+test('agency and DILG category (sector) filters', () => {
+  const r = parse('agency=DILG&sector=health');
+  assert.ok(r.ok);
+  assert.equal(r.query.agency, 'DILG');
+  assert.equal(r.query.sector, 'health');
+  const b = applyDirectoryQuery(new Recorder(), r.query, ['source', 'record_id']);
+  assert.deepEqual(b.calls.slice(0, 2), [['eq', 'agency', 'DILG'], ['eq', 'sector_category', 'health']]);
+
+  const dpwh = parse('agency=DPWH&source=dpwh_nep_2027');
+  assert.ok(dpwh.ok);
+  assert.equal(parse('agency=DILG&source=dpwh_contracts').ok, false, 'source must belong to the agency');
+  assert.equal(parse('agency=DPWH&sector=health').ok, false, 'DILG category needs DILG records');
+  assert.equal(parse('source=dpwh_contracts&sector=health').ok, false);
+  assert.equal(parse('agency=dilg').ok, false);
+  assert.equal(parse('sector=roads').ok, false);
+  const src = parse('source=subaybayan_rlip&sector=disaster');
+  assert.ok(src.ok);
+});

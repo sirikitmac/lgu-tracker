@@ -17,7 +17,10 @@ import {
   type ColumnVisibilityState as VisibilityState,
 } from '@tanstack/react-table';
 import type { ProjectListItem } from '@/types/dpwh';
-import { projectHref, sourceLabel } from '@/lib/integrations/bettergov/sources';
+import { projectHref, sourceLabel, subaybayanMapHref } from '@/lib/integrations/bettergov/sources';
+import { implementingLgu } from '@/lib/subaybayan/ui';
+import { DilgAmountNotes, DilgPlace, dilgCategoryColor } from '@/components/subaybayan/DilgDirectoryCard';
+import { SUBAYBAYAN_CATEGORY_SHORT } from '@/lib/subaybayan/categories';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { categoryLabel, contractMapHref, formatCount, formatDate, formatPeso, formatProgress, locationLabel } from './format';
 import { StatusPill } from './StatusPill';
@@ -74,6 +77,7 @@ const RowActions = createContext<{ onOpenContract: (id: string) => void; officeC
 });
 
 const isContract = (item: ProjectListItem) => item.source === 'dpwh_contracts';
+const isDilg = (item: ProjectListItem) => item.agency === 'DILG';
 
 function ProjectCell({ item }: { item: ProjectListItem }) {
   const { onOpenContract, officeColumnShown } = useContext(RowActions);
@@ -84,7 +88,7 @@ function ProjectCell({ item }: { item: ProjectListItem }) {
         {title}
       </span>
       <span className="block mt-1 text-xs text-muted">
-        {item.record_id} · {sourceLabel(item.source)}
+        {isDilg(item) ? item.project_code ?? 'No project code' : item.record_id} · {sourceLabel(item.source)}
         {!officeColumnShown && item.implementing_office ? ` · ${item.implementing_office}` : ''}
       </span>
     </>
@@ -98,6 +102,23 @@ function ProjectCell({ item }: { item: ProjectListItem }) {
 }
 
 function LocationCell({ item }: { item: ProjectListItem }) {
+  if (isDilg(item)) {
+    return (
+      <>
+        <span className="block text-ink"><DilgPlace item={item} /></span>
+        <span className="block text-xs text-muted">{item.region ?? '—'}</span>
+        {item.latitude !== null ? (
+          <Link href={subaybayanMapHref(item.record_id)} className={`inline-flex items-center gap-1 mt-1 text-xs ${textLinkClass}`}>
+            <MapPin className="w-3 h-3" aria-hidden="true" /> Map
+          </Link>
+        ) : (
+          <span className="inline-flex items-center gap-1 mt-1 text-xs text-muted" title="The location in the source could not be matched to a place.">
+            <MapPinOff className="w-3 h-3" aria-hidden="true" /> Not mapped
+          </span>
+        )}
+      </>
+    );
+  }
   const mapHref = isContract(item) ? contractMapHref({ ...item, contract_id: item.record_id }) : null;
   return (
     <>
@@ -131,15 +152,46 @@ const columns = helper.columns([
     header: 'Location (reported)',
     cell: (info) => <LocationCell item={info.row.original} />,
   }),
+  helper.accessor('agency', {
+    header: 'Agency',
+    enableSorting: false,
+    cell: (info) => (
+      <span className="inline-flex items-center h-6 px-2 rounded-full bg-sunken text-xs font-semibold text-ink" title={isDilg(info.row.original) ? 'DILG SubayBAYAN' : 'Department of Public Works and Highways'}>
+        {info.getValue()}
+      </span>
+    ),
+  }),
   helper.accessor('category', {
     header: 'Category',
     enableSorting: false,
     cell: (info) => <span className="text-ink">{categoryLabel(info.getValue())}</span>,
   }),
+  helper.accessor('sector_category', {
+    id: 'dilg_category',
+    header: 'DILG category',
+    enableSorting: false,
+    cell: (info) => {
+      const item = info.row.original;
+      if (!isDilg(item)) return dash;
+      return (
+        <span className="block" title="LGU Tracker classification, not an official DILG category">
+          <span className="inline-flex items-center gap-1.5 text-ink">
+            <span className="w-2 h-2 shrink-0 rounded-full" style={{ backgroundColor: dilgCategoryColor(item.sector_category) }} aria-hidden="true" />
+            {item.sector_category ? SUBAYBAYAN_CATEGORY_SHORT[item.sector_category] : 'Uncategorized'}
+          </span>
+          {item.sector_subcategory && item.sector_subcategory !== 'Uncategorized' && (
+            <span className="block text-xs text-muted">{item.sector_subcategory}</span>
+          )}
+        </span>
+      );
+    },
+  }),
   helper.accessor('status', {
     header: 'Status',
     enableSorting: false,
-    cell: (info) => <StatusPill status={info.getValue()} />,
+    cell: (info) => (
+      <StatusPill status={info.getValue()} label={isDilg(info.row.original) && info.getValue() === 'terminated' ? 'Cancelled / terminated' : undefined} />
+    ),
   }),
   helper.accessor('contractor', {
     header: 'Contractor',
@@ -150,14 +202,18 @@ const columns = helper.columns([
     id: 'office',
     header: 'Implementing office',
     enableSorting: false,
-    cell: (info) => (info.getValue() ? <span className="text-ink">{info.getValue()}</span> : dash),
+    cell: (info) => {
+      const item = info.row.original;
+      const value = isDilg(item) ? implementingLgu(item) : info.getValue();
+      return value ? <span className="text-ink">{value}</span> : dash;
+    },
   }),
   helper.accessor('start_date', {
     header: 'Start date',
     sortDescFirst: true,
     cell: (info) => (info.getValue() ? <span className="tabular-nums whitespace-nowrap">{formatDate(info.getValue())}</span> : dash),
   }),
-  helper.accessor((r) => (isContract(r) ? r.contract_amount : r.budget), {
+  helper.accessor((r) => (isContract(r) ? r.contract_amount : isDilg(r) ? r.total_cost : r.budget), {
     id: 'amount',
     header: 'Amount',
     sortDescFirst: true,
@@ -167,6 +223,7 @@ const columns = helper.columns([
         <>
           <span className="font-medium text-ink">{formatPeso(info.getValue())}</span>
           {!isContract(item) && <span className="block text-xs font-normal text-muted">{item.amount_label}</span>}
+          {isDilg(item) && <DilgAmountNotes item={item} className="justify-end mt-0.5" />}
         </>
       );
     },
@@ -176,11 +233,12 @@ const columns = helper.columns([
     sortDescFirst: true,
     cell: (info) => {
       const item = info.row.original;
-      if (!isContract(item)) return <span className="text-muted">Not applicable</span>;
+      if (!isContract(item) && !isDilg(item)) return <span className="text-muted">Not applicable</span>;
       if (item.progress === null) return <span className="text-muted">Not reported</span>;
       return (
         <>
           <span className="text-ink">{formatProgress(item.progress)}</span>
+          {isDilg(item) && <span className="block text-xs text-muted">OWPA</span>}
           <ProgressBar value={Number(item.progress)} status={item.status} className="w-16 ml-auto mt-1.5" />
         </>
       );
@@ -192,7 +250,9 @@ const columns = helper.columns([
 const COLUMN_CLASS: Record<string, string> = {
   project: 'w-[38%] min-w-[260px]',
   location: 'min-w-[150px]',
+  agency: 'whitespace-nowrap',
   category: 'hidden lg:table-cell min-w-[130px]',
+  dilg_category: 'min-w-[150px]',
   status: 'whitespace-nowrap',
   contractor: 'min-w-[180px]',
   office: 'min-w-[160px]',

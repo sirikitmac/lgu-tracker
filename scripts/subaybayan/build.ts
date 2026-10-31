@@ -24,7 +24,8 @@ import { classifyProject } from './lib/classify';
 import { IMPLAUSIBLE_COST_FACTOR, readWorkbook, type ParseIssue, type RawRecord } from './lib/extract';
 import { loadGazetteer } from './lib/gazetteer';
 import { Gazetteer, locate } from './lib/locate';
-import { assignIds, toProjectRow, type ProjectRow } from './lib/records';
+import { assignIds, toProjectRow, withCostReview, type ProjectRow } from './lib/records';
+import { flagCostOutliers, REVIEW_MEDIAN_FACTOR, REVIEW_MIN_COST, reviewThreshold, subcategoryMedians } from './lib/review';
 
 const PORTAL_COUNTS = { lgsf: 7353, rlip: 34126 } as const;
 const FOLDERS = { lgsf: 'Locally_Funded_Projects', rlip: 'LIME_20DF' } as const;
@@ -98,12 +99,15 @@ async function main() {
   const gazetteer = new Gazetteer(await loadGazetteer(path.join(args.cache, 'boundaries')));
   const ids = assignIds(raw);
   const notes: string[] = [];
-  const rows: ProjectRow[] = raw.map((r, i) => {
+  const located: ProjectRow[] = raw.map((r, i) => {
     const loc = locate(gazetteer, r);
     notes.push(loc.note);
     const c = classifyProject({ title: r.title, componentDetails: r.component_details, projectType: r.project_type, program: r.program });
     return toProjectRow(ids[i], r, c, loc);
   });
+  // Totals extreme for their subcategory: flagged for review, never changed.
+  const needsReview = flagCostOutliers(located);
+  const rows = located.map((r) => (needsReview.has(r.id) ? withCostReview(r) : r));
 
   // 3. Write outputs
   const outDir = path.join(args.cache, 'out');
@@ -262,6 +266,42 @@ async function main() {
   const huge = rows.filter((r) => (r.total_cost ?? 0) >= 1e9).sort((a, b) => b.total_cost! - a.total_cost!);
   p(`- Costs of ₱1 billion or more that remain (no reference amount in the row to check them against; review against the portal): ${fmt(huge.length)}.`);
   for (const r of huge) p(`  - \`${r.id}\` ₱${fmt(Math.round(r.total_cost!))} — ${r.title.replace(/\s+/g, ' ').slice(0, 90)}`);
+
+  p();
+  p('## Totals that need review');
+  p();
+  p(`Rule: a total project cost is flagged when it is at least ₱${fmt(REVIEW_MIN_COST)} **and** at least ${REVIEW_MEDIAN_FACTOR}× the median total of its subcategory (LGU Tracker classification; positive totals only).`);
+  p('Values are not changed. Flagged rows (`total_cost_review`) show "Amount not verified" on directory cards, the table, the detail page and the map');
+  p("panel, and the directory's amount sorts rank them after every verified amount. Subcategory medians are ₱1.2M–₱5M, so the bar is ₱120M–₱500M;");
+  p('a decimal-entry slip (two or three extra digits) lands far above it, while a per-subcategory percentile would flag a fixed share of every group,');
+  p('errors or not. The rule lives in `scripts/subaybayan/lib/review.ts`; migration `20261105000100` backfilled the same rule in SQL.');
+  p();
+  const medians = subcategoryMedians(rows);
+  p('| Subcategory | Median total | Flagged from |');
+  p('|---|---:|---:|');
+  for (const [sub, med] of [...medians].sort((a, b) => a[0].localeCompare(b[0]))) {
+    p(`| ${sub || '(none)'} | ₱${fmt(Math.round(med))} | ₱${fmt(Math.round(reviewThreshold(med)!))} |`);
+  }
+  p();
+  const flagged = rows.filter((r) => r.total_cost_review).sort((a, b) => b.total_cost! - a.total_cost!);
+  p(`Flagged: **${fmt(flagged.length)}** rows.`);
+  p();
+  p('| Id | Subcategory | Total project cost | × median | National subsidy | Title |');
+  p('|---|---|---:|---:|---:|---|');
+  for (const r of flagged) {
+    const med = medians.get(r.sector_subcategory ?? '')!;
+    const subsidy = r.national_subsidy === null ? '–' : `₱${fmt(Math.round(r.national_subsidy))}`;
+    p(`| ${r.id} | ${r.sector_subcategory} | ₱${fmt(Math.round(r.total_cost!))} | ${Math.round(r.total_cost! / med)}× | ${subsidy} | ${r.title.replace(/\s+/g, ' ').replace(/\|/g, '/').slice(0, 80)} |`);
+  }
+  p();
+  const rice = rows.filter((r) => !r.total_cost_review && r.sector_subcategory === 'Social services' && /\brice\b/i.test(r.title) && (r.total_cost ?? 0) >= 1e8);
+  if (rice.length) {
+    const ex = rows.find((r) => r.id === 'FALGU-26-01-55-00-000-1');
+    p(`Checked and not flagged: ${fmt(rice.length)} FALGU food-assistance / rice-distribution rows of ₱100M or more (up to ₱${fmt(Math.round(Math.max(...rice.map((r) => r.total_cost!))))}),`);
+    p(`${ex ? `including \`${ex.id}\` (₱${fmt(Math.round(ex.total_cost ?? 0))}, national subsidy ₱${fmt(Math.round(ex.national_subsidy ?? 0))}). ` : ''}Each total matches its national subsidy and the`);
+    p(`amounts form one continuous range across provinces and cities, which reads as a program allocation rather than a typing slip; they stay`);
+    p(`below the Social services bar (₱${fmt(Math.round(reviewThreshold(medians.get('Social services'))!))}). Lowering the bar to catch them would flag the whole program.`);
+  }
   mkdirSync(path.dirname(args.report), { recursive: true });
   writeFileSync(args.report, lines.join('\n') + '\n');
 

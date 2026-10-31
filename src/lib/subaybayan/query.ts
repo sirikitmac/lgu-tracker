@@ -36,12 +36,14 @@ export interface IndexRow {
   sector: string | null;
   mode_of_implementation: string | null;
   total_cost: number | null;
+  /** The total is extreme for its subcategory and not verified (migration 20261105000100). */
+  total_cost_review: boolean;
 }
 
 export const INDEX_COLUMNS = [
   'id', 'project_code', 'title', 'sector_category', 'sector_subcategory', 'region', 'province', 'citymun',
   'latitude', 'longitude', 'location_precision', 'funding_year', 'status', 'source_dataset', 'project_type',
-  'program', 'sector', 'mode_of_implementation', 'total_cost',
+  'program', 'sector', 'mode_of_implementation', 'total_cost', 'total_cost_review',
 ] as const;
 
 /** Category-specific filters, shown only while that category is selected. */
@@ -222,6 +224,8 @@ export interface PointsPayload {
     year: (number | null)[];
     /** Whole pesos. */
     cost: (number | null)[];
+    /** 1 when the cost is not verified (ranked after verified costs), else 0. */
+    review: (0 | 1)[];
   };
 }
 
@@ -230,7 +234,7 @@ export function buildPoints(index: readonly IndexRow[], f: SubaybayanFilters): P
     total: 0,
     counts: { barangay: 0, approximate: 0, unmapped: 0 },
     rows: 0,
-    columns: { id: [], lat: [], lng: [], category: [], precision: [], status: [], dataset: [], year: [], cost: [] },
+    columns: { id: [], lat: [], lng: [], category: [], precision: [], status: [], dataset: [], year: [], cost: [], review: [] },
   };
   const c = out.columns;
   for (const r of index) {
@@ -250,6 +254,7 @@ export function buildPoints(index: readonly IndexRow[], f: SubaybayanFilters): P
     c.dataset.push(DATASET_INDEX.get(r.source_dataset)!);
     c.year.push(r.funding_year);
     c.cost.push(r.total_cost === null ? null : Math.round(r.total_cost));
+    c.review.push(r.total_cost_review ? 1 : 0);
     out.rows++;
   }
   return out;
@@ -318,7 +323,7 @@ export const DETAIL_COLUMNS = [
   'id', 'source_agency', 'source_dataset', 'project_code', 'title', 'sector_category', 'sector_subcategory', 'classification_reason',
   'region', 'province', 'citymun', 'barangay', 'psgc_region', 'psgc_province', 'psgc_citymun', 'psgc_barangay',
   'latitude', 'longitude', 'location_precision', 'funding_year', 'status', 'status_raw', 'project_type', 'program', 'sector',
-  'mode_of_implementation', 'total_cost', 'total_cost_reported', 'total_cost_basis', 'national_subsidy', 'lgu_counterpart', 'owpa', 'contractor', 'project_owner',
+  'mode_of_implementation', 'total_cost', 'total_cost_reported', 'total_cost_basis', 'total_cost_review', 'national_subsidy', 'lgu_counterpart', 'owpa', 'contractor', 'project_owner',
   'approval_status', 'geotagged_photos', 'size_text', 'beneficiaries_text', 'component_details', 'start_date', 'end_date',
   'source_file', 'source_row', 'source_url', 'retrieved_at',
 ] as const;
@@ -331,6 +336,8 @@ export type SubaybayanDetail = {
     ? string
     : K extends 'total_cost_basis'
     ? CostBasis | null
+    : K extends 'total_cost_review'
+    ? boolean
     : K extends 'latitude' | 'longitude' | 'total_cost' | 'total_cost_reported' | 'national_subsidy' | 'lgu_counterpart' | 'owpa'
     ? number | null
     : K extends 'funding_year' | 'geotagged_photos' | 'source_row'
@@ -362,12 +369,14 @@ export interface SubaybayanSummary {
   total_cost: number | null;
   /** Non-null when total_cost is not the reported total. */
   total_cost_basis: CostBasis | null;
+  /** The total is extreme for its subcategory and not verified. */
+  total_cost_review: boolean;
   source_dataset: SubaybayanDataset;
 }
 
 export const SUMMARY_COLUMNS = [
   'id', 'project_code', 'title', 'sector_category', 'sector_subcategory', 'citymun', 'province', 'barangay',
-  'location_precision', 'status', 'funding_year', 'total_cost', 'total_cost_basis', 'source_dataset',
+  'location_precision', 'status', 'funding_year', 'total_cost', 'total_cost_basis', 'total_cost_review', 'source_dataset',
 ] as const;
 
 export const MAX_SUMMARY_IDS = 60;
