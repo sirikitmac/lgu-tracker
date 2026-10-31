@@ -22,6 +22,7 @@ import {
   type SubaybayanDetail,
   type SubaybayanFilters,
 } from '@/lib/subaybayan/query';
+import { asCode, joinList, revealFilters, type CodeLookup, type CodeMatch } from '@/lib/subaybayan/code';
 import { SUBAYBAYAN_DATASET_INFO, SUBAYBAYAN_RETRIEVED_LABEL } from '@/lib/subaybayan/source';
 import { SubaybayanFilterBar } from './SubaybayanFilters';
 import { SubaybayanPanel, type ListMode, type PanelMode } from './SubaybayanPanel';
@@ -89,8 +90,15 @@ export function SubaybayanMap({ initialFilters, focusId = null }: { initialFilte
   }, []);
 
   const q = useDebounced(filters.q, 350);
-  const effective = useMemo(() => ({ ...filters, q }), [filters, q]);
+  // A pasted project code searches in its normalized form (case, spaces, en/em dashes).
+  const effective = useMemo(() => ({ ...filters, q: asCode(q) ?? q }), [filters, q]);
   const query = filtersToParams(effective).toString();
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
+  const queryRef = useRef(query);
+  queryRef.current = query;
+  /** A query that a code lookup produced on purpose: reaching it must not close the panel it opened. */
+  const holdQuery = useRef<string | null>(null);
 
   // Keep the address bar in step (shareable links), without a server round trip.
   useEffect(() => {
@@ -127,7 +135,9 @@ export function SubaybayanMap({ initialFilters, focusId = null }: { initialFilte
       firstQuery.current = false;
       return;
     }
-    setMode({ kind: 'list' });
+    const held = holdQuery.current === query;
+    holdQuery.current = null;
+    if (!held) setMode({ kind: 'list' });
   }, [query]);
 
   const positions = useMemo(() => {
@@ -200,6 +210,68 @@ export function SubaybayanMap({ initialFilters, focusId = null }: { initialFilte
     setFocus({ lat: p.latitude, lng: p.longitude, zoom: 14 });
     setSmallView('map');
   }, []);
+
+  // --- Jump to a project by its SubayBAYAN code -------------------------------
+
+  /** Shows one looked-up project: clears filters that hide it (with a toast), flies to it, opens its detail. */
+  const reveal = useCallback(
+    (m: CodeMatch, code: string, back: ListMode = { kind: 'list' }) => {
+      const { filters: next, cleared } = revealFilters(m, filtersRef.current, code);
+      const nextQuery = filtersToParams({ ...next, q: asCode(next.q) ?? next.q }).toString();
+      if (nextQuery !== queryRef.current) holdQuery.current = nextQuery;
+      setFilters(next);
+      setMode({ kind: 'detail', id: m.id, back });
+      if (m.latitude !== null && m.longitude !== null) setFocus({ lat: m.latitude, lng: m.longitude, zoom: 14 });
+      setSmallView('list');
+      if (cleared.length) {
+        toast({
+          id: 'sb-code-reveal',
+          tone: 'info',
+          title: 'Filters cleared to show this project',
+          description: `Cleared the ${joinList(cleared)} filter${cleared.length === 1 ? '' : 's'}.`,
+        });
+      }
+    },
+    [toast]
+  );
+
+  // Search text that looks like a project code (typed, pasted, or from ?q= / ?code=) is looked up exactly.
+  // Keyed on the normalized code, so "lime–25…" and "LIME-25…" are one lookup, and a remount just repeats it.
+  const lookupCode = asCode(q);
+  const revealRef = useRef(reveal);
+  revealRef.current = reveal;
+  useEffect(() => {
+    if (!lookupCode) return;
+    const controller = new AbortController();
+    fetchJson<CodeLookup>(`/api/subaybayan/lookup?code=${encodeURIComponent(lookupCode)}`, { signal: controller.signal })
+      .then((r) => {
+        if (r.status === 'found' && r.matches.length === 1) {
+          revealRef.current(r.matches[0], r.code);
+          return;
+        }
+        // Show the normalized code in the box; the panel takes over (the list behind it is unchanged).
+        const next = { ...filtersRef.current, q: r.code };
+        const nextQuery = filtersToParams({ ...next, q: r.code }).toString();
+        if (nextQuery !== queryRef.current) holdQuery.current = nextQuery;
+        setFilters(next);
+        setMode(
+          r.status === 'found'
+            ? { kind: 'code', code: r.code, matches: r.matches }
+            : { kind: 'code-missing', code: r.code, suggestions: r.suggestions, dataset: r.dataset }
+        );
+        setSmallView('list');
+      })
+      .catch((e: unknown) => {
+        if ((e as Error)?.name === 'AbortError') return;
+        toast({ id: 'sb-code-lookup', tone: 'error', title: 'Could not look up this project code', description: errorMessage(e, 'Please try again.') });
+      });
+    return () => controller.abort();
+    // toast is stable (context); reveal is read through a ref so a lookup never repeats on its own.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lookupCode]);
+
+  const pickCode = useCallback((m: CodeMatch, back: ListMode) => reveal(m, m.project_code ?? filtersRef.current.q, back), [reveal]);
+  const suggestCode = useCallback((code: string) => setFilters((f) => ({ ...f, q: code })), []);
 
   const isFiltered = filtersToParams(filters).toString() !== '';
   const changeFilters = useCallback(
@@ -357,6 +429,8 @@ export function SubaybayanMap({ initialFilters, focusId = null }: { initialFilte
           onRetry={retry}
           emptyHint={emptyHint(filters)}
           onClearFilters={isFiltered ? () => changeFilters(EMPTY_FILTERS) : undefined}
+          onPickCode={pickCode}
+          onSuggestCode={suggestCode}
           className={smallView === 'map' ? 'hidden lg:flex' : 'flex'}
         />
       </div>

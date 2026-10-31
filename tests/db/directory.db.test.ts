@@ -178,3 +178,39 @@ test('the DILG arm reads its expression indexes (view and index expressions stay
   // The agency filter is a constant per arm: DPWH tables are not read for DILG.
   assert.doesNotMatch(await plan(`select ${cols} from public.project_directory where agency = 'DILG' limit 5`), /dpwh_contracts|infrastructure_projects/);
 });
+
+test('exact project-code lookup (directory pinning) returns only that code and reads the code index', async () => {
+  const res = await as<{ record_id: string; project_code: string; agency: string }>(db, 'anon', null,
+    `select record_id, project_code, agency from public.project_directory where project_code = $1`, ['RLIP-ROAD']);
+  assert.deepEqual(res.rows, [{ record_id: 'RLIP-ROAD', project_code: 'RLIP-ROAD', agency: 'DILG' }]);
+  // Exact, not prefix: a shorter code does not match a longer one.
+  const none = await as<{ n: number }>(db, 'anon', null, `select count(*)::int n from public.project_directory where project_code = 'RLIP-ROA'`);
+  assert.equal(none.rows![0].n, 0);
+  await db.exec('set enable_seqscan = off;');
+  try {
+    const plan = (await db.query<{ 'QUERY PLAN': string }>(`explain select record_id from public.project_directory where project_code = 'RLIP-ROAD'`)).rows.map((r) => r['QUERY PLAN']).join('\n');
+    assert.match(plan, /subaybayan_projects_code_idx/);
+  } finally {
+    await db.exec('reset enable_seqscan;');
+  }
+});
+
+test('a project code typed into the directory search finds its row (full-text, Postgres lexemes)', async () => {
+  const { codeTsQuery } = await import('@/lib/subaybayan/code');
+  const { toPrefixTsQuery } = await import('@/lib/integrations/dpwh/nationwide/query');
+  const r = row('LIME-25-13-02-00-000-41', { title: 'Construction of Slope Protection' });
+  const cols = Object.keys(r);
+  await as(db, 'service_role', null, `insert into public.subaybayan_projects (${cols.join(',')}) values (${cols.map((_, i) => `$${i + 1}`).join(',')})`, Object.values(r));
+  try {
+    const find = async (tsquery: string) =>
+      (await as<{ record_id: string }>(db, 'anon', null, `select record_id from public.project_directory where search @@ to_tsquery('simple', $1) and agency = 'DILG'`, [tsquery])).rows!.map((x) => x.record_id);
+    // The old word-prefix query never matched a code; the code query does.
+    assert.deepEqual(await find(toPrefixTsQuery('LIME-25-13-02-00-000-41')!), []);
+    assert.deepEqual(await find(codeTsQuery('LIME-25-13-02-00-000-41')!), ['LIME-25-13-02-00-000-41']);
+    assert.deepEqual(await find(codeTsQuery('LIME-25-13-02-00-000-4')!), ['LIME-25-13-02-00-000-41'], 'prefix on the last part');
+    assert.deepEqual(await find(codeTsQuery('LIME-25-13')!), ['LIME-25-13-02-00-000-41'], 'partial code');
+    assert.deepEqual(await find(codeTsQuery('LIME-13-25')!), [], 'order matters');
+  } finally {
+    await as(db, 'service_role', null, `delete from public.subaybayan_projects where id = $1`, [r.id]);
+  }
+});

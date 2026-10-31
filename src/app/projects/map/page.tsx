@@ -5,6 +5,7 @@ import { secondaryButtonClass } from '@/components/dpwh/ui';
 import { CONTRACT_ID_PATTERN } from '@/lib/integrations/dpwh/nationwide/detail';
 import { DpwhPublicMap, type MapFocus } from '@/components/dpwh/DpwhPublicMap';
 import { SubaybayanMap } from '@/components/subaybayan/SubaybayanMap';
+import { asCode } from '@/lib/subaybayan/code';
 import { EMPTY_FILTERS, ID_PATTERN, parseSubaybayanQuery } from '@/lib/subaybayan/query';
 
 export const metadata: Metadata = {
@@ -31,18 +32,23 @@ const layerTab = (active: boolean) =>
 
 export default async function PublicProjectMapPage({ searchParams }: PageProps<'/projects/map'>) {
   const params = await searchParams;
-  const layer = first(params.layer) === 'subaybayan' ? 'subaybayan' : 'dpwh';
+  // ?code=<SubayBAYAN project code> (shared links) always opens the LGU layer and looks the code up.
+  const rawCode = first(params.code);
+  const code = rawCode && rawCode.length <= 80 ? asCode(rawCode) : null;
+  const layer = code || first(params.layer) === 'subaybayan' ? 'subaybayan' : 'dpwh';
 
   let initialFilters = EMPTY_FILTERS;
   if (layer === 'subaybayan') {
     const usp = new URLSearchParams();
     for (const [k, v] of Object.entries(params)) {
       const value = first(v);
-      if (value !== undefined && k !== 'layer' && k !== 'focus') usp.set(k, value);
+      if (value !== undefined && k !== 'layer' && k !== 'focus' && k !== 'code') usp.set(k, value);
     }
     const parsed = parseSubaybayanQuery(usp);
     // An invalid shared link falls back to no filters rather than an error page.
     if (parsed.ok) initialFilters = parsed.filters;
+    // The map looks up any search text that is a code; the lookup then clears filters that would hide it.
+    if (code) initialFilters = { ...initialFilters, q: code };
   }
 
   // ?layer=subaybayan&focus=<project id> opens that project.

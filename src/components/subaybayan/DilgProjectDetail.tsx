@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowUpRight, MapPin, MapPinOff } from 'lucide-react';
-import { subaybayanMapHref } from '@/lib/integrations/bettergov/sources';
+import { projectMapLink } from '@/lib/subaybayan/code';
 import { SUBAYBAYAN_CATEGORY_COLORS, SUBAYBAYAN_CATEGORY_LABELS, SUBAYBAYAN_STATUS_LABELS } from '@/lib/subaybayan/categories';
 import type { SubaybayanDetail } from '@/lib/subaybayan/query';
 import { SUBAYBAYAN_DATASET_INFO, SUBAYBAYAN_RETRIEVED_LABEL } from '@/lib/subaybayan/source';
@@ -89,11 +89,10 @@ export function DilgProjectDetail({ p }: { p: SubaybayanDetail }) {
             <p className="mt-1.5 text-[13px] text-subtle">
               <span className="font-semibold">Location precision: {precisionLabel(p.location_precision)}.</span> {precisionNote(p.location_precision)}
             </p>
-            {p.latitude !== null && (
-              <Link href={subaybayanMapHref(p.id)} className="mt-2 inline-flex items-center gap-1 text-[13px] font-semibold text-accent-ink hover:underline rounded-sm focus-visible:outline-2 focus-visible:outline-accent-ink">
-                <MapPin className="w-3.5 h-3.5" aria-hidden="true" /> Show on the project map
-              </Link>
-            )}
+            {p.latitude === null && <p className="mt-1.5 text-[13px] font-medium text-warn-ink">This project has no mappable location in the source.</p>}
+            <Link href={projectMapLink(p)} className="mt-2 inline-flex items-center gap-1 text-[13px] font-semibold text-accent-ink hover:underline rounded-sm focus-visible:outline-2 focus-visible:outline-accent-ink">
+              <MapPin className="w-3.5 h-3.5" aria-hidden="true" /> View on map
+            </Link>
           </div>
         </section>
 

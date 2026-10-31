@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { applyDirectoryFilters, applyDirectoryQuery, parseDirectoryQuery, type FilterBuilder } from '@/lib/integrations/dpwh/nationwide/query';
+import { asCode } from '@/lib/subaybayan/code';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { PROJECT_LIST_COLUMNS, type ProjectListItem } from '@/types/dpwh';
 
@@ -12,6 +13,11 @@ import { PROJECT_LIST_COLUMNS, type ProjectListItem } from '@/types/dpwh';
  * with its `source` and `agency`; `sector` is the DILG category). Filtering, sorting, and
  * pagination run in Postgres (indexed); the browser never receives the
  * full dataset. Public data: RLS allows reads for everyone.
+ *
+ * When `q` is a SubayBAYAN project code, rows with exactly that code (index
+ * subaybayan_projects_code_idx) come first on page 1 and are left out of the
+ * full-text results on every page, so they are listed once. The count is the
+ * full-text count, which already includes them.
  */
 export async function GET(request: NextRequest) {
   const parsed = parseDirectoryQuery(request.nextUrl.searchParams);
@@ -32,16 +38,28 @@ export async function GET(request: NextRequest) {
   const countBuilder = supabase
     .from('project_directory')
     .select('record_id', { count: 'exact', head: true }) as unknown as ListBuilder;
-  const [{ data, error }, { count, error: countError }] = await Promise.all([
+  const code = parsed.query.q ? asCode(parsed.query.q) : null;
+  const exactBuilder = code
+    ? (supabase.from('project_directory').select(PROJECT_LIST_COLUMNS.join(',')).eq('project_code', code) as unknown as ListBuilder)
+    : null;
+  const [{ data, error }, { count, error: countError }, exact] = await Promise.all([
     applyDirectoryQuery(builder, parsed.query, ['source', 'record_id']),
     applyDirectoryFilters(countBuilder, parsed.query),
+    exactBuilder ? applyDirectoryFilters(exactBuilder, { ...parsed.query, q: null }).order('record_id', { ascending: true, nullsFirst: false }).range(0, 19) : null,
   ]);
-  if (error || countError) {
-    console.error('[LGU Tracker] DPWH directory query failed:', error ?? countError);
+  if (error || countError || exact?.error) {
+    console.error('[LGU Tracker] DPWH directory query failed:', error ?? countError ?? exact?.error);
     return Response.json({ error: 'Could not load projects.' }, { status: 502 });
   }
+  let items = (data ?? []) as unknown as ProjectListItem[];
+  const pinned = (exact?.data ?? []) as unknown as ProjectListItem[];
+  if (pinned.length) {
+    const key = (r: ProjectListItem) => `${r.source}|${r.record_id}`;
+    const pinnedKeys = new Set(pinned.map(key));
+    items = [...(parsed.query.page === 1 ? pinned : []), ...items.filter((r) => !pinnedKeys.has(key(r)))];
+  }
   return Response.json({
-    items: (data ?? []) as unknown as ProjectListItem[],
+    items,
     total: count ?? 0,
     page: parsed.query.page,
     pageSize: parsed.query.pageSize,

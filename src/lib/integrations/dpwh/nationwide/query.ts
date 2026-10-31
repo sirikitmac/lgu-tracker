@@ -1,3 +1,4 @@
+import { codeTsQuery } from '@/lib/subaybayan/code';
 import { DPWH_CATEGORIES, DPWH_STATUSES, type DpwhCategory, type DpwhStatus } from '@/types/dpwh';
 import { agencyOf, isProjectAgency, isProjectSource, type ProjectAgency, type ProjectSource } from '@/lib/integrations/bettergov/sources';
 import { isSubaybayanCategory, type SubaybayanCategory } from '@/lib/subaybayan/categories';
@@ -157,7 +158,8 @@ export interface FilterBuilder<T> {
 export function applyDirectoryFilters<T extends FilterBuilder<T>>(builder: T, query: DirectoryQuery): T {
   let b = builder;
   if (query.q) {
-    const tsquery = toPrefixTsQuery(query.q);
+    // Codes and "WORD-12" text are tokenized differently by Postgres; see codeTsQuery.
+    const tsquery = codeTsQuery(query.q) ?? toPrefixTsQuery(query.q);
     if (tsquery) b = b.textSearch('search', tsquery, { config: 'simple' });
   }
   if (query.region) b = b.eq('region', query.region);

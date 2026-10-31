@@ -67,6 +67,7 @@ export default function SubaybayanLeafletMap({ points, selectedId, stackIds, onS
   const mapRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.LayerGroup | null>(null);
   const rendererRef = useRef<L.Canvas | null>(null);
+  const pendingFocus = useRef<Props['focus']>(null);
   const handlers = useRef({ onSelect, onStack, onBoundsChange });
   handlers.current = { onSelect, onStack, onBoundsChange };
   const renderRef = useRef<() => void>(() => undefined);
@@ -123,7 +124,15 @@ export default function SubaybayanLeafletMap({ points, selectedId, stackIds, onS
     });
     report();
     const resize = new ResizeObserver(() => {
-      if (container.clientWidth > 0 && container.clientHeight > 0) map.invalidateSize();
+      if (container.clientWidth > 0 && container.clientHeight > 0) {
+        map.invalidateSize();
+        // A focus requested while the map was hidden (small screens show the list instead) lands now.
+        const pending = pendingFocus.current;
+        if (pending) {
+          pendingFocus.current = null;
+          map.setView([pending.lat, pending.lng], Math.max(map.getZoom(), pending.zoom ?? 13), { animate: false });
+        }
+      }
     });
     resize.observe(container);
     return () => {
@@ -192,6 +201,25 @@ export default function SubaybayanLeafletMap({ points, selectedId, stackIds, onS
         if (isSelected) selectedMarker = marker;
       }
       selectedMarker?.bringToFront();
+      // The selected project is inside a cluster (projects share an area centroid): ring its location so it stays visible.
+      if (!selectedMarker && selectedId) {
+        const i = c.id.indexOf(selectedId);
+        const lat = i >= 0 ? c.lat[i] : null;
+        const lng = i >= 0 ? c.lng[i] : null;
+        if (lat !== null && lng !== null && b.contains([lat, lng])) {
+          L.marker([lat, lng], {
+            icon: L.divIcon({
+              className: '',
+              html: `<span style="display:block;width:46px;height:46px;border-radius:9999px;border:3px solid ${inkColor};box-shadow:0 0 0 3px rgba(255,255,255,0.85)"></span>`,
+              iconSize: [46, 46],
+              iconAnchor: [23, 23],
+            }),
+            interactive: false,
+            keyboard: false,
+            zIndexOffset: 1000,
+          }).addTo(layer);
+        }
+      }
     };
     renderRef.current();
   }, [index, points, selectedId, highlighted]);
@@ -199,6 +227,13 @@ export default function SubaybayanLeafletMap({ points, selectedId, stackIds, onS
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !focus) return;
+    const container = containerRef.current;
+    // Hidden map (zero size): Leaflet would project to NaN. Keep the focus until the map is shown.
+    if (!container || container.clientWidth === 0 || container.clientHeight === 0) {
+      pendingFocus.current = focus;
+      return;
+    }
+    pendingFocus.current = null;
     map.invalidateSize();
     map.flyTo([focus.lat, focus.lng], Math.max(map.getZoom(), focus.zoom ?? 13), { duration: 0.6 });
   }, [focus]);

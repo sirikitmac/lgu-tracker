@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowUpRight, Crosshair, Info, Layers, MapPin, RotateCcw, SearchX, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Copy, Crosshair, Hash, Info, Layers, MapPin, MapPinOff, RotateCcw, SearchX, X } from 'lucide-react';
 import { errorMessage, fetchJson } from '@/lib/http';
 import { projectHref } from '@/lib/integrations/bettergov/sources';
 import {
@@ -9,7 +9,10 @@ import {
   SUBAYBAYAN_CATEGORY_LABELS,
   SUBAYBAYAN_STATUS_LABELS,
 } from '@/lib/subaybayan/categories';
+import type { SubaybayanDataset } from '@/lib/subaybayan/categories';
+import { projectMapLink, type CodeMatch, type CodeSuggestion } from '@/lib/subaybayan/code';
 import type { SubaybayanDetail, SubaybayanSummary } from '@/lib/subaybayan/query';
+import { useToast } from '@/components/ui/Toast';
 import { CostNote, ReviewNote } from './CostNotes';
 import { SUBAYBAYAN_DATASET_INFO, SUBAYBAYAN_RETRIEVED_LABEL } from '@/lib/subaybayan/source';
 import { isApproximate, placeLine, precisionLabel, precisionNote, subaybayanStatusBadge } from '@/lib/subaybayan/ui';
@@ -167,6 +170,25 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+/** Copies the project's shareable map link (by code when the code is unique to it). */
+function CopyLinkButton({ project }: { project: { id: string; project_code: string | null } }) {
+  const { toast } = useToast();
+  const copy = async () => {
+    const url = `${window.location.origin}${projectMapLink(project)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ id: 'sb-copy-link', tone: 'success', title: 'Link copied', description: url });
+    } catch {
+      toast({ id: 'sb-copy-link', tone: 'warning', title: 'Could not copy the link', description: url, duration: 0 });
+    }
+  };
+  return (
+    <button type="button" onClick={copy} className={secondaryButtonSmClass}>
+      <Copy className="w-3.5 h-3.5" aria-hidden="true" /> Copy link
+    </button>
+  );
+}
+
 function DetailView({ id, onBack, onLocate }: { id: string; onBack: () => void; onLocate: (p: SubaybayanDetail) => void }) {
   const [project, setProject] = useState<SubaybayanDetail | null>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -229,10 +251,14 @@ function DetailView({ id, onBack, onLocate }: { id: string; onBack: () => void; 
         <p className="mt-1.5 text-[12px] text-subtle">
           <span className="font-semibold">{precisionLabel(p.location_precision)}.</span> {precisionNote(p.location_precision)}
         </p>
-        {p.latitude !== null && p.longitude !== null && (
+        {p.latitude !== null && p.longitude !== null ? (
           <button type="button" onClick={() => onLocate(p)} className={`mt-2 inline-flex items-center gap-1 text-[12.5px] font-semibold ${textLinkClass}`}>
             <Crosshair className="w-3.5 h-3.5" aria-hidden="true" /> Show on map
           </button>
+        ) : (
+          <p className="mt-2 flex items-start gap-1.5 text-[12.5px] font-medium text-warn-ink">
+            <MapPinOff className="w-3.5 h-3.5 mt-px shrink-0" aria-hidden="true" /> This project has no mappable location in the source.
+          </p>
         )}
       </div>
 
@@ -284,15 +310,98 @@ function DetailView({ id, onBack, onLocate }: { id: string; onBack: () => void; 
       <a href={projectHref(`subaybayan_${p.source_dataset}`, p.id)} className={`mt-4 inline-flex items-center gap-1 text-[12.5px] font-semibold ${textLinkClass}`}>
         Full project page <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
       </a>
-      <br />
-      <button type="button" onClick={onBack} className={`${secondaryButtonSmClass} mt-5`}>
-        <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" /> Back to list
-      </button>
+      <div className="mt-5 flex flex-wrap items-center gap-2">
+        <button type="button" onClick={onBack} className={secondaryButtonSmClass}>
+          <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" /> Back to list
+        </button>
+        <CopyLinkButton project={p} />
+      </div>
     </div>
   );
 }
 
-export type ListMode = { kind: 'list' } | { kind: 'stack'; ids: string[] } | { kind: 'unmapped' };
+/** Several rows share one project code: let the user pick instead of guessing. */
+function CodeChooser({ code, matches, onPick }: { code: string; matches: CodeMatch[]; onPick: (m: CodeMatch) => void }) {
+  return (
+    <div className="p-3 sm:p-4">
+      <p className="px-1 pb-3 text-[13px] leading-snug text-subtle">
+        <span className="font-semibold text-ink tabular-nums">{code}</span> is used by {matches.length} projects in the source. Choose one:
+      </p>
+      <ol className="space-y-2.5" aria-label={`Projects with code ${code}`}>
+        {matches.map((m) => (
+          <li key={m.id}>
+            <button
+              type="button"
+              onClick={() => onPick(m)}
+              className={`block w-full text-left rounded-2xl border border-line bg-surface px-4 pt-3 pb-3.5 hover:border-line-strong hover:shadow-raise transition-[border-color,box-shadow] ${focusRing} focus-visible:outline-offset-0`}
+            >
+              <span className="block text-[14.5px] font-semibold leading-[1.45] text-ink text-pretty break-words line-clamp-3">{readableTitle(m.title)}</span>
+              <span className="mt-2 flex items-start justify-between gap-3 text-[12.5px] leading-snug text-subtle">
+                <span className="flex items-start gap-1.5 min-w-0">
+                  {m.latitude === null ? <MapPinOff className="w-3.5 h-3.5 mt-px shrink-0 text-muted" aria-hidden="true" /> : <MapPin className="w-3.5 h-3.5 mt-px shrink-0" aria-hidden="true" />}
+                  <span className="min-w-0 break-words">{placeLine(m)}</span>
+                </span>
+                <span className="shrink-0 tabular-nums text-muted">FY {m.funding_year ?? '—'}</span>
+              </span>
+            </button>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+/** No row has this code: say so, offer close codes, and point to the portal. */
+function CodeMissing({ code, suggestions, dataset, onSuggest }: { code: string; suggestions: CodeSuggestion[]; dataset: SubaybayanDataset | null; onSuggest: (code: string) => void }) {
+  const portals = dataset ? [SUBAYBAYAN_DATASET_INFO[dataset]] : [SUBAYBAYAN_DATASET_INFO.lgsf, SUBAYBAYAN_DATASET_INFO.rlip];
+  return (
+    <div className="px-5 py-8 sm:px-6" role="status">
+      <SearchX className="w-6 h-6 text-muted" aria-hidden="true" />
+      <p className="mt-3 text-[15px] font-semibold text-ink text-pretty">No project with this code in the {SUBAYBAYAN_RETRIEVED_LABEL} snapshot.</p>
+      <p className="mt-1 text-[13px] text-subtle tabular-nums break-all">{code}</p>
+      {suggestions.length > 0 && (
+        <div className="mt-5">
+          <p className="text-[12.5px] font-semibold text-ink">Close matches</p>
+          <ul className="mt-2 space-y-1.5">
+            {suggestions.map((s) => (
+              <li key={s.code}>
+                <button
+                  type="button"
+                  onClick={() => onSuggest(s.code)}
+                  className={`w-full text-left rounded-xl border border-line bg-surface px-3.5 py-2.5 hover:border-line-strong transition-colors ${focusRing} focus-visible:outline-offset-0`}
+                >
+                  <span className="flex items-center gap-1.5 text-[13px] font-semibold text-accent-ink tabular-nums">
+                    <Hash className="w-3.5 h-3.5 shrink-0" aria-hidden="true" /> {s.code}
+                  </span>
+                  <span className="mt-0.5 block text-[12.5px] leading-snug text-subtle line-clamp-2">{readableTitle(s.title)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <p className="mt-5 text-[12.5px] leading-relaxed text-subtle">
+        The project may be newer than this snapshot. Check{' '}
+        {portals.map((info, i) => (
+          <React.Fragment key={info.url}>
+            {i > 0 && ' or '}
+            <a href={info.url} target="_blank" rel="noopener noreferrer" className={`inline-flex items-center gap-0.5 font-semibold ${textLinkClass}`}>
+              SubayBAYAN – {info.short} <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
+            </a>
+          </React.Fragment>
+        ))}{' '}
+        (sign-in required).
+      </p>
+    </div>
+  );
+}
+
+export type ListMode =
+  | { kind: 'list' }
+  | { kind: 'stack'; ids: string[] }
+  | { kind: 'unmapped' }
+  | { kind: 'code'; code: string; matches: CodeMatch[] }
+  | { kind: 'code-missing'; code: string; suggestions: CodeSuggestion[]; dataset: SubaybayanDataset | null };
 export type PanelMode = ListMode | { kind: 'detail'; id: string; back: ListMode };
 
 export function SubaybayanPanel({
@@ -310,6 +419,8 @@ export function SubaybayanPanel({
   onRetry,
   emptyHint,
   onClearFilters,
+  onPickCode,
+  onSuggestCode,
   className = '',
 }: {
   state: 'idle' | 'loading' | 'ready' | 'error';
@@ -327,6 +438,10 @@ export function SubaybayanPanel({
   /** Which filters to loosen when nothing matches (null when no filter is active). */
   emptyHint: string | null;
   onClearFilters?: () => void;
+  /** A project picked from the chooser of a shared code. */
+  onPickCode: (m: CodeMatch, back: ListMode) => void;
+  /** A suggested code chosen after a miss. */
+  onSuggestCode: (code: string) => void;
   className?: string;
 }) {
   const ready = state === 'ready' || (state === 'loading' && counts !== null);
@@ -372,6 +487,17 @@ export function SubaybayanPanel({
             </button>
           </div>
         )}
+        {(mode.kind === 'code' || mode.kind === 'code-missing') && (
+          <div className="mt-3 flex items-center justify-between gap-2 text-xs text-subtle">
+            <span className="flex items-center gap-1.5 min-w-0">
+              <Hash className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+              <span className="truncate">{mode.kind === 'code' ? `${mode.matches.length} projects share this code` : 'Project code not found'}</span>
+            </span>
+            <button type="button" onClick={() => onMode({ kind: 'list' })} aria-label="Close and show the list" className={`inline-flex items-center gap-1 font-semibold text-ink rounded-full ${focusRing}`}>
+              <X className="w-3.5 h-3.5" aria-hidden="true" /> Close
+            </button>
+          </div>
+        )}
         {mode.kind === 'unmapped' && (
           <div className="mt-3 flex items-center justify-between gap-2 text-xs text-subtle">
             <span className="flex items-center gap-1.5"><Info className="w-3.5 h-3.5 shrink-0" aria-hidden="true" /> Not on the map (location not matched)</span>
@@ -386,6 +512,12 @@ export function SubaybayanPanel({
         {mode.kind === 'detail' ? (
           <div className="bg-surface min-h-full">
             <DetailView id={mode.id} onBack={() => onMode(mode.back)} onLocate={onLocate} />
+          </div>
+        ) : mode.kind === 'code' ? (
+          <CodeChooser code={mode.code} matches={mode.matches} onPick={(m) => onPickCode(m, mode)} />
+        ) : mode.kind === 'code-missing' ? (
+          <div className="bg-surface min-h-full">
+            <CodeMissing code={mode.code} suggestions={mode.suggestions} dataset={mode.dataset} onSuggest={onSuggestCode} />
           </div>
         ) : state === 'error' && counts === null ? (
           <ErrorState className="px-8 py-14" title="LGU projects could not be loaded" description="The project list did not load. Check the connection and try again." onRetry={onRetry} />

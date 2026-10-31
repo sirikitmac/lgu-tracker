@@ -96,7 +96,8 @@ export const EMPTY_FILTERS: SubaybayanFilters = {
 
 const MAX_TEXT = 200;
 // Letters (any script), digits, spaces and the punctuation found in place names, programs and sectors.
-const SAFE_TEXT = /^[\p{L}\p{N}\s.,'’()&/:%#°\-–]*$/u;
+// En and em dashes too: pasted codes and titles carry them (codes are normalized before searching).
+const SAFE_TEXT = /^[\p{L}\p{N}\s.,'’()&/:%#°\-–—]*$/u;
 
 export type ParseResult = { ok: true; filters: SubaybayanFilters } | { ok: false; error: string };
 
