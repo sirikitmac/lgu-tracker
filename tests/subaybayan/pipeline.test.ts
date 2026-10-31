@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { classifyProject } from '../../scripts/subaybayan/lib/classify';
 import { normalizePlaceName, splitPlaceList } from '../../scripts/subaybayan/lib/names';
 import { assignIds } from '../../scripts/subaybayan/lib/records';
-import { mapStatus, parseDate, parseMoney, parseOwpa, pickCost, assertHeaders, COL } from '../../scripts/subaybayan/lib/extract';
+import { mapStatus, parseDate, parseMoney, parseOwpa, pickCost, plausibleTotal, assertHeaders, COL } from '../../scripts/subaybayan/lib/extract';
 import { Gazetteer, locate } from '../../scripts/subaybayan/lib/locate';
 import type { Place } from '../../scripts/subaybayan/lib/gazetteer';
 import { columnIndex, decodeXml } from '../../scripts/subaybayan/lib/xlsx';
@@ -212,4 +212,14 @@ test('locate: ambiguous names are not guessed; province-level and unknown region
   assert.equal(none.location_precision, 'unresolved');
   assert.equal(none.latitude, null);
   assert.equal(loc('ATLANTIS', 'X', 'Y', 'Z').location_precision, 'unresolved');
+});
+
+test("plausibleTotal: totals far above the row's own amounts are logged and skipped, never rescaled", () => {
+  const issues: string[] = [];
+  const issue = (f: string) => issues.push(f);
+  assert.equal(plausibleTotal(1994699780, null, 2000000, null, issue), null);
+  assert.equal(pickCost(plausibleTotal(1994699780, null, 2000000, null, issue), null, 2000000, null), 2000000);
+  assert.equal(plausibleTotal(2490000, 2490000, 2500000, 0, issue), 2490000);
+  assert.equal(plausibleTotal(8789534586, null, null, null, issue), 8789534586); // no reference: kept as reported
+  assert.deepEqual(issues, ['total_project_cost_implausible', 'total_project_cost_implausible']);
 });

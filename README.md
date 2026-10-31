@@ -54,6 +54,47 @@ We're working toward making LGU Tracker more interactive, reliable, and useful f
 
 ---
 
+## 📚 Data Sources
+
+| Data | Source | Retrieved | License / terms |
+|---|---|---|---|
+| DPWH contracts | DPWH project data via [BetterGov.ph](https://bettergov.ph) (Hugging Face snapshot) | see `/projects/dashboard` | as published by the source |
+| LGU projects: Locally Funded Projects (LGSF) | [DILG SubayBAYAN (RBME)](https://subaybayan.dilg.gov.ph/rbme/projects/index?type=lgsf) | Oct 31, 2026 (Excel export snapshot) | public government data as published by DILG |
+| LGU projects: Local Infrastructure Monitoring and Evaluation, 20% DF (RLIP) | [DILG SubayBAYAN (RBME)](https://subaybayan.dilg.gov.ph/rbme/projects/index?type=rlip) | Oct 31, 2026 (Excel export snapshot) | public government data as published by DILG |
+| PSGC boundaries (centroids for LGU projects) | [faeldon/philippines-json-maps](https://github.com/faeldon/philippines-json-maps) release v1.1.0, `geojson-lowres.zip` (PSGC 3Q 2026) | pinned by SHA-256 | MIT; underlying boundaries NAMRIA / PSA via [OCHA COD-AB](https://data.humdata.org/dataset/cod-ab-phl), CC BY-IGO |
+| Base map | © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors | live tiles | ODbL |
+
+Notes on the SubayBAYAN layer (`/projects/map?layer=subaybayan`):
+
+- The portal needs a sign-in, so the data is a one-time export; the app never contacts the portal.
+- SubayBAYAN has no coordinates. Each project is placed at the representative point of its barangay, city/municipality or province polygon (**area centroid, not the project site**).
+- Categories (infrastructure, community, health, environment, disaster) are **LGU Tracker's own keyword classification**, not an official DILG category.
+- Possible duplicates with DPWH contracts are recorded as review flags in `subaybayan_dpwh_matches` (admin-only); records are never merged.
+- Pipeline figures and known gaps: [`docs/subaybayan/report.md`](docs/subaybayan/report.md) and [`docs/subaybayan/duplicates.md`](docs/subaybayan/duplicates.md).
+
+### Re-running the SubayBAYAN pipeline and import
+
+```bash
+# 1. Excel exports → normalized, categorized, located rows + docs/subaybayan/report.md
+#    Reads <source>/Locally_Funded_Projects/*.xlsx and <source>/LIME_20DF/*.xlsx (read-only).
+#    <source> defaults to ~/Downloads/SubayBayan_RBME (or set SUBAYBAYAN_SOURCE_DIR / --source).
+#    Boundaries are downloaded once into .cache/subaybayan (gitignored) and checked by SHA-256.
+npm run subaybayan:build
+
+# 2. Flag possible duplicates against dpwh_contracts (read-only; --refresh re-reads DPWH)
+npm run subaybayan:dedupe
+
+# 3. Import (needs migration 20261103000100 and SUPABASE_SECRET_KEY in .env.local, server-side only)
+npm run subaybayan:import -- --dry-run     # what would change
+npm run subaybayan:import -- --limit 100   # first rows, then check them
+npm run subaybayan:import                  # everything; unchanged rows are skipped
+```
+
+The importer upserts in batches of 1,000, skips rows whose `source_hash` is unchanged, stops before the
+database passes `SYNC_STORAGE_BUDGET_MB` (default 400 MB), and checks that `dpwh_contracts` is unchanged.
+
+---
+
 ## 🎯 Project Goals
 
 LGU Tracker aims to:

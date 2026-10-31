@@ -21,7 +21,7 @@ import path from 'node:path';
 import { SUBAYBAYAN_CATEGORIES, SUBAYBAYAN_CATEGORY_LABELS, LOCATION_PRECISIONS } from '@/lib/subaybayan/categories';
 import { BOUNDARY_SOURCE, SUBAYBAYAN_DATASET_INFO, SUBAYBAYAN_RETRIEVED_AT } from '@/lib/subaybayan/source';
 import { classifyProject } from './lib/classify';
-import { readWorkbook, type ParseIssue, type RawRecord } from './lib/extract';
+import { IMPLAUSIBLE_COST_FACTOR, readWorkbook, type ParseIssue, type RawRecord } from './lib/extract';
 import { loadGazetteer } from './lib/gazetteer';
 import { Gazetteer, locate } from './lib/locate';
 import { assignIds, toProjectRow, type ProjectRow } from './lib/records';
@@ -248,6 +248,10 @@ async function main() {
   const noCost = rows.filter((r) => r.total_cost === null);
   p(`- Rows without any cost, by dataset and status: ${tally(noCost, (r) => `${r.source_dataset} ${r.status}`).map(([k, n]) => `${k} ${fmt(n)}`).join(', ')}.`);
   p('  RLIP exports leave the subsidy and counterpart columns empty, and most not-yet-started RLIP projects have no cost yet.');
+  p(`- Implausible totals (over ${IMPLAUSIBLE_COST_FACTOR}× the row's contract amount or subsidy + counterpart) are skipped and the next amount in the order is used: ${fmt(issues.filter((x) => x.field === 'total_project_cost_implausible').length)} rows (listed in parse-issues.csv).`);
+  const huge = rows.filter((r) => (r.total_cost ?? 0) >= 1e9).sort((a, b) => b.total_cost! - a.total_cost!);
+  p(`- Costs of ₱1 billion or more that remain (no reference amount in the row to check them against; review against the portal): ${fmt(huge.length)}.`);
+  for (const r of huge) p(`  - \`${r.id}\` ₱${fmt(Math.round(r.total_cost!))} — ${r.title.replace(/\s+/g, ' ').slice(0, 90)}`);
   mkdirSync(path.dirname(args.report), { recursive: true });
   writeFileSync(args.report, lines.join('\n') + '\n');
 

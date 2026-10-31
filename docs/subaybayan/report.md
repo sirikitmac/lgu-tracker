@@ -131,7 +131,9 @@ Why a record stopped above barangay level (a record can have several notes):
 
 Stored as null and listed in `.cache/subaybayan/out/parse-issues.csv`; never guessed.
 
-None.
+| Field | Rows |
+|---|---:|
+| total_project_cost_implausible | 12 |
 
 ## Cost source
 
@@ -139,3 +141,11 @@ None.
 - Rule: total project cost, else contract amount, else national subsidy + LGU counterpart (zeros count as not reported).
 - Rows without any cost, by dataset and status: rlip not_yet_started 19,014, rlip cancelled 211, lgsf not_yet_started 32, rlip completed 4.
   RLIP exports leave the subsidy and counterpart columns empty, and most not-yet-started RLIP projects have no cost yet.
+- Implausible totals (over 20× the row's contract amount or subsidy + counterpart) are skipped and the next amount in the order is used: 12 rows (listed in parse-issues.csv).
+- Costs of ₱1 billion or more that remain (no reference amount in the row to check them against; review against the portal): 6.
+  - `LIME-26-11-23-17-000-11` ₱8,789,534,586 — Improvement of Samal Island Integrated Public Market and Transport Terminal
+  - `RLIP-25-10-13-01-000-2` ₱7,160,000,000 — Construction of Water System at Libon-libon Lingating, Baungon, Bukidnon
+  - `LIME-26-01-29-08-000-2` ₱2,500,000,000 — Construction of Tourism Scenic Stand Points & Signages
+  - `RLIP-25-10-43-08-000-1` ₱1,475,655,520 — ROAD CONCRETING
+  - `LIME-25-16-02-00-000-1` ₱1,034,398,239 — UPGRADING/ IMPROVEMENT OF KITCHARAO-ANIBONGAN PROVINCIAL ROAD
+  - `RLIP-25-10-43-08-000-4` ₱1,030,413,517 — REPAIR OF CLASSROOM AT ALAGATAN ES

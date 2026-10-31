@@ -192,6 +192,28 @@ export function pickCost(total: number | null, contract: number | null, subsidy:
   return sum > 0 ? sum : null;
 }
 
+/** A total more than this many times the row's own reference amount is treated as a data-entry error. */
+export const IMPLAUSIBLE_COST_FACTOR = 20;
+
+/**
+ * The total project cost, unless it is over IMPLAUSIBLE_COST_FACTOR times a
+ * reference amount from the same row (the contract amount, or national
+ * subsidy + LGU counterpart). The exports contain totals ~1,000x the subsidy
+ * (decimal-entry errors such as ₱1,994,699,780 against a ₱2,000,000 subsidy).
+ * Such a total is logged and skipped, so the documented order falls through
+ * to the reference amount; nothing is invented. Without a reference amount
+ * the total is kept as reported.
+ */
+export function plausibleTotal(total: number | null, contract: number | null, subsidy: number | null, counterpart: number | null, issue: Issue): number | null {
+  if (!total) return total;
+  const reference = Math.max(contract ?? 0, (subsidy ?? 0) + (counterpart ?? 0));
+  if (reference > 0 && total > reference * IMPLAUSIBLE_COST_FACTOR) {
+    issue('total_project_cost_implausible', total);
+    return null;
+  }
+  return total;
+}
+
 // ---------------------------------------------------------------------------
 
 export interface RawRecord {
@@ -286,7 +308,7 @@ export function rowToRecord(
     geotagged_photos: ctx.photoCols.reduce((sum, i) => sum + parseCount(row[i]), 0),
     start_date: parseDate(row[COL.startDate], 'start_date', issue),
     end_date: parseDate(row[COL.endDate], 'end_date', issue),
-    total_cost: pickCost(totalCost, contractAmount, nationalSubsidy, lguCounterpart),
+    total_cost: pickCost(plausibleTotal(totalCost, contractAmount, nationalSubsidy, lguCounterpart, issue), contractAmount, nationalSubsidy, lguCounterpart),
     owpa: parseOwpa(row[COL.owpa], issue),
     contractor: text(row[COL.contractor], 300),
   };
