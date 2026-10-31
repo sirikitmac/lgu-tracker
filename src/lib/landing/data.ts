@@ -11,10 +11,32 @@ import type { DpwhCategory, DpwhStatus } from '@/types/dpwh';
  *
  * Every field is null when Supabase is not configured or a query fails: the
  * page then describes the coverage in words and never shows a made-up count.
+ *
+ * The page is prerendered during `next build` (and revalidated hourly), so
+ * nothing here may throw or hang: query errors (including the anon statement
+ * timeout) come back as `error` and fall back, each request is aborted after
+ * REQUEST_TIMEOUT_MS, and the whole load gives up after LOAD_DEADLINE_MS,
+ * well inside Next's 60 s static-generation limit. A deploy therefore never
+ * fails because the database is slow; the page shows the fallback until the
+ * next revalidation.
  */
 
 /** Mapped contracts plotted per region on the coverage map (largest contract amounts first). */
 export const POINTS_PER_REGION = 300;
+
+/** Abort any single landing query after this long (the anon statement timeout is 3 s). */
+export const REQUEST_TIMEOUT_MS = 8_000;
+/** Give up on the whole load (and render the fallback) after this long. */
+export const LOAD_DEADLINE_MS = 30_000;
+
+/** fetch with a per-request timeout, keeping any caller signal. */
+export function fetchWithTimeout(timeoutMs: number, base: typeof fetch = fetch): typeof fetch {
+  return (input, init) => {
+    const timeout = AbortSignal.timeout(timeoutMs);
+    const signal = init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
+    return base(input, { ...init, signal });
+  };
+}
 
 /** Shown in "How it works": an ongoing bridge replacement in Linamon, next to Iligan City. */
 export const EXAMPLE_CONTRACT_ID = '25KG0033';
@@ -55,6 +77,7 @@ function publicClient(): SupabaseClient | null {
   if (!isSupabaseConfigured) return null;
   return createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: fetchWithTimeout(REQUEST_TIMEOUT_MS) },
   });
 }
 
@@ -137,9 +160,28 @@ async function loadExample(supabase: SupabaseClient): Promise<ExampleContract | 
   return (data as ExampleContract | null) ?? null;
 }
 
-export async function loadLandingData(): Promise<LandingData> {
-  const supabase = publicClient();
-  const empty: LandingData = {
+/** Landing figures; never throws, and settles within LOAD_DEADLINE_MS (fallback: all nulls). */
+export async function loadLandingData(
+  { client = publicClient(), deadlineMs = LOAD_DEADLINE_MS }: { client?: SupabaseClient | null; deadlineMs?: number } = {}
+): Promise<LandingData> {
+  const empty = emptyLandingData();
+  if (!client) return empty;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<LandingData>((resolve) => {
+    timer = setTimeout(() => {
+      console.error(`[LGU Tracker] Landing data took over ${deadlineMs / 1000} s; rendering the fallback.`);
+      resolve(empty);
+    }, deadlineMs);
+  });
+  try {
+    return await Promise.race([loadFrom(client), deadline]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function emptyLandingData(): LandingData {
+  return {
     totalContracts: null,
     totalAmount: null,
     ongoingContracts: null,
@@ -149,8 +191,10 @@ export async function loadLandingData(): Promise<LandingData> {
     nepProposals: null,
     example: null,
   };
-  if (!supabase) return empty;
+}
 
+async function loadFrom(supabase: SupabaseClient): Promise<LandingData> {
+  const empty = emptyLandingData();
   try {
     const [stats, nepProposals, example] = await Promise.all([
       loadStats(supabase),
