@@ -86,7 +86,7 @@ export async function getSubaybayanDetail(id: string): Promise<SubaybayanDetail 
   if (error) throw new Error(`Reading project ${id} failed: ${error.message}`);
   if (!data) return null;
   const row = data as unknown as Record<string, unknown>;
-  for (const k of ['total_cost', 'national_subsidy', 'lgu_counterpart', 'owpa'] as const) if (row[k] !== null) row[k] = Number(row[k]);
+  for (const k of ['total_cost', 'total_cost_reported', 'national_subsidy', 'lgu_counterpart', 'owpa'] as const) if (row[k] !== null) row[k] = Number(row[k]);
   return row as SubaybayanDetail;
 }
 

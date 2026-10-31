@@ -35,6 +35,9 @@ export interface ProjectRow {
   sector: string | null;
   mode_of_implementation: string | null;
   total_cost: number | null;
+  /** Present only when the reported total was replaced (keeps unaffected rows' hashes unchanged). */
+  total_cost_reported?: number;
+  total_cost_basis?: RawRecord['total_cost_basis'];
   national_subsidy: number | null;
   lgu_counterpart: number | null;
   owpa: number | null;
@@ -108,6 +111,9 @@ export function toProjectRow(id: string, r: RawRecord, c: Classification, loc: L
     sector: r.sector,
     mode_of_implementation: r.mode_of_implementation,
     total_cost: r.total_cost,
+    ...(r.total_cost_reported !== null && r.total_cost_basis !== null
+      ? { total_cost_reported: r.total_cost_reported, total_cost_basis: r.total_cost_basis }
+      : {}),
     national_subsidy: r.national_subsidy,
     lgu_counterpart: r.lgu_counterpart,
     owpa: r.owpa,

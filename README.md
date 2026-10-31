@@ -69,6 +69,7 @@ Notes on the SubayBAYAN layer (`/projects/map?layer=subaybayan`):
 - The portal needs a sign-in, so the data is a one-time export; the app never contacts the portal.
 - SubayBAYAN has no coordinates. Each project is placed at the representative point of its barangay, city/municipality or province polygon (**area centroid, not the project site**).
 - Categories (infrastructure, community, health, environment, disaster) are **LGU Tracker's own keyword classification**, not an official DILG category.
+- Where a reported total cost looks like a data-entry error (over 20× the row's own contract amount or subsidy), the map shows that amount instead, keeps the source's value in `total_cost_reported`, and says so in the project panel.
 - Possible duplicates with DPWH contracts are recorded as review flags in `subaybayan_dpwh_matches` (admin-only); records are never merged.
 - Pipeline figures and known gaps: [`docs/subaybayan/report.md`](docs/subaybayan/report.md) and [`docs/subaybayan/duplicates.md`](docs/subaybayan/duplicates.md).
 

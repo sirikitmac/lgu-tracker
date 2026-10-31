@@ -8,7 +8,7 @@ import {
   SUBAYBAYAN_CATEGORY_LABELS,
   SUBAYBAYAN_STATUS_LABELS,
 } from '@/lib/subaybayan/categories';
-import type { SubaybayanDetail, SubaybayanSummary } from '@/lib/subaybayan/query';
+import type { CostBasis, SubaybayanDetail, SubaybayanSummary } from '@/lib/subaybayan/query';
 import { SUBAYBAYAN_DATASET_INFO, SUBAYBAYAN_RETRIEVED_LABEL } from '@/lib/subaybayan/source';
 import { isApproximate, placeLine, precisionLabel, precisionNote, subaybayanStatusBadge } from '@/lib/subaybayan/ui';
 import { formatCount, formatDate, formatPeso, readableTitle } from '@/components/dpwh/format';
@@ -104,6 +104,11 @@ function ProjectRow({ id, row, selected, onSelect }: { id: string; row: Subaybay
           <span className="text-right">
             <span className="block text-[11px] leading-none text-muted">FY {row.funding_year ?? '—'}</span>
             <span className="block mt-1 text-[14px] font-semibold leading-none text-ink tabular-nums">{row.total_cost === null ? 'No cost' : formatPeso(row.total_cost)}</span>
+            {row.total_cost_basis && (
+              <span className="block mt-1 text-[11px] leading-none text-warn-ink" title="The reported total looked like a data-entry error; open the project to see it.">
+                adjusted
+              </span>
+            )}
           </span>
         </span>
       </button>
@@ -152,6 +157,20 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <dt className="text-muted">{label}</dt>
       <dd className="text-ink break-words">{children ?? <span className="text-muted">Not reported</span>}</dd>
     </>
+  );
+}
+
+/** The source reported a different total; say so and show what it said. */
+function CostNote({ reported, basis }: { reported: number; basis: CostBasis }) {
+  const used = basis === 'contract_amount' ? 'contract amount' : 'subsidy amount (national subsidy + LGU counterpart)';
+  return (
+    <span role="note" className="mt-1.5 flex items-start gap-1.5 rounded-lg border border-warn-line bg-warn-soft px-2.5 py-2 text-[12px] leading-snug text-warn-ink">
+      <Info className="w-3.5 h-3.5 mt-px shrink-0" aria-hidden="true" />
+      <span>
+        Reported total looked like a data-entry error; showing the {used} instead. SubayBAYAN reports{' '}
+        <strong className="font-semibold tabular-nums">{formatPeso(reported)}</strong>.
+      </span>
+    </span>
   );
 }
 
@@ -225,7 +244,14 @@ function DetailView({ id, onBack, onLocate }: { id: string; onBack: () => void; 
       </div>
 
       <dl className="mt-4 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 text-[13px] leading-snug">
-        <Field label="Total cost">{p.total_cost === null ? null : <span className="font-semibold tabular-nums">{formatPeso(p.total_cost)}</span>}</Field>
+        <Field label="Total cost">
+          {p.total_cost === null ? null : (
+            <>
+              <span className="font-semibold tabular-nums">{formatPeso(p.total_cost)}</span>
+              {p.total_cost_reported !== null && p.total_cost_basis && <CostNote reported={p.total_cost_reported} basis={p.total_cost_basis} />}
+            </>
+          )}
+        </Field>
         <Field label="National subsidy">{p.national_subsidy === null ? null : <span className="tabular-nums">{formatPeso(p.national_subsidy)}</span>}</Field>
         <Field label="LGU counterpart">{p.lgu_counterpart === null ? null : <span className="tabular-nums">{formatPeso(p.lgu_counterpart)}</span>}</Field>
         <Field label="Funding year">{p.funding_year}</Field>

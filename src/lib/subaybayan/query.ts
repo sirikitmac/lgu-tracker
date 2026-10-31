@@ -318,15 +318,20 @@ export const DETAIL_COLUMNS = [
   'id', 'source_agency', 'source_dataset', 'project_code', 'title', 'sector_category', 'sector_subcategory', 'classification_reason',
   'region', 'province', 'citymun', 'barangay', 'psgc_region', 'psgc_province', 'psgc_citymun', 'psgc_barangay',
   'latitude', 'longitude', 'location_precision', 'funding_year', 'status', 'status_raw', 'project_type', 'program', 'sector',
-  'mode_of_implementation', 'total_cost', 'national_subsidy', 'lgu_counterpart', 'owpa', 'contractor', 'project_owner',
+  'mode_of_implementation', 'total_cost', 'total_cost_reported', 'total_cost_basis', 'national_subsidy', 'lgu_counterpart', 'owpa', 'contractor', 'project_owner',
   'approval_status', 'geotagged_photos', 'size_text', 'beneficiaries_text', 'component_details', 'start_date', 'end_date',
   'source_file', 'source_row', 'source_url', 'retrieved_at',
 ] as const;
 
+/** Which amount total_cost holds when the reported total was not used (see scripts/subaybayan/lib/extract.ts). */
+export type CostBasis = 'contract_amount' | 'subsidy_plus_counterpart';
+
 export type SubaybayanDetail = {
   [K in (typeof DETAIL_COLUMNS)[number]]: K extends 'id' | 'title' | 'source_agency' | 'classification_reason' | 'source_url' | 'retrieved_at'
     ? string
-    : K extends 'latitude' | 'longitude' | 'total_cost' | 'national_subsidy' | 'lgu_counterpart' | 'owpa'
+    : K extends 'total_cost_basis'
+    ? CostBasis | null
+    : K extends 'latitude' | 'longitude' | 'total_cost' | 'total_cost_reported' | 'national_subsidy' | 'lgu_counterpart' | 'owpa'
     ? number | null
     : K extends 'funding_year' | 'geotagged_photos' | 'source_row'
       ? number | null
@@ -355,12 +360,14 @@ export interface SubaybayanSummary {
   status: SubaybayanStatus;
   funding_year: number | null;
   total_cost: number | null;
+  /** Non-null when total_cost is not the reported total. */
+  total_cost_basis: CostBasis | null;
   source_dataset: SubaybayanDataset;
 }
 
 export const SUMMARY_COLUMNS = [
   'id', 'project_code', 'title', 'sector_category', 'sector_subcategory', 'citymun', 'province', 'barangay',
-  'location_precision', 'status', 'funding_year', 'total_cost', 'source_dataset',
+  'location_precision', 'status', 'funding_year', 'total_cost', 'total_cost_basis', 'source_dataset',
 ] as const;
 
 export const MAX_SUMMARY_IDS = 60;

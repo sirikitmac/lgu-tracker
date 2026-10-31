@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { classifyProject } from '../../scripts/subaybayan/lib/classify';
 import { normalizePlaceName, splitPlaceList } from '../../scripts/subaybayan/lib/names';
 import { assignIds } from '../../scripts/subaybayan/lib/records';
-import { mapStatus, parseDate, parseMoney, parseOwpa, pickCost, plausibleTotal, assertHeaders, COL } from '../../scripts/subaybayan/lib/extract';
+import { mapStatus, parseDate, parseMoney, parseOwpa, pickCost, plausibleTotal, resolveCost, assertHeaders, COL } from '../../scripts/subaybayan/lib/extract';
 import { Gazetteer, locate } from '../../scripts/subaybayan/lib/locate';
 import type { Place } from '../../scripts/subaybayan/lib/gazetteer';
 import { columnIndex, decodeXml } from '../../scripts/subaybayan/lib/xlsx';
@@ -221,5 +221,16 @@ test("plausibleTotal: totals far above the row's own amounts are logged and skip
   assert.equal(pickCost(plausibleTotal(1994699780, null, 2000000, null, issue), null, 2000000, null), 2000000);
   assert.equal(plausibleTotal(2490000, 2490000, 2500000, 0, issue), 2490000);
   assert.equal(plausibleTotal(8789534586, null, null, null, issue), 8789534586); // no reference: kept as reported
+  // A tiny contract amount is the suspect value, not the total: the total is kept.
+  assert.equal(plausibleTotal(999017.83, 99, null, null, issue), 999017.83);
+  assert.equal(plausibleTotal(200000, 1999.83, null, null, issue), 200000);
   assert.deepEqual(issues, ['total_project_cost_implausible', 'total_project_cost_implausible']);
+});
+
+test('resolveCost: a replaced total keeps the reported value and says what is used instead', () => {
+  const noop = () => undefined;
+  assert.deepEqual(resolveCost(1994699780, null, 2000000, null, noop), { total_cost: 2000000, total_cost_reported: 1994699780, total_cost_basis: 'subsidy_plus_counterpart' });
+  assert.deepEqual(resolveCost(101072637659, 1994838.96, 2000000, null, noop), { total_cost: 1994838.96, total_cost_reported: 101072637659, total_cost_basis: 'contract_amount' });
+  assert.deepEqual(resolveCost(2490000, 2490000, 2500000, 0, noop), { total_cost: 2490000, total_cost_reported: null, total_cost_basis: null });
+  assert.deepEqual(resolveCost(null, null, 2000000, 0, noop), { total_cost: 2000000, total_cost_reported: null, total_cost_basis: null });
 });

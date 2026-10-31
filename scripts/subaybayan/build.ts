@@ -248,7 +248,17 @@ async function main() {
   const noCost = rows.filter((r) => r.total_cost === null);
   p(`- Rows without any cost, by dataset and status: ${tally(noCost, (r) => `${r.source_dataset} ${r.status}`).map(([k, n]) => `${k} ${fmt(n)}`).join(', ')}.`);
   p('  RLIP exports leave the subsidy and counterpart columns empty, and most not-yet-started RLIP projects have no cost yet.');
-  p(`- Implausible totals (over ${IMPLAUSIBLE_COST_FACTOR}× the row's contract amount or subsidy + counterpart) are skipped and the next amount in the order is used: ${fmt(issues.filter((x) => x.field === 'total_project_cost_implausible').length)} rows (listed in parse-issues.csv).`);
+  const replaced = rows.filter((r) => r.total_cost_reported !== undefined);
+  p(`- Implausible totals (over ${IMPLAUSIBLE_COST_FACTOR}× the row's contract amount or subsidy + counterpart) are not used as \`total_cost\`; the next amount in the order is used and the reported value is kept in \`total_cost_reported\` (shown with a note in the detail panel): ${fmt(replaced.length)} rows.`);
+  if (replaced.length) {
+    p();
+    p('  | Id | Title | Reported total | Used as total_cost | Basis |');
+    p('  |---|---|---:|---:|---|');
+    for (const r of replaced) {
+      p(`  | ${r.id} | ${r.title.replace(/\s+/g, ' ').replace(/\|/g, '/').slice(0, 60)} | ₱${fmt(r.total_cost_reported!)} | ₱${fmt(r.total_cost!)} | ${r.total_cost_basis === 'contract_amount' ? 'contract amount' : 'national subsidy + LGU counterpart'} |`);
+    }
+    p();
+  }
   const huge = rows.filter((r) => (r.total_cost ?? 0) >= 1e9).sort((a, b) => b.total_cost! - a.total_cost!);
   p(`- Costs of ₱1 billion or more that remain (no reference amount in the row to check them against; review against the portal): ${fmt(huge.length)}.`);
   for (const r of huge) p(`  - \`${r.id}\` ₱${fmt(Math.round(r.total_cost!))} — ${r.title.replace(/\s+/g, ' ').slice(0, 90)}`);

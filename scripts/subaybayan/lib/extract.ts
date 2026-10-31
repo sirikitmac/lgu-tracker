@@ -194,6 +194,12 @@ export function pickCost(total: number | null, contract: number | null, subsidy:
 
 /** A total more than this many times the row's own reference amount is treated as a data-entry error. */
 export const IMPLAUSIBLE_COST_FACTOR = 20;
+/**
+ * A reference amount below this is itself not a believable project amount
+ * (the exports have contract amounts like ₱99 next to a ₱999,017.83 total),
+ * so it is never used to overrule the reported total.
+ */
+export const MIN_REFERENCE_AMOUNT = 10_000;
 
 /**
  * The total project cost, unless it is over IMPLAUSIBLE_COST_FACTOR times a
@@ -201,17 +207,39 @@ export const IMPLAUSIBLE_COST_FACTOR = 20;
  * subsidy + LGU counterpart). The exports contain totals ~1,000x the subsidy
  * (decimal-entry errors such as ₱1,994,699,780 against a ₱2,000,000 subsidy).
  * Such a total is logged and skipped, so the documented order falls through
- * to the reference amount; nothing is invented. Without a reference amount
- * the total is kept as reported.
+ * to the reference amount; nothing is invented. Without a believable
+ * reference amount (at least MIN_REFERENCE_AMOUNT) the total is kept as reported.
  */
 export function plausibleTotal(total: number | null, contract: number | null, subsidy: number | null, counterpart: number | null, issue: Issue): number | null {
   if (!total) return total;
   const reference = Math.max(contract ?? 0, (subsidy ?? 0) + (counterpart ?? 0));
-  if (reference > 0 && total > reference * IMPLAUSIBLE_COST_FACTOR) {
+  if (reference >= MIN_REFERENCE_AMOUNT && total > reference * IMPLAUSIBLE_COST_FACTOR) {
     issue('total_project_cost_implausible', total);
     return null;
   }
   return total;
+}
+
+export type CostBasis = 'contract_amount' | 'subsidy_plus_counterpart';
+
+/**
+ * total_cost for a row, plus — only when the reported total was skipped as
+ * implausible — the reported value and which amount is used instead, so the
+ * substitution stays visible.
+ */
+export function resolveCost(
+  total: number | null,
+  contract: number | null,
+  subsidy: number | null,
+  counterpart: number | null,
+  issue: Issue
+): { total_cost: number | null; total_cost_reported: number | null; total_cost_basis: CostBasis | null } {
+  const plausible = plausibleTotal(total, contract, subsidy, counterpart, issue);
+  const cost = pickCost(plausible, contract, subsidy, counterpart);
+  if (total && plausible === null && cost !== null) {
+    return { total_cost: cost, total_cost_reported: total, total_cost_basis: contract ? 'contract_amount' : 'subsidy_plus_counterpart' };
+  }
+  return { total_cost: cost, total_cost_reported: null, total_cost_basis: null };
 }
 
 // ---------------------------------------------------------------------------
@@ -245,6 +273,9 @@ export interface RawRecord {
   start_date: string | null;
   end_date: string | null;
   total_cost: number | null;
+  /** Set only when the reported total was replaced (see resolveCost). */
+  total_cost_reported: number | null;
+  total_cost_basis: CostBasis | null;
   owpa: number | null;
   contractor: string | null;
 }
@@ -308,7 +339,7 @@ export function rowToRecord(
     geotagged_photos: ctx.photoCols.reduce((sum, i) => sum + parseCount(row[i]), 0),
     start_date: parseDate(row[COL.startDate], 'start_date', issue),
     end_date: parseDate(row[COL.endDate], 'end_date', issue),
-    total_cost: pickCost(plausibleTotal(totalCost, contractAmount, nationalSubsidy, lguCounterpart, issue), contractAmount, nationalSubsidy, lguCounterpart),
+    ...resolveCost(totalCost, contractAmount, nationalSubsidy, lguCounterpart, issue),
     owpa: parseOwpa(row[COL.owpa], issue),
     contractor: text(row[COL.contractor], 300),
   };

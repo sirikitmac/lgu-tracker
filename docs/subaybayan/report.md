@@ -133,7 +133,7 @@ Stored as null and listed in `.cache/subaybayan/out/parse-issues.csv`; never gue
 
 | Field | Rows |
 |---|---:|
-| total_project_cost_implausible | 12 |
+| total_project_cost_implausible | 10 |
 
 ## Cost source
 
@@ -141,7 +141,21 @@ Stored as null and listed in `.cache/subaybayan/out/parse-issues.csv`; never gue
 - Rule: total project cost, else contract amount, else national subsidy + LGU counterpart (zeros count as not reported).
 - Rows without any cost, by dataset and status: rlip not_yet_started 19,014, rlip cancelled 211, lgsf not_yet_started 32, rlip completed 4.
   RLIP exports leave the subsidy and counterpart columns empty, and most not-yet-started RLIP projects have no cost yet.
-- Implausible totals (over 20× the row's contract amount or subsidy + counterpart) are skipped and the next amount in the order is used: 12 rows (listed in parse-issues.csv).
+- Implausible totals (over 20× the row's contract amount or subsidy + counterpart) are not used as `total_cost`; the next amount in the order is used and the reported value is kept in `total_cost_reported` (shown with a note in the detail panel): 10 rows.
+
+  | Id | Title | Reported total | Used as total_cost | Basis |
+  |---|---|---:|---:|---|
+  | SBDP-2025-10-43-08-076-01 | CONCRETING OF FARM-TO-MARKET ROAD | ₱101,072,637,659 | ₱1,994,838.96 | contract amount |
+  | SBDP-2025-10-43-08-014-01 | CONCRETING OF FARM-TO-MARKET ROAD | ₱1,994,699,780 | ₱2,000,000 | national subsidy + LGU counterpart |
+  | SBDP-2025-10-43-08-022-01 | CONCRETING OF FARM-TO-MARKET ROAD | ₱1,994,624,980 | ₱1,994,624.98 | contract amount |
+  | SBDP-2025-10-43-08-072-01 | CONCRETING OF FARM-TO-MARKET ROAD | ₱1,985,576,340 | ₱1,985,576.34 | contract amount |
+  | FALGU-25-17-52-12-000-4 | Purchase of vehicle - Van (for conversion into a rescue vehi | ₱1,250,000,000 | ₱1,250,000 | contract amount |
+  | GEF-26-14-44-09-000-16 | IMPROVEMENT/CONCRETING/RIPRAPPING OF TURNING POINT TO LAN-AG | ₱147,781,335.38 | ₱3,900,169 | national subsidy + LGU counterpart |
+  | SBDP-26-02-15-23-000-14 | REHABILITATION/IMPROVEMENT OF SCHOOL BUILDING | ₱249,726,475.74 | ₱2,497,264.74 | contract amount |
+  | SBDP-26-05-17-08-000-1 | CONCRETING OF FARM-TO-MARKET ROAD | ₱208,441,540.07 | ₱9,998,529.24 | contract amount |
+  | LIME-25-16-85-05-000-1 | SITE DEVELOPMENT OF LORETO INSTITUTIONAL COMPLEX – PHASE 3 ( | ₱1,623,929,220.2 | ₱2,618,396.03 | contract amount |
+  | LIME-25-11-23-17-000-11 | Repair and Maintenance of Babak Gymnasium | ₱722,368,062.32 | ₱2,867,254.34 | contract amount |
+
 - Costs of ₱1 billion or more that remain (no reference amount in the row to check them against; review against the portal): 6.
   - `LIME-26-11-23-17-000-11` ₱8,789,534,586 — Improvement of Samal Island Integrated Public Market and Transport Terminal
   - `RLIP-25-10-13-01-000-2` ₱7,160,000,000 — Construction of Water System at Libon-libon Lingating, Baungon, Bukidnon

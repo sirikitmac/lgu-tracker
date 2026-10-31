@@ -105,3 +105,17 @@ test('duplicate flags: service role writes, only admins read, review status surv
   const badClass = await as(db, 'service_role', null, `insert into public.subaybayan_dpwh_matches values ('RLIP-1', 'X', 'merged', 1, 0.5, '{}', '{}')`);
   assert.equal(badClass.error?.code, '23514');
 });
+
+test('reported total: kept only together with the basis that replaced it', async () => {
+  assert.equal((await insert('service_role', row('COST-OK', { total_cost: 2000000, total_cost_reported: 1994699780, total_cost_basis: 'subsidy_plus_counterpart' }))).error, undefined);
+  assert.equal((await insert('service_role', row('COST-NONE', { total_cost: 2000000 }))).error, undefined);
+  for (const bad of [
+    row('COST-B1', { total_cost_reported: 5 }),
+    row('COST-B2', { total_cost_basis: 'contract_amount' }),
+    row('COST-B3', { total_cost_reported: 5, total_cost_basis: 'guess' }),
+  ]) {
+    assert.equal((await insert('service_role', bad)).error?.code, '23514', `${bad.id} should violate a check`);
+  }
+  const read = await as<{ total_cost_reported: string }>(db, 'anon', null, `select total_cost_reported from public.subaybayan_projects where id = 'COST-OK'`);
+  assert.deepEqual(read.rows, [{ total_cost_reported: '1994699780.00' }]);
+});
