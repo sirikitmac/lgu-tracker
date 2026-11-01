@@ -22,7 +22,7 @@ export const CRITICAL_TILES = WALL_COLUMNS.length * 2;
  * transform, so a lazy tile below a column's edge never counts as near the
  * viewport and would only start loading as it drifted into view (a blank
  * tile, then a pop). The second copy of each column reuses the first copy's
- * URLs, so the wall costs 15 requests, the first two per column at normal
+ * URLs, so the wall costs 15 requests, the first two per column at high
  * priority (they are what the first screen shows) and the rest at low.
  */
 export function PhotoWall() {
@@ -40,8 +40,10 @@ export function PhotoWall() {
                       src={photo.src}
                       sizes={SIZES[c]}
                       loading="eager"
-                      fetchPriority={i < 2 ? 'auto' : 'low'}
+                      fetchPriority={i < 2 ? 'high' : 'low'}
                       critical={copy === 0 && i < 2}
+                      fade={false}
+                      quality={50}
                       className="aspect-[4/3] rounded-[14px] bg-white/5"
                     />
                     <figcaption className="wall-caption">

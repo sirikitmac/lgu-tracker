@@ -258,9 +258,10 @@
   .photo > img {
     transition: opacity 0.6s var(--ease-out);
   }
-  /* First-screen wall tiles (data-critical) never wait: they are the
-     page's largest paint, and hiding them until hydration delayed LCP. */
-  [data-js] .photo > img:not([data-loaded]):not([data-critical]) {
+  /* Photos marked data-instant (the hero wall) never wait: equal-sized
+     tiles take turns as the page's largest paint, so hiding any of them
+     until hydration delayed LCP. They show their blur until decoded. */
+  [data-js] .photo > img:not([data-loaded]):not([data-instant]) {
     opacity: 0;
   }
 }

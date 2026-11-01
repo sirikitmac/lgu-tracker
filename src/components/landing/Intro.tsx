@@ -18,13 +18,17 @@ const CAP_MS = 1500;
  * navigation start it leaves wherever it is. A CSS failsafe hides it at 2.5 s
  * should the main thread be too busy for the timer.
  *
+ * If the script itself only runs within 400 ms of the cap (a slow
+ * connection), the intro is skipped rather than flashed.
+ *
  * Exit: html[data-intro] goes from "" to "out" (the counter slides up, the
  * panel wipes away, the headline's rise starts), then is removed.
  */
 function introScript(critical: number) {
   return `(function(){try{
 var d=document.documentElement;
-if(sessionStorage.getItem(${JSON.stringify(INTRO_SEEN_KEY)})||!matchMedia('(prefers-reduced-motion: no-preference)').matches)return;
+// Too late to be worth a panel (a slow load already past the cap): skip it, no flash.
+if(performance.now()>${CAP_MS - 400}||sessionStorage.getItem(${JSON.stringify(INTRO_SEEN_KEY)})||!matchMedia('(prefers-reduced-motion: no-preference)').matches)return;
 sessionStorage.setItem(${JSON.stringify(INTRO_SEEN_KEY)},'1');
 d.setAttribute('data-intro','');
 var total=2+${critical},done=0,shown=0,left=false,el=null;

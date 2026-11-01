@@ -21,6 +21,8 @@ export function Photo({
   loading = 'lazy',
   fetchPriority,
   critical = false,
+  fade = true,
+  quality,
   className = '',
   imgClassName = '',
 }: {
@@ -31,6 +33,10 @@ export function Photo({
   fetchPriority?: 'high' | 'low' | 'auto';
   /** Counted by the first-visit loader (FirstVisitLoader) as part of the first screen. */
   critical?: boolean;
+  /** Fade in once loaded (default). Off for the hero wall, whose tiles are the LCP candidates. */
+  fade?: boolean;
+  /** One of images.qualities in next.config.mjs; 75 when unset. */
+  quality?: 50 | 75;
   className?: string;
   imgClassName?: string;
 }) {
@@ -42,6 +48,7 @@ export function Photo({
     sizes,
     loading,
     fetchPriority,
+    quality,
     placeholder: blurDataURL ? 'blur' : 'empty',
     blurDataURL,
   });
@@ -49,7 +56,7 @@ export function Photo({
   const { backgroundImage, backgroundSize, backgroundPosition, backgroundRepeat, ...imgStyle } = style;
   return (
     <span className={`photo ${className}`} style={{ backgroundImage, backgroundSize, backgroundPosition, backgroundRepeat }}>
-      <FadeImg {...img} style={imgStyle} data-critical={critical ? '' : undefined} className={`object-cover ${imgClassName}`} />
+      <FadeImg {...img} style={imgStyle} data-critical={critical ? '' : undefined} data-instant={fade ? undefined : ''} className={`object-cover ${imgClassName}`} />
     </span>
   );
 }
