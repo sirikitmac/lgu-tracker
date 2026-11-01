@@ -22,13 +22,13 @@ export const isApproximate = (p: LocationPrecision) => p === 'municipality_centr
 export function precisionNote(p: LocationPrecision): string {
   switch (p) {
     case 'barangay_centroid':
-      return 'Shown at the centre of the barangay area, not at the project site.';
+      return 'Centre of the barangay.';
     case 'municipality_centroid':
-      return 'Shown at the centre of the city or municipality: the barangay was missing, listed several places, or could not be matched.';
+      return 'Centre of the city or municipality; the barangay was missing, multiple or unmatched.';
     case 'province_centroid':
-      return 'Shown at the centre of the province: the project is province-level or its city/municipality could not be matched.';
+      return 'Centre of the province; the project is province-wide or its town was unmatched.';
     default:
-      return 'Not on the map: the location in the source could not be matched to a place.';
+      return 'Not on the map: the source location could not be matched.';
   }
 }
 

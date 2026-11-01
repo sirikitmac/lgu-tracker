@@ -40,7 +40,7 @@ interface Message {
 }
 
 const WELCOME =
-  "Hi! I'm BP, your LGU Tracker AI Assistant. 👋\n\nI can help you explore available infrastructure project records, reported contract amounts, project locations, categories, and contract statuses.\n\nWhat would you like to know?";
+  "Hi! I'm BP, LGU Tracker's assistant. 👋\n\nAsk me about project records: amounts, locations, categories and statuses.\n\nWhat would you like to know?";
 
 const SUGGESTIONS = [
   'How many contracts are listed in the directory?',
@@ -349,8 +349,8 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
                   {m.references && m.references.length > 0 && <ReferenceList references={m.references} />}
                   <p className="mt-1.5 text-[11px] leading-snug text-muted">
                     {m.mode === 'preview'
-                      ? 'Gemini is not configured; this answer was assembled from database results without AI.'
-                      : 'AI-generated from LGU Tracker records. Values are as published by the source and not verified by the LGU.'}
+                      ? 'Built from database results, without AI.'
+                      : 'AI-generated from LGU Tracker records. Check the linked records.'}
                   </p>
                 </div>
               )
@@ -402,7 +402,7 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
             </button>
           </form>
           <p className="px-4 pb-3 -mt-1 text-[11.5px] leading-snug text-muted">
-            With AI answers on, questions are sent to Google Gemini, so leave out personal details. The conversation is kept only in this browser tab.
+            Values are as published, not verified by the LGU. Questions go to Google Gemini, so leave out personal details. Kept only in this tab.
           </p>
         </section>,
         document.body

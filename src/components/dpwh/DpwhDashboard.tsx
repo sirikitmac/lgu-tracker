@@ -321,7 +321,7 @@ export function DpwhDashboard({
             className={panelClass}
             icon={BarChart3}
             title="No data available yet"
-            description="No DPWH contracts have been imported yet, so there is nothing to chart. Figures appear here after the first sync."
+            description="Figures appear here after the first DPWH sync."
           />
         )}
       </div>
@@ -375,7 +375,7 @@ export function DpwhDashboard({
 
       <div className="space-y-2">
         <DataFreshness summary={summary} className="px-1" />
-        <DataScopeNote summary={summary} />
+        <DataScopeNote />
       </div>
 
       <section aria-label={`Summary: ${scopeWord}`} className={`${panelClass} overflow-hidden`}>
@@ -383,12 +383,12 @@ export function DpwhDashboard({
           <Figure label="Contracts" value={formatCount(regionCount)} detail={region ? `${formatShare(regionCount, total)} of ${formatCount(total)} contracts` : 'Unique DPWH contract IDs'} />
           <Figure
             label="Reported contract value"
-            hint="The sum of award amounts DPWH reports for these contracts. It is not money released or spent."
+            hint="Sum of the award amounts DPWH reports."
             value={formatPesoCompact(amount)}
             title={formatPeso(amount)}
             detail={
               scoped ? (
-                <>Award amounts for {formatCount(withValue)} of {formatCount(detail ? detail.count : total)} contracts; not disbursements.</>
+                <>Award amounts for {formatCount(withValue)} of {formatCount(detail ? detail.count : total)} contracts; not money spent.</>
               ) : (
                 'All regions; not yet broken down by region.'
               )
@@ -396,7 +396,7 @@ export function DpwhDashboard({
           />
           <Figure
             label="Completed"
-            hint="Contracts DPWH reports as completed. The LGU has not verified these in the field."
+            hint="Contracts DPWH reports as completed."
             value={formatCount(completed)}
             detail={scoped ? `${formatShare(completed, breakdownTotal)} of contracts` : `All regions (${formatShare(completed, breakdownTotal)})`}
           />
@@ -410,7 +410,7 @@ export function DpwhDashboard({
             <Figure
               label="FY 2027 budget proposals"
               value={nepCount === null ? '—' : formatCount(nepCount)}
-              detail={nepCount === null ? 'Count unavailable right now.' : 'NEP items, nationwide. A separate dataset: not contracts, not in any figure on the left.'}
+              detail={nepCount === null ? 'Count unavailable right now.' : 'Nationwide · not contracts, not in the other figures'}
             />
           </div>
         </dl>
@@ -419,7 +419,7 @@ export function DpwhDashboard({
       <div className="grid gap-5 lg:grid-cols-3">
         <Panel
           title="Contracts by region"
-          note={`Where the contract's components are located. Select a region to focus the dashboard. ${formatCount(regions.length)} regions, ${formatCount(total)} contracts.`}
+          note={`By component location; select one to focus the dashboard. ${formatCount(regions.length)} regions, ${formatCount(total)} contracts.`}
           className="lg:col-span-2"
         >
           <RankedBars
@@ -445,14 +445,14 @@ export function DpwhDashboard({
         {region ? (
           <Panel
             title={`Provinces in ${region}`}
-            note="Contracts with a component in each province. A contract spanning provinces counts in each, so these can sum above the region's total."
+            note="A contract spanning provinces counts in each, so these can sum above the region's total."
           >
             {provinces.length ? (
               <div className="max-h-[22rem] overflow-y-auto pr-1">
                 <RankedBars rows={provinces} total={regionCount} label={(v) => v} color={() => regionColor(region)} />
               </div>
             ) : (
-              <EmptyState compact icon={MapPinned} title="No provinces in this region" description="The source reports no provinces for this region. Try another region, or show all regions." />
+              <EmptyState compact icon={MapPinned} title="No provinces in this region" description="The source reports no provinces here. Try another region." />
             )}
           </Panel>
         ) : (
@@ -463,7 +463,7 @@ export function DpwhDashboard({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-        <p className="text-xs text-muted">Figures computed from the published snapshot; select any region above to see its provinces.</p>
+        <p className="text-xs text-muted">Select a region above to see its provinces.</p>
         <Link href={projectsHref} className={secondaryButtonClass}>
           {region ? `Browse ${formatCount(regionCount)} contracts in ${region}` : 'Browse all projects'} <ArrowRight className="w-4 h-4" aria-hidden="true" />
         </Link>

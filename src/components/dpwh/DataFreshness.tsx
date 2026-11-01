@@ -4,14 +4,14 @@ import React from 'react';
 import { History, Info } from 'lucide-react';
 import type { DpwhSummary } from '@/types/dpwh';
 import { Tooltip } from '@/components/ui/Tooltip';
-import { formatDate } from './format';
+import { formatCount, formatDate } from './format';
 
 /**
  * How current the figures on a public data screen are, from the cached
  * summary row only (never the clock): the date of the BetterGov.ph snapshot
  * the data comes from, or, while an import is unfinished, the date the
- * totals were last computed. The hint spells out what each date means.
- * DataScopeNote keeps the full disclosure.
+ * totals were last computed. This is the one place a screen says the
+ * import is incomplete; the hint spells out what each date means.
  */
 export function DataFreshness({ summary, className = '' }: { summary: DpwhSummary | null; className?: string }) {
   if (!summary) return null;
@@ -21,9 +21,9 @@ export function DataFreshness({ summary, className = '' }: { summary: DpwhSummar
   const hint = (
     <>
       {snapshot
-        ? `Source snapshot: the date BetterGov.ph published the DPWH data shown here (${formatDate(snapshot)}). `
-        : 'The latest DPWH snapshot has not finished importing, so figures cover only the records imported so far. '}
-      Last completed sync: {synced ? formatDate(synced) : 'none yet'}. Totals computed: {formatDate(summary.computed_at)}.
+        ? `The date BetterGov.ph published this DPWH data. `
+        : `The latest DPWH snapshot is still importing: figures cover ${formatCount(summary.stats.total_contracts)} contracts so far. `}
+      Last sync: {synced ? formatDate(synced) : 'none yet'}. Totals computed {formatDate(summary.computed_at)}.
     </>
   );
 

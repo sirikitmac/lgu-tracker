@@ -110,14 +110,14 @@ export default async function SourceProjectPage({ params }: PageProps<'/projects
         </div>
         {p.status === 'proposed' && (
           <p className="text-xs text-[#5B21B6] dark:text-violet-300 bg-violet-50 dark:bg-violet-500/12 border border-violet-200 dark:border-violet-500/30 rounded-card px-4 py-3 leading-relaxed">
-            <strong>Proposed (budget)</strong> means this project is listed in the FY 2027 National Expenditure Program,
-            the budget the executive proposes to Congress. It is not an approved appropriation, a funded project, or an
-            awarded contract. The source has no status column: LGU Tracker gives every record in this dataset this status.
+            <strong>Proposed (budget):</strong> listed in the FY 2027 National Expenditure Program, the executive&apos;s budget
+            proposal to Congress. Not an approved appropriation or an awarded contract. The source has no status; LGU Tracker
+            sets this one.
           </p>
         )}
         {p.latitude === null && (
           <span className="inline-flex items-center gap-1 text-sm text-muted">
-            <MapPinOff className="w-4 h-4" /> The source reports no coordinates for this project, so it is not on the map.
+            <MapPinOff className="w-4 h-4" /> No coordinates reported, so not on the map.
           </span>
         )}
       </header>
@@ -154,7 +154,7 @@ export default async function SourceProjectPage({ params }: PageProps<'/projects
 
         <section className="space-y-2 text-xs text-muted">
           <h2 className="text-base font-semibold tracking-tight text-ink">Provenance</h2>
-          <p>{info.description}. License: {info.license}. Values are as published and have not been verified by the LGU.</p>
+          <p>{info.description}. License: {info.license}. As published, not verified by the LGU.</p>
           <p>
             Snapshot {p.source_revision.slice(0, 10)} committed {formatDate(p.source_snapshot_at)}; last imported {formatDate(p.updated_at)}.
           </p>

@@ -13,8 +13,8 @@ import { Reveal } from '@/components/landing/Reveal';
 import { StackSteps } from '@/components/landing/StackSteps';
 import { anton } from '@/components/landing/fonts';
 import { applyFixture, LANDING_FIXTURES, type LandingFixture } from '@/lib/landing/fixtures';
-import { PHOTOS, regionName } from '@/components/landing/content';
-import { pageCredits, TRAIL_PHOTOS, WAY_PHOTOS, type WallPhoto } from '@/components/landing/wall';
+import { regionName } from '@/components/landing/content';
+import { TRAIL_PHOTOS, WAY_PHOTOS, type WallPhoto } from '@/components/landing/wall';
 import { ImageTrail, type TrailImage } from '@/components/landing/ImageTrail';
 import { getImageProps } from 'next/image';
 import { contractMapHref, formatCount, formatDate, formatPeso } from '@/components/dpwh/format';
@@ -153,8 +153,8 @@ function Hero({ data }: { data: LandingData }) {
         </h1>
 
         <p className="hero-sub mt-7 text-[length:var(--step-lead)] leading-snug max-w-[46ch] text-white">
-          <span className="font-semibold text-signal">Bantay Proyekto.</span> A free public directory and map of DPWH contracts
-          and DILG local projects: what was built, where, by whom and for how much, each linked to its source.
+          <span className="font-semibold text-signal">Bantay Proyekto.</span> A free directory and map of DPWH contracts and DILG
+          local projects: what was built, where, by whom and for how much.
         </p>
 
         <div className="hero-sub mt-8 flex flex-col sm:flex-row sm:items-center gap-3">
@@ -185,7 +185,7 @@ function Stats({ data }: { data: LandingData }) {
     },
     data.datasets !== null && data.datasets.length > 0 && {
       value: data.datasets.length,
-      label: plural(data.datasets.length, 'public dataset, linked to its source', 'public datasets, each linked to its source'),
+      label: plural(data.datasets.length, 'public dataset', 'public datasets'),
     },
   ].filter(Boolean) as { value: number; label: string }[];
 
@@ -210,11 +210,11 @@ function Stats({ data }: { data: LandingData }) {
             ))}
           </dl>
         ) : (
-          <p className="text-[15px] text-white/80">Live figures are unavailable right now; the directory and the map still work.</p>
+          <p className="text-[15px] text-white/80">Live figures are unavailable. The directory and map still work.</p>
         )}
         {items.length > 0 && data.computedAt && (
           <p className="mt-6 text-[13px] text-white/70">
-            Counts of stored records as of {formatDate(data.computedAt)}, as published by each source.
+            Record counts as of {formatDate(data.computedAt)}.
           </p>
         )}
       </div>
@@ -276,7 +276,7 @@ function SixWaysIn({ data }: { data: LandingData }) {
     },
     {
       title: 'Filter by agency',
-      text: 'DPWH and DILG side by side, never merged.',
+      text: 'DPWH contracts, DILG local projects, or both.',
       href: '/projects?agency=DILG',
       photo: WAY_PHOTOS.agency,
       ui: (
@@ -313,7 +313,7 @@ function SixWaysIn({ data }: { data: LandingData }) {
             </sup>
           </h2>
           <p data-reveal style={delay(70)} className="lg:col-span-5 text-[length:var(--step-lead)] leading-snug text-ink max-w-[40ch]">
-            Every card opens a part of LGU Tracker that works today, with no account needed.
+            Each card opens a working part of the site. No account needed.
           </p>
         </div>
 
@@ -489,7 +489,7 @@ function HowItWorks({ example, regionPoints }: { example: ExampleContract | null
         <StepLayout
           n="01"
           title="Find a project"
-          text="Search by place, title or contractor, or paste a SubayBAYAN code. Narrow it down by agency, region, category or status."
+          text="Search by place, title or contractor, or paste a SubayBAYAN code. Filter by agency, region, category or status."
           chips={['SubayBAYAN code', 'Agency: DPWH or DILG', 'Contractor']}
           chipTone="bg-accent-soft text-accent-ink"
           numberTone="text-accent-ink"
@@ -505,7 +505,7 @@ function HowItWorks({ example, regionPoints }: { example: ExampleContract | null
         <StepLayout
           n="02"
           title="See where it is"
-          text="Contracts sit at the coordinates DPWH reported; LGU projects at their barangay or town, matched by PSGC code, never at a guessed site."
+          text="Contracts at the coordinates DPWH reported. LGU projects in their barangay or town, matched by PSGC code."
           chips={['PSGC location', 'Map clusters', 'Region filter']}
           chipTone="bg-night/10 text-night"
           numberTone="text-night"
@@ -521,7 +521,7 @@ function HowItWorks({ example, regionPoints }: { example: ExampleContract | null
         <StepLayout
           n="03"
           title="Verify at the source"
-          text="Each record names where it was published and when it was retrieved, with a link back, so you can check it yourself."
+          text="Every record links back to where it was published, with the retrieval date."
           chips={['Source link', 'Retrieved date', 'As reported']}
           chipTone="bg-night/10 text-night"
           numberTone="text-night"
@@ -540,7 +540,7 @@ function HowItWorks({ example, regionPoints }: { example: ExampleContract | null
             How it works<span className="text-accent-ink">.</span>
           </h2>
           <p data-reveal style={delay(70)} className="lg:col-span-5 text-[length:var(--step-lead)] leading-snug text-ink max-w-[40ch]">
-            Three steps from a question about a road or a hall to the record behind it.
+            From a question about a road or a hall to the record behind it.
           </p>
         </div>
         <div className="mt-12">
@@ -611,7 +611,7 @@ function StepVerify({ example }: { example: ExampleContract | null }) {
       <dl className="space-y-3">
         {example && (
           <div>
-            <dt className="text-night/70">Contract amount, as reported</dt>
+            <dt className="text-night/70">Contract amount</dt>
             <dd className="text-[20px] font-semibold tracking-[-0.02em] tabular-nums">{formatPeso(example.contract_amount)}</dd>
           </div>
         )}
@@ -650,10 +650,7 @@ function Coverage({ data }: { data: LandingData }) {
             <p className="text-[length:var(--step-lead)] leading-snug">
               DPWH contracts from ten regions of the Visayas and Mindanao, including Northern Mindanao, home to Iligan City.
             </p>
-            <p className="text-subtle">
-              Luzon and Metro Manila contracts are not stored. DILG SubayBAYAN projects cover every region and live on the
-              map&rsquo;s LGU layer.
-            </p>
+            <p className="text-subtle">Luzon and Metro Manila contracts are not included. DILG projects cover every region, on the map&rsquo;s LGU layer.</p>
           </div>
         </div>
 
@@ -663,14 +660,13 @@ function Coverage({ data }: { data: LandingData }) {
 
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-x-12 gap-y-3 text-[15px] text-ink">
           <p className="lg:col-span-8 max-w-[64ch]">
-            Also in the directory, nationwide:{' '}
-            {data.nepProposals !== null ? `${formatCount(data.nepProposals)} DPWH projects` : 'DPWH projects'} proposed in the FY 2027
-            National Expenditure Program. They are budget proposals, not contracts, and carry no coordinates.{' '}
+            Also listed:{' '}
+            {data.nepProposals !== null ? `${formatCount(data.nepProposals)} FY 2027 budget proposals` : 'FY 2027 budget proposals'}{' '}
+            from the National Expenditure Program, nationwide.{' '}
             <Link href="/projects?source=dpwh_nep_2027" className={`font-semibold underline decoration-2 underline-offset-4 rounded-sm hover:text-accent-ink ${FOCUS_THEMED}`}>
               Browse the proposals
             </Link>
           </p>
-          {data.computedAt && <p className="lg:col-span-4 lg:text-right text-[13px] text-muted">Figures as of {formatDate(data.computedAt)}.</p>}
         </div>
       </div>
     </section>
@@ -680,27 +676,33 @@ function Coverage({ data }: { data: LandingData }) {
 /* ------------------------------------------------------------------------- */
 
 function AboutData({ data }: { data: LandingData }) {
-  const credits = pageCredits(Object.values(PHOTOS));
   const link = `underline underline-offset-2 rounded-sm hover:text-accent-ink ${FOCUS_THEMED}`;
   const sources = [
     {
       name: 'DPWH contracts',
-      by: 'DPWH Transparency Portal, published by BetterGov.ph (CC0)',
-      text: `${data.totalContracts !== null ? `${formatCount(data.totalContracts)} contracts` : 'Contracts'} in the Visayas and Mindanao, plus the FY 2027 NEP proposals nationwide.`,
+      by: 'DPWH Transparency Portal via BetterGov.ph · CC0',
+      text: `${data.totalContracts !== null ? `${formatCount(data.totalContracts)} contracts` : 'Contracts'} in the Visayas and Mindanao, plus FY 2027 NEP proposals nationwide.`,
       href: 'https://bettergov.ph',
     },
     {
       name: 'DILG SubayBAYAN',
-      by: `Locally funded projects and LIME 20% development fund, retrieved ${SUBAYBAYAN_RETRIEVED_LABEL}`,
-      text: `${data.dilgProjects !== null ? `${formatCount(data.dilgProjects)} projects` : 'Projects'} of local governments, a one-time export placed at area centroids, not sites.`,
+      by: `One-time export, retrieved ${SUBAYBAYAN_RETRIEVED_LABEL}`,
+      text: `${data.dilgProjects !== null ? `${formatCount(data.dilgProjects)} local government projects` : 'Local government projects'}, nationwide.`,
       href: SUBAYBAYAN_DATASET_INFO.lgsf.url,
     },
     {
       name: 'Boundaries',
-      by: `${BOUNDARY_SOURCE.underlying.replace(' (CC BY-IGO)', '')}`,
-      text: `Region, province and town shapes (${BOUNDARY_SOURCE.psgc}), under CC BY-IGO, for locating LGU projects.`,
+      by: 'NAMRIA / PSA via OCHA · CC BY-IGO',
+      text: `Region, province and town shapes (${BOUNDARY_SOURCE.psgc}) that place LGU projects.`,
       href: 'https://data.humdata.org/dataset/cod-ab-phl',
     },
+  ];
+  // The one full statement of the caveats on this page; elsewhere it uses short labels.
+  const notes = [
+    'Values are shown as each source published them, not verified by the LGU.',
+    'DILG projects sit at the centre of their barangay or town, not the exact site.',
+    'FY 2027 proposals are budget items, not contracts, and never count in contract totals.',
+    'DPWH and DILG records stay separate, even when they match. Photos are illustrative.',
   ];
 
   return (
@@ -710,13 +712,14 @@ function AboutData({ data }: { data: LandingData }) {
           <h2 id="about-title" data-reveal className="display text-[length:var(--step-head)] text-ink">
             About the data<span className="text-accent-ink">.</span>
           </h2>
-          <p data-reveal style={delay(70)} className="mt-6 text-[length:var(--step-lead)] leading-snug text-ink max-w-[34ch]">
-            Values are shown as reported by each source. They are not verified by the LGU.
-          </p>
-          <p data-reveal style={delay(120)} className="mt-4 text-ink max-w-[44ch]">
-            Proposals are budget items, never added to contract totals. DPWH and DILG records stay separate, even when they
-            look alike. Photographs on this page are illustrative scenes from the covered regions, not project records.
-          </p>
+          <ul data-reveal style={delay(70)} className="mt-6 space-y-2 text-[17px] leading-snug text-ink max-w-[46ch]">
+            {notes.map((n) => (
+              <li key={n} className="flex gap-3">
+                <span className="mt-[0.55em] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />
+                {n}
+              </li>
+            ))}
+          </ul>
         </div>
 
         <div className="lg:col-span-7">
@@ -733,23 +736,12 @@ function AboutData({ data }: { data: LandingData }) {
               </li>
             ))}
           </ul>
-
-          <div className="mt-10 text-[13px] text-subtle">
-            <h3 className="text-[14px] font-semibold text-ink">Picture credits</h3>
-            <ul className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1.5">
-              {credits.map((p) => (
-                <li key={p.src}>
-                  <a href={p.sourceUrl} target="_blank" rel="noopener noreferrer" className={link}>
-                    {p.caption}
-                  </a>{' '}
-                  by {p.creator},{' '}
-                  <a href={p.licenseUrl} target="_blank" rel="noopener noreferrer" className={link}>
-                    {p.license}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <p className="mt-6 text-[14px] text-subtle">
+            Licenses, photo authors and map tiles:{' '}
+            <Link href="/credits" className={`font-semibold text-ink ${link}`}>
+              Photo &amp; data credits
+            </Link>
+          </p>
         </div>
       </div>
     </section>
@@ -807,7 +799,7 @@ function Closing() {
               <span className="trail-accent text-signal">built.</span>
             </h2>
             <p data-reveal style={delay(70)} className="mt-6 text-[length:var(--step-lead)] leading-snug max-w-[44ch] text-white">
-              Look up the contracts and local projects in your town, then follow each one back to where it was published.
+              Look up the contracts and local projects in your town, then trace each one to its source.
             </p>
             <div data-reveal style={delay(140)} className="mt-9 flex flex-col sm:flex-row sm:items-center justify-center gap-3">
               <PrimaryLink href="/projects">Explore projects</PrimaryLink>
@@ -815,7 +807,12 @@ function Closing() {
             </div>
           </div>
 
-          <p className="absolute inset-x-0 bottom-5 z-10 px-6 text-[12px] text-white/75">Photos are illustrative, not specific project records.</p>
+          <p className="absolute inset-x-0 bottom-5 z-10 px-6 text-[12px] text-white/75">
+            Illustrative photos ·{' '}
+            <Link href="/credits" className={`underline underline-offset-2 rounded-sm hover:text-white ${FOCUS_ON_DARK}`}>
+              Credits
+            </Link>
+          </p>
         </div>
       </div>
     </section>

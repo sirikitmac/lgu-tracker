@@ -413,8 +413,8 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
   const scopeNote = filters.source
     ? `Source: ${sourceLabel(filters.source)}`
     : isProjectAgency(filters.agency)
-      ? `${filters.agency} only: ${AGENCY_SCOPE[filters.agency]}`
-      : `Across all sources: ${AGENCY_SCOPE.DPWH}, and ${AGENCY_SCOPE.DILG}`;
+      ? AGENCY_SCOPE[filters.agency]
+      : 'DPWH and DILG, all sources';
   const sourceOptions = isProjectAgency(filters.agency) ? AGENCY_SOURCES[filters.agency as ProjectAgency] : PROJECT_SOURCE_IDS;
   const sortOptions = sortOptionsFor(filters.agency);
   const rows = table.getRowModel().rows;
@@ -441,7 +441,7 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
     <div className="space-y-5">
       {summaryState === 'error' && (
         <Notice tone="danger">
-          Could not load the data summary, so the location and office filters have no options. Search and the other filters still work.
+          The data summary did not load, so the location and office filters are empty. Search and other filters still work.
         </Notice>
       )}
       {summaryState === 'empty' && (
@@ -458,7 +458,7 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
           onSelectStatus={(v) => update({ status: v ?? '' })}
         />
       )}
-      {!showSummary && summaryState !== 'loading' && <DataScopeNote summary={summary} />}
+      {!showSummary && <DataScopeNote />}
 
       <section aria-label="Search and filter projects" className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
@@ -641,7 +641,7 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
             <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1">
               <p className="text-xs text-muted">{scopeNote}</p>
               {filters.agency !== 'DILG' && <DataFreshness summary={summary} />}
-              {filters.agency !== 'DPWH' && <p className="text-xs text-muted">DILG SubayBAYAN retrieved {SUBAYBAYAN_RETRIEVED_LABEL}</p>}
+              {filters.agency !== 'DPWH' && <p className="text-xs text-muted">DILG export {SUBAYBAYAN_RETRIEVED_LABEL}</p>}
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -668,7 +668,7 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
           >
             {(filters.status || filters.sort !== EMPTY_FILTERS.sort) && (
               <p className="max-w-sm text-xs text-muted">
-                Some sort orders can time out on the hosted database when every agency is shown. Choosing one agency or using the default sort usually helps.
+                Some sorts time out across all agencies. Pick one agency, or the default sort.
               </p>
             )}
           </ErrorState>
@@ -678,7 +678,7 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
               className={panelClass}
               icon={SearchX}
               title="No projects found"
-              description="No projects match your current search or filters. Try fewer filters or a different search term."
+              description="Try fewer filters or a different search."
               action={
                 <button type="button" onClick={resetFilters} className={secondaryButtonSmClass}>
                   <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" /> Clear search and filters
@@ -690,7 +690,7 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
               className={panelClass}
               icon={FolderSearch}
               title="No projects available yet"
-              description="There are no project records to show. Records appear here once the DPWH data has been imported."
+              description="Records appear here once the data is imported."
             />
           )
         ) : (
@@ -722,7 +722,7 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
         {view === 'grid' && listState !== 'error' && photoCredits.length > 0 && (
           <details className="text-xs text-muted">
             <summary className="cursor-pointer w-fit rounded-sm hover:text-ink focus-visible:outline-2 focus-visible:outline-accent-ink">
-              Photos are representative of the kind of work and do not show these projects; DILG projects with no fitting photo show an illustration. Credits for the {photoCredits.length} photo{photoCredits.length === 1 ? '' : 's'} on this page
+              Photos show the kind of work, not these projects. Credits for the {photoCredits.length} on this page
             </summary>
             <ul className="mt-2 space-y-1 pl-4 list-disc">
               {photoCredits.map((photo) => (

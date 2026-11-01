@@ -70,7 +70,6 @@ function popupHtml(p: DpwhMapPoint): string {
         <div><span style="${muted}">Office:</span> ${escapeHtml(p.implementing_office ?? 'Not reported')}</div>
       </div>
       <a href="/projects/${encodeURIComponent(p.contract_id)}" style="display:inline-block;margin-top:8px;font-size:12px;font-weight:600;color:var(--color-accent-ink)">View full details →</a>
-      <div style="margin-top:6px;font-size:10.5px;${muted}">Coordinates as reported by DPWH; not verified.</div>
     </div>`;
 }
 

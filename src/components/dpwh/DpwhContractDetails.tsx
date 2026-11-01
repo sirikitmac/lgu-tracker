@@ -52,8 +52,8 @@ export function DpwhContractDetails({ detail }: { detail: DpwhContractDetail }) 
   return (
     <div className="space-y-6">
       <p className="text-xs text-subtle leading-relaxed px-4 py-3 rounded-card bg-sunken">
-        Source-reported values from the DPWH Transparency Portal via BetterGov.ph. Amounts are reported contract
-        values, not disbursements. {detail.review?.is_field_verified
+        As published by the DPWH Transparency Portal via BetterGov.ph. Amounts are contract values, not
+        disbursements. {detail.review?.is_field_verified
           ? `Field-verified by the LGU on ${formatDate(detail.review.verified_at)}.`
           : 'Not field-verified by the LGU.'}
       </p>
@@ -77,22 +77,22 @@ export function DpwhContractDetails({ detail }: { detail: DpwhContractDetail }) 
         <Field
           label="Coordinates"
           value={c.latitude !== null && c.longitude !== null ? `${c.latitude.toFixed(6)}, ${c.longitude.toFixed(6)}` : null}
-          note={c.latitude !== null ? 'DPWH-reported; not verified.' : undefined}
+          note={c.latitude !== null ? 'As reported by DPWH' : undefined}
         />
       </Section>
 
       <Section title="Implementing office">
-        <Field label="Office" value={c.implementing_office} note="The DPWH office running the contract, not the project location." />
+        <Field label="Office" value={c.implementing_office} note="Runs the contract; not the project location" />
         <Field label="Office region" value={c.implementing_region} />
       </Section>
 
       <Section title="Contract and amounts">
         <Field label="Contractor" value={c.contractor} />
         <Field label="Winning bidder(s)" value={c.winner_names} />
-        <Field label="Contract amount" value={c.contract_amount === null ? null : formatPeso(c.contract_amount)} note="Award amount as reported" />
+        <Field label="Contract amount" value={c.contract_amount === null ? null : formatPeso(c.contract_amount)} note="Award amount" />
         <Field label="Approved budget (ABC)" value={c.approved_budget === null ? null : formatPeso(c.approved_budget)} />
         <Field label="DPWH budget field" value={c.budget === null ? null : formatPeso(c.budget)} />
-        <Field label="Amount paid" value={c.amount_paid === null ? null : formatPeso(c.amount_paid)} note="As reported; DPWH usually reports 0. Not disbursement data." />
+        <Field label="Amount paid" value={c.amount_paid === null ? null : formatPeso(c.amount_paid)} note="DPWH usually reports 0" />
         <Field label="Program" value={c.program_name} />
         <Field label="Source of funds" value={c.source_of_funds} />
         <Field label="Funding instrument" value={c.funding_instrument} />
@@ -153,7 +153,7 @@ export function DpwhContractDetails({ detail }: { detail: DpwhContractDetail }) 
         <Field
           label="Site photos (DPWH)"
           value={c.total_images === null ? null : `${c.total_images} reported${c.latest_image_date ? `, latest ${formatDate(c.latest_image_date)}` : ''}`}
-          note="DPWH reports how many site photos it holds. LGU Tracker does not store or show them; see the DPWH Transparency Portal."
+          note="Held by DPWH; see the Transparency Portal."
         />
         <Field label="Source snapshot" value={formatDate(c.source_snapshot_at)} note="Snapshot in which these values last changed" />
         <Field label="Last successful sync" value={detail.lastSuccessfulSyncAt && formatDate(detail.lastSuccessfulSyncAt)} />
