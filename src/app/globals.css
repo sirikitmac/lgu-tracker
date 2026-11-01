@@ -620,6 +620,82 @@
   .closing-glow { right: -40%; bottom: -30%; width: 140%; }
 }
 
+/* ---- Closing: the cursor image trail (ImageTrail.tsx) ----------------------
+   Photographs follow a fine pointer across the night card; a radial scrim
+   keeps the headline and the actions readable above them. Touch screens,
+   reduced motion and no scripts get the still, fanned collage instead. */
+
+.trail-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.trail-img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 13rem;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 12px;
+  opacity: 0;
+  box-shadow: 0 24px 48px -16px rgb(0 0 0 / 0.65);
+}
+.trail-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(ellipse 50% 42% at 50% 50%, rgb(5 15 22 / 0.86) 0%, rgb(5 15 22 / 0.6) 55%, rgb(5 15 22 / 0) 100%);
+}
+@media (max-width: 767px) {
+  .trail-scrim {
+    background: radial-gradient(ellipse 90% 48% at 50% 50%, rgb(5 15 22 / 0.9) 0%, rgb(5 15 22 / 0.65) 60%, rgb(5 15 22 / 0) 100%);
+  }
+}
+/* The one word in the text face: lower case, heavy, tight. */
+.trail-accent {
+  font-family: var(--font-sans);
+  font-weight: 800;
+  text-transform: none;
+  letter-spacing: -0.05em;
+}
+
+.trail-collage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.trail-card {
+  position: absolute;
+  width: 9.5rem;
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px -16px rgb(0 0 0 / 0.7);
+}
+.collage-0 { left: -1.5rem; top: 2rem; rotate: -8deg; }
+.collage-1 { right: -1.75rem; top: 3.5rem; rotate: 7deg; }
+.collage-2 { left: 1rem; bottom: 4rem; rotate: 6deg; }
+.collage-3 { right: 0.5rem; bottom: 2.5rem; rotate: -6deg; }
+.collage-4 { left: 50%; top: -2.25rem; translate: -50% 0; rotate: 3deg; }
+@media (min-width: 1024px) {
+  .trail-img { width: 17rem; }
+  .trail-card { width: 15rem; }
+  .collage-0 { left: 4%; top: 9%; }
+  .collage-1 { right: 5%; top: 12%; }
+  .collage-2 { left: 9%; bottom: 11%; }
+  .collage-3 { right: 8%; bottom: 9%; }
+  .collage-4 { top: -4rem; }
+}
+/* Where the trail runs, the collage steps aside. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  [data-js] .trail-collage {
+    display: none;
+  }
+}
+
 /* Small translucent labels laid over photographs (used by DpwhProjectCard). */
 .glass-chip {
   background-color: rgb(20 20 22 / 0.48);

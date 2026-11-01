@@ -14,7 +14,9 @@ import { StackSteps } from '@/components/landing/StackSteps';
 import { anton } from '@/components/landing/fonts';
 import { applyFixture, LANDING_FIXTURES, type LandingFixture } from '@/lib/landing/fixtures';
 import { PHOTOS, regionName } from '@/components/landing/content';
-import { pageCredits, WAY_PHOTOS, type WallPhoto } from '@/components/landing/wall';
+import { pageCredits, TRAIL_PHOTOS, WAY_PHOTOS, type WallPhoto } from '@/components/landing/wall';
+import { ImageTrail, type TrailImage } from '@/components/landing/ImageTrail';
+import { getImageProps } from 'next/image';
 import { contractMapHref, formatCount, formatDate, formatPeso } from '@/components/dpwh/format';
 import { BOUNDARY_SOURCE, SUBAYBAYAN_DATASET_INFO, SUBAYBAYAN_RETRIEVED_LABEL } from '@/lib/subaybayan/source';
 import { loadLandingData, POINTS_PER_REGION, type ExampleContract, type LandingData } from '@/lib/landing/data';
@@ -756,6 +758,14 @@ function AboutData({ data }: { data: LandingData }) {
 
 /* ------------------------------------------------------------------------- */
 
+/** Optimized sources for the cursor trail; the browser picks the width per screen density. */
+function trailImages(): TrailImage[] {
+  return TRAIL_PHOTOS.map((p) => {
+    const { props } = getImageProps({ src: p.src, alt: '', width: 272, height: 204, sizes: '17rem' });
+    return { src: props.src, srcSet: props.srcSet, sizes: props.sizes };
+  });
+}
+
 const MARQUEE = ['Bantay Proyekto', 'Gabay sa Progreso'];
 
 function Closing() {
@@ -777,18 +787,35 @@ function Closing() {
       </div>
 
       <div className="mx-auto w-full max-w-[90rem] px-2 sm:px-4">
-        <div className="closing relative isolate overflow-hidden rounded-[32px] bg-night text-white dark:ring-1 dark:ring-white/12 px-6 py-16 sm:px-12 lg:px-16 lg:py-24">
+        <div
+          id="closing-stage"
+          className="closing trail-stage relative isolate flex min-h-[40rem] flex-col items-center justify-center overflow-hidden rounded-[32px] bg-night px-6 pt-20 pb-24 text-center text-white dark:ring-1 dark:ring-white/12 sm:px-12 lg:min-h-[46rem]"
+        >
           <div className="closing-glow" aria-hidden="true" />
-          <h2 id="closing-title" data-reveal className="display text-[length:var(--step-head-xl)] max-w-[16ch]">
-            What was built <span className="text-signal">near you?</span>
-          </h2>
-          <p data-reveal style={delay(70)} className="mt-6 text-[length:var(--step-lead)] leading-snug max-w-[44ch] text-white">
-            Look up the contracts and local projects in your town, then follow each one back to where it was published.
-          </p>
-          <div data-reveal style={delay(140)} className="mt-9 flex flex-col sm:flex-row sm:items-center gap-3">
-            <PrimaryLink href="/projects">Explore projects</PrimaryLink>
-            <SecondaryLink href="/projects/map">Open the map</SecondaryLink>
+          {/* Still collage: touch screens, reduced motion and no scripts. */}
+          <div className="trail-collage" aria-hidden="true">
+            {TRAIL_PHOTOS.slice(0, 5).map((p, i) => (
+              <Photo key={p.src} src={p.src} sizes="(min-width: 1024px) 17rem, 10rem" className={`trail-card collage-${i}`} />
+            ))}
           </div>
+          <ImageTrail images={trailImages()} stageId="closing-stage" />
+          <div className="trail-scrim" aria-hidden="true" />
+
+          <div className="relative z-10 flex flex-col items-center">
+            <h2 id="closing-title" data-reveal className="display text-[length:var(--step-head-xl)] max-w-[14ch]">
+              See what your taxes{' '}
+              <span className="trail-accent text-signal">built.</span>
+            </h2>
+            <p data-reveal style={delay(70)} className="mt-6 text-[length:var(--step-lead)] leading-snug max-w-[44ch] text-white">
+              Look up the contracts and local projects in your town, then follow each one back to where it was published.
+            </p>
+            <div data-reveal style={delay(140)} className="mt-9 flex flex-col sm:flex-row sm:items-center justify-center gap-3">
+              <PrimaryLink href="/projects">Explore projects</PrimaryLink>
+              <SecondaryLink href="/projects/map">Open the map</SecondaryLink>
+            </div>
+          </div>
+
+          <p className="absolute inset-x-0 bottom-5 z-10 px-6 text-[12px] text-white/75">Photos are illustrative, not specific project records.</p>
         </div>
       </div>
     </section>
