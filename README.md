@@ -1,139 +1,213 @@
 # 🏗️ LGU Tracker
+
 ### *Bantay Proyekto, Gabay sa Progreso.* 🇵🇭
-<img width="1897" height="899" alt="image" src="https://github.com/user-attachments/assets/f17dfa2c-c6a3-4457-a79b-756b07536620" />
-<img width="1343" height="810" alt="image" src="https://github.com/user-attachments/assets/8b7e1cb9-bbe9-421a-ac4a-f509da825367" />
 
+> 🚧 **Under active development.** Features and data are changing; see [Project status](#-project-status).
 
+**LGU Tracker** is a free public directory and map of Philippine infrastructure projects: DPWH contracts and
+DILG-reported local government projects. For each project it shows what was built, where, by whom and for how
+much, and links back to where the record was published.
 
-
-**LGU Tracker** is a web-based infrastructure project monitoring platform designed to improve public access to project information through interactive maps, searchable project directories, and centralized project data.
-
-Our goal is to make infrastructure projects easier to find, monitor, and understand—promoting transparency, accessibility, and public participation in local development. 💙
-
----
-
-## ✨ Key Features
-
-- 🗺️ **Interactive Project Map** — Explore infrastructure projects through a map-based interface.
-- 🔎 **Project Directory** — Search, browse, and filter infrastructure project records.
-- 📋 **Project Details** — View available information about individual infrastructure projects.
-- 📱 **Responsive Interface** — Access the platform through a modern web interface.
-- 🏛️ **Public Transparency** — Make infrastructure project information more accessible to communities.
-
-> 🚧 Some features depend on backend integration, database configuration, and data availability. The project is currently under active development.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/landing-dark.webp">
+  <img src="docs/images/landing-light.webp" width="1280" alt="LGU Tracker landing page: the headline &quot;Track every peso. See every project.&quot; over a wall of project photos, with live counts of 92,581 DPWH contracts and 41,194 DILG projects">
+</picture>
 
 ---
 
-## 🚀 Upcoming Features
+## ✨ Features
 
-We're working toward making LGU Tracker more interactive, reliable, and useful for both the public and authorized project members.
+### Landing page with live stats
+Record counts, a region breakdown and a dot map of contract locations, read live from cached aggregates in the
+database.
+On a first visit, an intro animation counts up from 0 to 100%.
 
-- 📍 **Map Markers & Project Locations** — Display infrastructure projects as markers on the map, allowing users to explore projects by location.
-- 💬 **Public Feedback System** — Allow users to submit feedback, observations, and concerns about infrastructure projects.
-- 🔄 **Automated Weekly Data Synchronization** — Synchronize available DPWH project data from [BetterGov.ph](https://bettergov.ph/) on a weekly schedule.
-- 📝 **Project Reporting System** — Enable registered members to submit reports about project progress, issues, and other relevant observations.
-- 🔐 **Authentication & Role-Based Access Control** — Implement secure login and permissions for different user roles.
-- 👥 **Member Dashboard** — Provide authorized members with a dedicated space to manage their project-related activities.
-- 🗄️ **Backend & Database Integration** — Support project records, user accounts, feedback, reports, and other platform functionality through a centralized backend.
-- 📊 **Project Monitoring & Status Updates** — Help users track project information and monitor reported developments.
+<img src="docs/images/landing-coverage.webp" width="640" alt="&quot;Where the records are&quot; section: contract counts per Visayas and Mindanao region beside a dot map of contract locations">
 
-*Feature availability may change as development progresses.*
+### Project directory
+One searchable list of about 145,000 records with an **All / DPWH / DILG** agency switch, DILG categories, filters, sort,
+and grid or table views.
+
+<img src="docs/images/directory.webp" width="1280" alt="Projects page with a search bar, the All/DPWH/DILG agency switch, the record count, and project cards showing status, contractor and contract amount">
+
+### Project map
+- **DPWH layer**: contracts at the coordinates DPWH reports. Filter by region, category and status. In view, it
+  shows the largest 1,000 contracts.
+- **LGU layer (DILG SubayBAYAN)**: 41,194 projects in clustered markers (supercluster), with category chips and
+  source, region, province, city, year and status filters.
+- **Approximate locations**: SubayBAYAN has no coordinates, so each project sits at the centre of its barangay,
+  city or province. The panel says which one. An *Approximate locations* toggle shows or hides projects placed at a
+  city or province centre.
+- **Street View cat**: drag it onto the map to see the street there.
+
+<img src="docs/images/map-dpwh.webp" width="1280" alt="Project map, DPWH layer: status-coloured markers across the Visayas and Mindanao beside a list of contracts in view">
+
+<img src="docs/images/map-lgu.webp" width="1280" alt="Project map, LGU layer: the layer switch, SubayBAYAN category chips with counts, and source, location, year and status filters">
+
+### Jump to a project by SubayBAYAN code
+`/projects/map?code=FALGU-26-10-13-01-000-1` opens the LGU layer and zooms to that project. If several projects
+share a code, it lists them all.
+
+<img src="docs/images/map-code-jump.webp" width="1280" alt="Map opened from a ?code= link: the search box holds the project code, and the map and panel show the single matching project">
+
+### Project detail pages
+Every DPWH contract, NEP item and DILG project has its own page with the reported fields and a link to its source
+(for BetterGov.ph data, the exact dataset file and revision).
+
+### Dashboard
+DPWH contracts by region, status, category and year, with a region filter. FY 2027 NEP proposals are counted
+separately.
+
+<img src="docs/images/dashboard.webp" width="1280" alt="Dashboard: contract totals, reported contract value, completed and on-going counts, contracts by region and a status donut">
+
+### Ask BP assistant
+A chat assistant for questions about the directory, built on Gemini function calling. Gemini never writes SQL.
+It can only call two read-only tools, and the counts in its answers come from the database. See
+[`docs/BP_ASSISTANT.md`](docs/BP_ASSISTANT.md).
+
+<img src="docs/images/ask-bp.webp" width="1280" alt="Ask BP chat panel open over the landing page with a greeting and suggested questions">
+
+### Dark mode and mobile
+Light, dark or system theme, with layouts down to 360 px wide.
+
+<img src="docs/images/landing-mobile.webp" width="300" alt="Landing page on a 360 px wide phone screen">
 
 ---
 
-## 🛠️ Tech Stack
-
-| Technology | Purpose |
-|---|---|
-| ⚛️ Next.js | Web application framework |
-| 📘 TypeScript | Type-safe development |
-| 🎨 Tailwind CSS | User interface styling |
-| 🗄️ Supabase | Database and backend services |
-| 🗺️ Leaflet | Interactive maps |
-| 🚀 Vercel | Planned hosting and deployment |
-
----
-
-## 📚 Data Sources
+## 📚 Data sources
 
 | Data | Source | Retrieved | License / terms |
 |---|---|---|---|
-| DPWH contracts | DPWH project data via [BetterGov.ph](https://bettergov.ph) (Hugging Face snapshot) | see `/projects/dashboard` | as published by the source |
-| LGU projects: Locally Funded Projects (LGSF) | [DILG SubayBAYAN (RBME)](https://subaybayan.dilg.gov.ph/rbme/projects/index?type=lgsf) | Oct 31, 2026 (Excel export snapshot) | public government data as published by DILG |
-| LGU projects: Local Infrastructure Monitoring and Evaluation, 20% DF (RLIP) | [DILG SubayBAYAN (RBME)](https://subaybayan.dilg.gov.ph/rbme/projects/index?type=rlip) | Oct 31, 2026 (Excel export snapshot) | public government data as published by DILG |
-| PSGC boundaries (centroids for LGU projects) | [faeldon/philippines-json-maps](https://github.com/faeldon/philippines-json-maps) release v1.1.0, `geojson-lowres.zip` (PSGC 3Q 2026) | pinned by SHA-256 | MIT; underlying boundaries NAMRIA / PSA via [OCHA COD-AB](https://data.humdata.org/dataset/cod-ab-phl), CC BY-IGO |
+| DPWH contracts (Visayas and Mindanao) | DPWH Transparency Portal via [BetterGov.ph](https://huggingface.co/datasets/bettergovph/dpwh-transparency-data) | Oct 26, 2026 (import incomplete) | CC0 1.0 |
+| DPWH FY 2027 NEP proposals (nationwide, directory only, no coordinates) | [BetterGov.ph](https://huggingface.co/datasets/bettergovph/dpwh-nep-2027) | with the DPWH data | Not stated; the NEP is a public government document |
+| LGU projects: Locally Funded Projects (LGSF) | [DILG SubayBAYAN (RBME)](https://subaybayan.dilg.gov.ph/rbme/projects/index?type=lgsf) | Oct 31, 2026 (Excel export snapshot) | Public government records (DILG) |
+| LGU projects: LIME 20% Development Fund (RLIP) | [DILG SubayBAYAN (RBME)](https://subaybayan.dilg.gov.ph/rbme/projects/index?type=rlip) | Oct 31, 2026 (Excel export snapshot) | Public government records (DILG) |
+| Boundaries (centroids for LGU projects) | NAMRIA / PSA via [OCHA COD-AB](https://data.humdata.org/dataset/cod-ab-phl), packaged by [faeldon/philippines-json-maps](https://github.com/faeldon/philippines-json-maps) v1.1.0 (PSGC 3Q 2026) | pinned by SHA-256 | CC BY-IGO (packaging: MIT) |
 | Base map | © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors | live tiles | ODbL |
 
-Notes on the SubayBAYAN layer (`/projects/map?layer=subaybayan`):
-
-- The portal needs a sign-in, so the data is a one-time export; the app never contacts the portal.
-- SubayBAYAN has no coordinates. Each project is placed at the representative point of its barangay, city/municipality or province polygon (**area centroid, not the project site**).
-- Categories (infrastructure, community, health, environment, disaster) are **LGU Tracker's own keyword classification**, not an official DILG category.
-- Where a reported total cost looks like a data-entry error (over 20× the row's own contract amount or subsidy), the map shows that amount instead, keeps the source's value in `total_cost_reported`, and says so in the project panel.
-- Possible duplicates with DPWH contracts are recorded as review flags in `subaybayan_dpwh_matches` (admin-only); records are never merged.
-- Pipeline figures and known gaps: [`docs/subaybayan/report.md`](docs/subaybayan/report.md) and [`docs/subaybayan/duplicates.md`](docs/subaybayan/duplicates.md).
-
-### Re-running the SubayBAYAN pipeline and import
-
-```bash
-# 1. Excel exports → normalized, categorized, located rows + docs/subaybayan/report.md
-#    Reads <source>/Locally_Funded_Projects/*.xlsx and <source>/LIME_20DF/*.xlsx (read-only).
-#    <source> defaults to ~/Downloads/SubayBayan_RBME (or set SUBAYBAYAN_SOURCE_DIR / --source).
-#    Boundaries are downloaded once into .cache/subaybayan (gitignored) and checked by SHA-256.
-npm run subaybayan:build
-
-# 2. Flag possible duplicates against dpwh_contracts (read-only; --refresh re-reads DPWH)
-npm run subaybayan:dedupe
-
-# 3. Import (needs migration 20261103000100 and SUPABASE_SECRET_KEY in .env.local, server-side only)
-npm run subaybayan:import -- --dry-run     # what would change
-npm run subaybayan:import -- --limit 100   # first rows, then check them
-npm run subaybayan:import                  # everything; unchanged rows are skipped
-```
-
-The importer upserts in batches of 1,000, skips rows whose `source_hash` is unchanged, stops before the
-database passes `SYNC_STORAGE_BUDGET_MB` (default 400 MB), and checks that `dpwh_contracts` is unchanged.
+All values are shown as each source published them; the LGU has not verified them. Photo credits and licenses
+are on the app's `/credits` page ([source](src/app/credits/page.tsx)).
 
 ---
 
-## 🎯 Project Goals
+## 🛠️ Tech stack
 
-LGU Tracker aims to:
+| Technology | Purpose |
+|---|---|
+| Next.js 16 (App Router) · React 19 · TypeScript | Web app |
+| Tailwind CSS v4 | Styling, light and dark themes |
+| Supabase (Postgres + Row Level Security) | Database, auth, public read access |
+| Leaflet + supercluster | Maps and marker clustering |
+| motion | Landing page animation |
+| Google Gemini (`@google/genai`) | Ask BP assistant |
+| Vercel | Hosting |
 
-- 🏛️ Improve public access to infrastructure project information.
-- 🗺️ Make project locations easier to identify and explore.
-- 🤝 Encourage public participation through feedback and reporting.
-- 🔍 Support transparency and accountability in infrastructure development.
-- 📈 Provide a foundation for more accessible and organized project monitoring.
+---
+
+## 🚀 Getting started
+
+**Prerequisites:** Node.js 22 or later, and a Supabase project with the migrations in `supabase/migrations`
+applied (`supabase db push`).
+
+```bash
+git clone https://github.com/sirikitmac/lgu-tracker.git
+cd lgu-tracker
+npm install
+cp .env.example .env.local   # then fill in the values
+npm run dev                  # http://localhost:3000
+```
+
+`.env.example` explains every variable. The main ones:
+
+| Variable | Needed for |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (or `..._ANON_KEY`) | Reading data |
+| `SUPABASE_SECRET_KEY` | Server-only: data sync and import scripts |
+| `CRON_SECRET` | Server-only: the scheduled sync route |
+| `GEMINI_API_KEY` | Ask BP (without it, dev shows a labelled non-AI preview) |
+| `GOOGLE_MAPS_API_KEY`, `NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY` | Optional: in-map Street View |
+
+Never commit `.env.local` or put a secret key in a `NEXT_PUBLIC_` variable.
+
+```bash
+npm test          # unit tests (DPWH, BetterGov, BP, SubayBAYAN)
+npm run test:db   # database tests against an in-memory Postgres (PGlite)
+npm run lint      # TypeScript type check (tsc --noEmit)
+npm run build     # production build
+```
+
+### Data pipelines
+
+- **DPWH:** `npm run dpwh:sync`. Setup and the Vercel cron are in [`docs/DPWH_DEPLOYMENT.md`](docs/DPWH_DEPLOYMENT.md).
+- **DILG SubayBAYAN:** a one-time Excel export, since the portal needs a sign-in. The app never contacts the portal.
+
+```bash
+npm run subaybayan:build    # Excel → normalized, categorized, located rows + docs/subaybayan/report.md
+npm run subaybayan:dedupe   # flag possible DPWH duplicates (read-only)
+npm run subaybayan:import -- --dry-run   # preview; then --limit 100; then no flags for everything
+```
+
+- `build` reads `<source>/Locally_Funded_Projects/*.xlsx` and `<source>/LIME_20DF/*.xlsx`. `<source>` defaults to
+  `~/Downloads/SubayBayan_RBME`; change it with `SUBAYBAYAN_SOURCE_DIR` or `--source`. Boundaries are cached in
+  `.cache/subaybayan` and checked by SHA-256.
+- `import` needs migration `20261103000100` and `SUPABASE_SECRET_KEY`. It upserts in batches of 1,000 and skips
+  unchanged rows. It stops before the database passes `SYNC_STORAGE_BUDGET_MB` (default 400).
+- Categories (infrastructure, community, health and social, environment, disaster) are **LGU Tracker's own keyword
+  classification**, not DILG's. Where a reported total cost is over 20× the row's own contract amount or subsidy,
+  the map shows the smaller amount and keeps the original in `total_cost_reported`.
+- Possible DPWH duplicates go into `subaybayan_dpwh_matches` as review flags. Records are never merged.
+- Figures and known gaps: [`docs/subaybayan/report.md`](docs/subaybayan/report.md) ·
+  [`docs/subaybayan/duplicates.md`](docs/subaybayan/duplicates.md).
+
+---
+
+## 🗂️ Project structure
+
+```
+src/
+  app/            routes: / (landing), /projects, /projects/map, /projects/dashboard,
+                  /projects/[contractId], /credits, /login, /register, /dashboard, api/
+  components/     landing/, dpwh/, subaybayan/, map/, bp/, layout/, dashboard/, ui/
+  lib/            supabase/, integrations/ (dpwh, bettergov), subaybayan/, bp/, auth/, actions/
+scripts/          dpwh-sync, bettergov-sync, subaybayan/ (build, dedupe, import)
+supabase/         migrations/, seed.sql
+tests/            dpwh/, bettergov/, bp/, subaybayan/, db/
+docs/             BP_ASSISTANT.md, DPWH_DEPLOYMENT.md, subaybayan/, images/
+```
+
+---
+
+## 🛣️ Coming soon
+
+Planned, or partly built but not working end to end yet:
+
+- 🔄 **Automated weekly DPWH sync.** The cron route and schedule are written, but it has not run in production yet,
+  and the first import is still incomplete.
+- 💬 **Public feedback on projects.** The database table and server action exist; there is no form yet.
+- 📝 **Project reporting by registered members.**
+- 👥 **Role-based member dashboards.** Sign-in, sign-up and roles exist, but the `/dashboard` workspace has no
+  live project data yet.
+- 🔍 **Review tool for possible DPWH–DILG duplicates.** The flags are stored; there is no review screen.
+- 📍 **Exact barangay-level locations** from geotagged photos, with the owners' permission.
+- ⚡ **Faster directory sorts.** Some non-default sorts time out on the full dataset.
+- 🗓️ **Scheduled SubayBAYAN refresh.**
+
+---
+
+## 📌 Project status
+
+🚧 **Under development.** Features and data may change. The data is a snapshot from the dates above, not a live
+feed. LGU Tracker is a student project, not an official government website.
 
 ---
 
 ## 👥 Contributing
 
-Contributions, suggestions, and feedback are welcome! 💙
+Bug reports, suggestions and pull requests are welcome. Work on a feature branch, run `npm test`, `npm run lint`
+and `npm run build` before opening a PR, and talk to the maintainers before making large changes.
 
-If you're interested in improving LGU Tracker, you can help by:
-
-- 🐛 Reporting bugs and issues.
-- 💡 Suggesting new features.
-- 🎨 Improving the user interface and user experience.
-- 💻 Contributing code through feature branches and pull requests.
-- 📖 Improving project documentation.
-
-Please coordinate with the project maintainers before making significant changes.
+**CCC181 Final Project by Team BB (BeyondBoard).**
 
 ---
-
-## 📌 Project Status
-
-🚧 **Currently in development.**
-
-LGU Tracker is being developed incrementally, with ongoing work on its interface, interactive map, project directory, database integration, and supporting functionality.
-
-Some features listed above are planned or still being integrated and may not yet be available in a deployed environment.
-
----
-
-### 💙 Built with the goal of making infrastructure information more accessible to everyone.
 
 **LGU Tracker — Bantay Proyekto, Gabay sa Progreso.** 🇵🇭
