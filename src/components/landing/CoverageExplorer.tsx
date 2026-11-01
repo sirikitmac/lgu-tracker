@@ -95,7 +95,7 @@ export function CoverageExplorer({
       </div>
 
       <div className="lg:col-span-7 flex flex-col">
-        <figure className="relative rounded-[24px] border border-line bg-surface p-4 sm:p-6">
+        <figure className="relative rounded-[24px] bg-surface p-4 sm:p-6">
           {hasPoints ? (
             <svg
               viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -142,10 +142,10 @@ export function CoverageExplorer({
           )}
         </figure>
 
-        <div className="mt-4 rounded-[24px] border border-line bg-surface p-6 sm:p-7" aria-live="polite">
+        <div className="mt-4 rounded-[24px] bg-surface p-6 sm:p-7" aria-live="polite">
           {active && active.contracts !== null ? (
             <>
-              <p className="font-display text-[length:var(--step-head)] leading-none tabular-nums text-ink">
+              <p className="display text-[length:var(--step-figure)] tabular-nums text-ink">
                 {formatCount(active.contracts)}
               </p>
               <p className="mt-2 text-[15px] text-subtle max-w-lg">
@@ -162,7 +162,7 @@ export function CoverageExplorer({
             </>
           ) : hasCounts ? (
             <>
-              <p className="font-display text-[length:var(--step-head)] leading-none tabular-nums text-ink">
+              <p className="display text-[length:var(--step-figure)] tabular-nums text-ink">
                 {totalContracts !== null ? formatCount(totalContracts) : ''}
               </p>
               <p className="mt-2 text-[15px] text-subtle max-w-lg">
