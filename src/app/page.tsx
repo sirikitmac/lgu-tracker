@@ -35,13 +35,15 @@ const FOCUS_ON_LIGHT = 'focus-visible:outline-3 focus-visible:outline-offset-2 f
 const FOCUS_THEMED = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent-ink';
 
 /**
- * Runs inline, before the hero is parsed: marks <html> so the headline's rise
+ * Runs inline, before the hero is parsed. Marks <html> with data-js (photos
+ * may then wait hidden over their blur until loaded, see .photo) and, unless
+ * reduced motion is asked for, data-hero-play so the headline's rise
  * (globals.css) starts with the first paint instead of waiting for the JS
  * bundle. Skipped under reduced motion; without scripts the headline simply
  * stands in place. After a client-side navigation it is not run again, and
  * the mark left from an earlier visit (if any) still applies.
  */
-const HERO_PLAY_SCRIPT = `try{if(matchMedia('(prefers-reduced-motion: no-preference)').matches)document.documentElement.setAttribute('data-hero-play','')}catch(e){}`;
+const HERO_PLAY_SCRIPT = `try{document.documentElement.setAttribute('data-js','');if(matchMedia('(prefers-reduced-motion: no-preference)').matches)document.documentElement.setAttribute('data-hero-play','')}catch(e){}`;
 
 const delay = (ms: number) => ({ '--reveal-delay': `${ms}ms` }) as React.CSSProperties;
 

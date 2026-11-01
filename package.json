@@ -16,7 +16,8 @@
     "bettergov:sync": "tsx --conditions=react-server scripts/bettergov-sync.ts",
     "subaybayan:build": "tsx --conditions=react-server --max-old-space-size=4096 scripts/subaybayan/build.ts",
     "subaybayan:dedupe": "tsx --conditions=react-server --max-old-space-size=4096 scripts/subaybayan/dedupe.ts",
-    "subaybayan:import": "tsx --conditions=react-server scripts/subaybayan/import.ts"
+    "subaybayan:import": "tsx --conditions=react-server scripts/subaybayan/import.ts",
+    "landing:blur": "tsx scripts/landing-blur.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

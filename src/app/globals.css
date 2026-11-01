@@ -244,6 +244,23 @@
   transition-delay: var(--reveal-delay, 0ms);
 }
 
+/* ---- Photographs (src/components/landing/Photo.tsx) ----------------------
+   The blur placeholder is the box's background; the picture fades in over it
+   once loaded. Only with scripts (html[data-js], set inline in page.tsx):
+   without them nothing would ever mark the picture loaded. */
+.photo {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  background-repeat: no-repeat;
+}
+.photo > img {
+  transition: opacity 0.6s var(--ease-out);
+}
+[data-js] .photo > img:not([data-loaded]) {
+  opacity: 0;
+}
+
 /* ---- Hero: the drifting photo wall ---------------------------------------- */
 
 .wall {
@@ -539,6 +556,9 @@
    stand in their final place; cards stop stacking (StackSteps and ArcItem
    also render static); presses keep only their colour change. */
 @media (prefers-reduced-motion: reduce) {
+  .photo > img {
+    transition: none;
+  }
   .wall-track,
   .marquee-track,
   [data-hero-play] .hl-word,
