@@ -3,21 +3,26 @@
 import { useRouter } from 'next/navigation';
 import { LANDING_FIXTURES, type LandingFixture } from '@/lib/landing/fixtures';
 
-const label = (f: LandingFixture) => (f === 'demo' ? 'Demo data' : f === 'worst' ? 'Worst case' : f[0].toUpperCase() + f.slice(1));
+// 'demo' is the real database data, unchanged; every other choice replaces it.
+const label = (f: LandingFixture) => (f === 'demo' ? 'Live data' : f === 'worst' ? 'Worst case' : f[0].toUpperCase() + f.slice(1));
 
 /**
  * Dev-only switch between the real landing data and the break-ui fixtures.
  * Rendered only in development (page.tsx gates it on NODE_ENV, so production
  * builds never render it). It sits collapsed in the bottom-left corner, a
  * small chip, so it never covers the hero actions on a phone; BP's launcher
- * owns the bottom-right corner.
+ * owns the bottom-right corner. While a fixture replaces the live data the
+ * chip turns signal orange and says so, and the choice lasts only for the
+ * browser session, so a stress fixture is never mistaken for a failing
+ * database later.
  */
 export function FixtureToggle({ current }: { current: LandingFixture }) {
   const router = useRouter();
   const pick = (value: LandingFixture) => {
-    document.cookie = `landing-fixture=${value}; path=/; max-age=86400; samesite=lax`;
+    document.cookie = `landing-fixture=${value}; path=/; samesite=lax`;
     router.refresh();
   };
+  const live = current === 'demo';
   return (
     <details
       data-fixture-toggle
@@ -25,9 +30,12 @@ export function FixtureToggle({ current }: { current: LandingFixture }) {
     >
       <summary
         aria-label={`Landing data (development only): ${label(current)}`}
-        style={{ cursor: 'pointer', listStyle: 'none', padding: '3px 8px', borderRadius: 999, background: 'rgb(212 212 216 / 0.85)', opacity: 0.8 }}
+        style={{
+          cursor: 'pointer', listStyle: 'none', padding: '3px 8px', borderRadius: 999,
+          background: live ? 'rgb(212 212 216 / 0.85)' : '#ff7a1a', fontWeight: live ? 400 : 700, opacity: live ? 0.8 : 1,
+        }}
       >
-        dev · {label(current)}
+        dev · {live ? label(current) : `${label(current)} fixture, not live data`}
       </summary>
       <div
         role="group"

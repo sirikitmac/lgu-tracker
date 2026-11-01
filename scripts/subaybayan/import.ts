@@ -18,7 +18,9 @@
  *
  * Idempotent: rows are upserted on id in batches of 1,000; rows whose
  * source_hash is unchanged are skipped. Writes only subaybayan_projects and
- * subaybayan_dpwh_matches. dpwh_contracts is only counted, before and after.
+ * subaybayan_dpwh_matches (then rebuilds the landing page's cached figures,
+ * public.landing_stats, when migration 20261106000100 is applied).
+ * dpwh_contracts is only counted, before and after.
  */
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -172,6 +174,11 @@ async function main() {
     }
     console.log(`Duplicate flags: ${matches.length} upserted, ${stale.length} stale unreviewed removed.`);
   }
+
+  // The landing page reads DILG counts and regions from this cached row.
+  const { error: landingError } = await client.rpc('refresh_landing_stats');
+  if (landingError) console.warn(`Landing stats not refreshed (${landingError.message}); apply migration 20261106000100, then run select public.refresh_landing_stats().`);
+  else console.log('Landing stats refreshed.');
 
   const sizeAfter = await dbBytes(client);
   const dpwhAfter = await countRows(client, 'dpwh_contracts');

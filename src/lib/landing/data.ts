@@ -12,6 +12,14 @@ import type { DpwhCategory, DpwhStatus } from '@/types/dpwh';
  * Every field is null when Supabase is not configured or a query fails: the
  * page then describes the coverage in words and never shows a made-up count.
  *
+ * Three small reads in parallel: the cached DPWH stats, the example contract,
+ * and public.landing_stats, one precomputed row with the map points, the NEP
+ * and DILG counts and the DILG regions (migration 20261106000100; rebuilt
+ * after each DPWH sync and SubayBAYAN import). Reading those live took ~30
+ * requests and several seconds warm, and single region scans crossed the 3 s
+ * anon statement timeout on a cold instance. If that row is missing the live
+ * queries still run, as a fallback.
+ *
  * The page is prerendered during `next build` (and revalidated hourly), so
  * nothing here may throw or hang: query errors (including the anon statement
  * timeout) come back as `error` and fall back, each request is aborted after
@@ -310,54 +318,110 @@ function emptyLandingData(): LandingData {
   };
 }
 
+/** The precomputed row (migration 20261106000100); built after each DPWH sync and SubayBAYAN import. */
+export interface LandingStatsRow {
+  computed_at: string;
+  stats: {
+    region_points: { region: string; points: [number, number][] }[];
+    nep_proposals: number;
+    dilg_by_dataset: { dataset: string; count: number }[];
+    dilg_regions: string[];
+  };
+}
+
+/** Null when the row is missing or unreadable (e.g. the migration is not applied); the live queries then run. */
+async function loadPrecomputed(supabase: SupabaseClient): Promise<LandingStatsRow | null> {
+  const { data, error, status } = await supabase.from('landing_stats').select('computed_at, stats').eq('id', 1).maybeSingle();
+  if (error) {
+    console.error('[LGU Tracker] Landing precomputed stats failed; using live queries:', describeError(error, status));
+    return null;
+  }
+  const row = data as LandingStatsRow | null;
+  return row && Array.isArray(row.stats?.region_points) ? row : null;
+}
+
+type DpwhStats = NonNullable<Awaited<ReturnType<typeof loadStats>>>;
+
+/** Assembles the page figures from whichever parts could be read. */
+export function buildLandingData(parts: {
+  stats: DpwhStats | null;
+  points: [number, number][][];
+  nepProposals: number | null;
+  example: ExampleContract | null;
+  lgsf: number | null;
+  rlip: number | null;
+  dilgRegions: string[] | null;
+}): LandingData {
+  const { stats, points, nepProposals, example, lgsf, rlip, dilgRegions } = parts;
+  const counts = new Map((stats?.stats.by_region ?? []).map((r) => [r.value, r.count]));
+  const regions = DEFAULT_SCOPE_REGIONS.map((region, i) => ({
+    region,
+    contracts: stats ? (counts.get(region) ?? 0) : null,
+    points: points[i] ?? [],
+  }));
+  const totalContracts = stats?.stats.total_contracts ?? null;
+  return {
+    totalContracts,
+    totalAmount: stats?.stats.contract_amount.sum ?? null,
+    ongoingContracts: stats?.stats.by_status.find((s) => s.value === 'ongoing')?.count ?? null,
+    completedContracts: stats?.stats.by_status.find((s) => s.value === 'completed')?.count ?? null,
+    computedAt: stats?.computed_at ?? null,
+    regions,
+    nepProposals,
+    example,
+    dilgProjects: lgsf !== null && rlip !== null ? lgsf + rlip : null,
+    regionsCovered: countRegionsCovered(regions, dilgRegions),
+    datasets: listDatasets([
+      { label: 'DPWH contracts (Transparency Portal)', records: totalContracts },
+      { label: 'DPWH proposals (FY 2027 NEP)', records: nepProposals },
+      { label: 'DILG SubayBAYAN locally funded projects', records: lgsf },
+      { label: 'DILG SubayBAYAN 20% development fund (LIME)', records: rlip },
+    ]),
+  };
+}
+
+/** Landing figures from the precomputed row: three small reads in parallel. */
+export function fromPrecomputed(row: LandingStatsRow, stats: DpwhStats | null, example: ExampleContract | null): LandingData {
+  const byRegion = new Map(row.stats.region_points.map((r) => [r.region, r.points]));
+  const dataset = (name: string) => row.stats.dilg_by_dataset.find((d) => d.dataset === name)?.count ?? 0;
+  return buildLandingData({
+    stats,
+    points: DEFAULT_SCOPE_REGIONS.map((region) => byRegion.get(region) ?? []),
+    nepProposals: row.stats.nep_proposals,
+    example,
+    lgsf: dataset('lgsf'),
+    rlip: dataset('rlip'),
+    dilgRegions: row.stats.dilg_regions,
+  });
+}
+
 async function loadFrom(supabase: SupabaseClient): Promise<LandingData> {
-  const empty = emptyLandingData();
   try {
-    // The counts run first, beside the small reads, rather than against the
-    // region scans below; the DILG skip scan is a chain of one-row reads and
-    // runs beside everything.
-    const dilgRegionsLoad = loadDilgRegions(supabase).catch((err) => {
-      console.error('[LGU Tracker] Landing DILG regions failed:', err instanceof Error ? err.message : err);
-      return null;
-    });
-    const [stats, nepProposals, example, { lgsf, rlip }] = await Promise.all([
-      loadStats(supabase),
-      loadNepCount(supabase),
-      loadExample(supabase),
-      loadDilgCounts(supabase).catch((err) => {
-        console.error('[LGU Tracker] Landing DILG counts failed:', err instanceof Error ? err.message : err);
-        return { lgsf: null, rlip: null };
-      }),
-    ]);
-    const points = await loadAllRegionPoints(supabase);
-    const dilgRegions = await dilgRegionsLoad;
-    const counts = new Map((stats?.stats.by_region ?? []).map((r) => [r.value, r.count]));
-    const regions = DEFAULT_SCOPE_REGIONS.map((region, i) => ({
-      region,
-      contracts: stats ? (counts.get(region) ?? 0) : null,
-      points: points[i],
-    }));
-    const totalContracts = stats?.stats.total_contracts ?? null;
-    return {
-      totalContracts,
-      totalAmount: stats?.stats.contract_amount.sum ?? null,
-      ongoingContracts: stats?.stats.by_status.find((s) => s.value === 'ongoing')?.count ?? null,
-      completedContracts: stats?.stats.by_status.find((s) => s.value === 'completed')?.count ?? null,
-      computedAt: stats?.computed_at ?? null,
-      regions,
-      nepProposals,
-      example,
-      dilgProjects: lgsf !== null && rlip !== null ? lgsf + rlip : null,
-      regionsCovered: countRegionsCovered(regions, dilgRegions),
-      datasets: listDatasets([
-        { label: 'DPWH contracts (Transparency Portal)', records: totalContracts },
-        { label: 'DPWH proposals (FY 2027 NEP)', records: nepProposals },
-        { label: 'DILG SubayBAYAN locally funded projects', records: lgsf },
-        { label: 'DILG SubayBAYAN 20% development fund (LIME)', records: rlip },
-      ]),
-    };
+    const [precomputed, stats, example] = await Promise.all([loadPrecomputed(supabase), loadStats(supabase), loadExample(supabase)]);
+    if (precomputed) return fromPrecomputed(precomputed, stats, example);
+    return await loadLive(supabase, stats, example);
   } catch (err) {
     console.error('[LGU Tracker] Landing data failed:', err instanceof Error ? err.message : err);
-    return empty;
+    return emptyLandingData();
   }
+}
+
+/** Fallback when the precomputed row is unavailable: the per-query reads. */
+async function loadLive(supabase: SupabaseClient, stats: DpwhStats | null, example: ExampleContract | null): Promise<LandingData> {
+  // The counts run first rather than against the region scans below; the
+  // DILG skip scan is a chain of one-row reads and runs beside everything.
+  const dilgRegionsLoad = loadDilgRegions(supabase).catch((err) => {
+    console.error('[LGU Tracker] Landing DILG regions failed:', err instanceof Error ? err.message : err);
+    return null;
+  });
+  const [nepProposals, { lgsf, rlip }] = await Promise.all([
+    loadNepCount(supabase),
+    loadDilgCounts(supabase).catch((err) => {
+      console.error('[LGU Tracker] Landing DILG counts failed:', err instanceof Error ? err.message : err);
+      return { lgsf: null, rlip: null };
+    }),
+  ]);
+  const points = await loadAllRegionPoints(supabase);
+  const dilgRegions = await dilgRegionsLoad;
+  return buildLandingData({ stats, points, nepProposals, example, lgsf, rlip, dilgRegions });
 }

@@ -132,3 +132,36 @@ test('DILG counts retry a cold-cache timeout and split the total by dataset', as
     console.error = errors;
   }
 });
+
+test('the precomputed row serves the map, NEP and DILG figures in one read, without the live queries', async () => {
+  const paths: string[] = [];
+  const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
+  const fake: typeof fetch = async (input) => {
+    const url = new URL(String(input instanceof Request ? input.url : input));
+    paths.push(url.pathname);
+    if (url.pathname.endsWith('/landing_stats'))
+      return json({
+        computed_at: '2026-11-01T00:00:00Z',
+        stats: {
+          region_points: [{ region: 'Region X', points: [[124.2, 8.2], [124.3, 8.1]] }],
+          nep_proposals: 11372,
+          dilg_by_dataset: [{ dataset: 'lgsf', count: 6963 }, { dataset: 'rlip', count: 34231 }],
+          dilg_regions: ['REGION X - NORTHERN MINDANAO', 'NATIONAL CAPITAL REGION'],
+        },
+      });
+    if (url.pathname.endsWith('/dpwh_directory_stats'))
+      return json({
+        computed_at: '2026-10-26T00:00:00Z',
+        stats: { total_contracts: 5, contract_amount: { sum: 10 }, by_region: [{ value: 'Region X', count: 5 }], by_status: [{ value: 'ongoing', count: 2 }] },
+      });
+    return json(null);
+  };
+  const data = await loadLandingData({ client: client(fake) });
+  assert.deepEqual(data.regions.find((r) => r.region === 'Region X'), { region: 'Region X', contracts: 5, points: [[124.2, 8.2], [124.3, 8.1]] });
+  assert.ok(data.regions.filter((r) => r.region !== 'Region X').every((r) => r.contracts === 0 && r.points.length === 0));
+  assert.equal(data.nepProposals, 11372);
+  assert.equal(data.dilgProjects, 41194);
+  assert.equal(data.regionsCovered, 2);
+  assert.equal(data.ongoingContracts, 2);
+  assert.equal(paths.length, 3, `three reads, got ${paths.join(', ')}`);
+});
