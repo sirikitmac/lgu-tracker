@@ -344,6 +344,22 @@
   to { opacity: 1; transform: none; }
 }
 
+/* ---- Hero: stats row --------------------------------------------------------
+   A figure is never truncated: it takes the display size when it fits its
+   column and shrinks to fit when it is long (--digits is its formatted
+   length; a condensed digit is about 0.5em wide). */
+.stat {
+  container-type: inline-size;
+}
+.stat-figure {
+  font-size: min(var(--step-figure), calc(100cqi / (var(--digits, 6) * 0.52)));
+  white-space: nowrap;
+  /* A shrunken figure sits on the same baseline, so the labels still line up. */
+  display: flex;
+  align-items: flex-end;
+  min-height: calc(var(--step-figure) * 0.92);
+}
+
 /* ---- Buttons: arrow slides on hover, the button presses in ---------------- */
 
 .lt-btn {

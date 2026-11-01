@@ -11,6 +11,8 @@ import { PhotoWall } from '@/components/landing/PhotoWall';
 import { Reveal } from '@/components/landing/Reveal';
 import { StackSteps } from '@/components/landing/StackSteps';
 import { anton } from '@/components/landing/fonts';
+import { FixtureToggle } from '@/components/landing/FixtureToggle';
+import { applyFixture, LANDING_FIXTURES, type LandingFixture } from '@/lib/landing/fixtures';
 import { PHOTOS, regionName } from '@/components/landing/content';
 import { pageCredits } from '@/components/landing/wall';
 import { contractMapHref, formatCount, formatDate, formatPeso } from '@/components/dpwh/format';
@@ -36,7 +38,15 @@ const FOCUS_THEMED = 'focus-visible:outline-3 focus-visible:outline-offset-2 foc
 const delay = (ms: number) => ({ '--reveal-delay': `${ms}ms` }) as React.CSSProperties;
 
 export default async function LandingPage() {
-  const data = await loadLandingData();
+  let data = await loadLandingData();
+  let fixture: LandingFixture | null = null;
+  // break-ui stress data, development only: the branch is removed from production builds.
+  if (process.env.NODE_ENV === 'development') {
+    const { cookies } = await import('next/headers');
+    const value = (await cookies()).get('landing-fixture')?.value as LandingFixture | undefined;
+    fixture = value && LANDING_FIXTURES.includes(value) ? value : 'demo';
+    data = applyFixture(data, fixture);
+  }
 
   return (
     <div className={`landing ${anton.variable} min-h-svh flex flex-col bg-ground`}>
@@ -53,6 +63,7 @@ export default async function LandingPage() {
       </main>
 
       <Footer />
+      {fixture && <FixtureToggle current={fixture} />}
     </div>
   );
 }
@@ -139,11 +150,24 @@ function Hero({ data }: { data: LandingData }) {
 }
 
 function Stats({ data }: { data: LandingData }) {
+  const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
   const items = [
-    data.totalContracts !== null && { value: data.totalContracts, label: 'DPWH contracts in the Visayas and Mindanao' },
-    data.dilgProjects !== null && { value: data.dilgProjects, label: 'DILG projects of local governments, nationwide' },
-    data.regionsCovered !== null && { value: data.regionsCovered, label: 'regions with at least one record' },
-    data.datasets !== null && data.datasets.length > 0 && { value: data.datasets.length, label: 'public datasets, each linked to its source' },
+    data.totalContracts !== null && {
+      value: data.totalContracts,
+      label: `${plural(data.totalContracts, 'DPWH contract', 'DPWH contracts')} in the Visayas and Mindanao`,
+    },
+    data.dilgProjects !== null && {
+      value: data.dilgProjects,
+      label: `${plural(data.dilgProjects, 'DILG project', 'DILG projects')} of local governments, nationwide`,
+    },
+    data.regionsCovered !== null && {
+      value: data.regionsCovered,
+      label: plural(data.regionsCovered, 'region with at least one record', 'regions with at least one record'),
+    },
+    data.datasets !== null && data.datasets.length > 0 && {
+      value: data.datasets.length,
+      label: plural(data.datasets.length, 'public dataset, linked to its source', 'public datasets, each linked to its source'),
+    },
   ].filter(Boolean) as { value: number; label: string }[];
 
   return (
@@ -153,9 +177,14 @@ function Stats({ data }: { data: LandingData }) {
         {items.length > 0 ? (
           <dl className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8">
             {items.map((item, i) => (
-              <div key={item.label} data-reveal style={delay(i * 70)} className="flex min-w-0 flex-col-reverse justify-end">
+              <div
+                key={item.label}
+                data-reveal
+                style={{ ...delay(i * 70), '--digits': formatCount(item.value).length } as React.CSSProperties}
+                className="stat flex min-w-0 flex-col-reverse justify-end"
+              >
                 <dt className="mt-2 text-[14px] leading-snug text-white/80 max-w-[26ch]">{item.label}</dt>
-                <dd className="display text-[length:var(--step-figure)] text-white break-words">
+                <dd className="stat-figure display text-white">
                   <CountUp value={item.value} />
                 </dd>
               </div>

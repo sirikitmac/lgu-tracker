@@ -28,7 +28,13 @@ export function ArcItem({ index, children, className = '' }: { index: number; ch
   });
   const opacity = useTransform(scrollYProgress, [0, 0.6], [0.25, 1]);
 
-  if (reduce) return <li className={className}>{children}</li>;
+  // The ref stays attached either way: useScroll needs a hydrated target.
+  if (reduce)
+    return (
+      <li ref={ref} className={className}>
+        {children}
+      </li>
+    );
   return (
     <motion.li ref={ref} className={`${className} arc-item`} style={{ transform, opacity }}>
       {children}
