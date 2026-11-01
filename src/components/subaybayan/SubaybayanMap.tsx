@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { AlertTriangle, ChevronDown, Info, List, Loader2, Map as MapIcon, MapPin } from 'lucide-react';
 import { errorMessage, fetchJson } from '@/lib/http';
 import { useToast } from '@/components/ui/Toast';
@@ -400,7 +401,7 @@ export function SubaybayanMap({ initialFilters, focusId = null }: { initialFilte
                 </li>
                 <li className="flex items-center gap-2">
                   <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="var(--color-subtle)" fillOpacity="0.18" stroke="var(--color-subtle)" strokeWidth="1.6" strokeDasharray="2.5 2.5" /></svg>
-                  Municipality / province centre (approximate)
+                  Town / province centre (approx.)
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="grid place-items-center w-[18px] h-[18px] rounded-full bg-[conic-gradient(#2563EB_0_50%,#16A34A_50%_75%,#D97706_75%)] p-[2.5px]" aria-hidden="true">
@@ -409,7 +410,6 @@ export function SubaybayanMap({ initialFilters, focusId = null }: { initialFilte
                   Cluster (ring = category mix)
                 </li>
               </ul>
-              <p className="mt-2.5 text-[11px] leading-snug text-muted">All locations are approximate area centroids, not project sites.</p>
             </div>
           </details>
         </div>
@@ -437,18 +437,13 @@ export function SubaybayanMap({ initialFilters, focusId = null }: { initialFilte
 
       <div className="flex items-start gap-3 rounded-card bg-sunken px-4 py-3.5 text-[13px] leading-relaxed text-subtle">
         <Info className="w-4 h-4 shrink-0 mt-0.5 text-muted" aria-hidden="true" />
-        <div className="space-y-1.5">
-          <p>
-            <span className="font-semibold text-ink">Locations are area centroids, not project sites.</span> SubayBAYAN lists a barangay, city/municipality or
-            province but no coordinates, so each project is placed at the centre of that area (PSGC boundaries). Many projects can share one point.
-          </p>
-          <p>
-            Categories are LGU Tracker&apos;s own keyword classification, not an official DILG category. Data is a snapshot retrieved {SUBAYBAYAN_RETRIEVED_LABEL} from{' '}
-            <a href={SUBAYBAYAN_DATASET_INFO.lgsf.url} target="_blank" rel="noopener noreferrer" className={textLinkClass}>Locally Funded Projects</a> and{' '}
-            <a href={SUBAYBAYAN_DATASET_INFO.rlip.url} target="_blank" rel="noopener noreferrer" className={textLinkClass}>LIME 20% DF</a> on DILG SubayBAYAN; check the
-            portal for the latest status. Boundaries: NAMRIA/PSA via OCHA (CC BY-IGO), packaged by faeldon/philippines-json-maps (MIT).
-          </p>
-        </div>
+        <p>
+          <span className="font-semibold text-ink">As reported to DILG, not verified.</span> SubayBAYAN gives no coordinates, so many projects can
+          share one point. Categories are LGU Tracker&apos;s own. Export of {SUBAYBAYAN_RETRIEVED_LABEL} from{' '}
+          <a href={SUBAYBAYAN_DATASET_INFO.lgsf.url} target="_blank" rel="noopener noreferrer" className={textLinkClass}>Locally Funded</a> and{' '}
+          <a href={SUBAYBAYAN_DATASET_INFO.rlip.url} target="_blank" rel="noopener noreferrer" className={textLinkClass}>LIME 20% DF</a>.{' '}
+          <Link href="/credits" className={textLinkClass}>Credits</Link>
+        </p>
       </div>
     </div>
   );

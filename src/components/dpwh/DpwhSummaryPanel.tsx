@@ -165,8 +165,7 @@ export function DpwhSummaryPanel({
             )}
           </p>
           <p>
-            Values are as reported by DPWH and have not been verified by the LGU. Location comes from the contract components
-            DPWH reports, not from the implementing office.
+            As reported by DPWH, not verified by the LGU. Location is the contract&apos;s reported site, not the implementing office.
           </p>
         </div>
       </aside>
@@ -179,7 +178,7 @@ export function DpwhSummaryPanel({
           <Metric
             icon={FileText}
             label="Total reported contract amount"
-            detail={<>Award amounts for {formatCount(withValue)} of {formatCount(total)} contracts. Not disbursements or audited spending.</>}
+            detail={<>Award amounts for {formatCount(withValue)} of {formatCount(total)} contracts; not money spent.</>}
           >
             <span className={figureClass} title={formatPeso(amount)}>{formatPesoCompact(amount)}</span>
             <span className="block mt-1.5 text-xs text-muted tabular-nums">{formatPeso(amount)}</span>
@@ -225,7 +224,7 @@ export function DpwhSummaryPanel({
             onSelect={onSelectCategory} selected={selectedCategory} />
           <BarList title="Contracts by status" rows={stats.by_status} total={total} label={statusLabel}
             onSelect={onSelectStatus} selected={selectedStatus} swatch={statusColor} className="flex-1"
-            note="Status as reported by DPWH for each contract. FY 2027 NEP budget proposals are not contracts and are not counted here; filter by status “Proposed (budget)” to list them." />
+            note="As reported by DPWH. NEP budget proposals are not counted; filter by “Proposed (budget)” to list them." />
         </div>
       </div>
     </div>

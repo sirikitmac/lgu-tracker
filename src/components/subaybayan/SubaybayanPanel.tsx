@@ -257,7 +257,7 @@ function DetailView({ id, onBack, onLocate }: { id: string; onBack: () => void; 
           </button>
         ) : (
           <p className="mt-2 flex items-start gap-1.5 text-[12.5px] font-medium text-warn-ink">
-            <MapPinOff className="w-3.5 h-3.5 mt-px shrink-0" aria-hidden="true" /> This project has no mappable location in the source.
+            <MapPinOff className="w-3.5 h-3.5 mt-px shrink-0" aria-hidden="true" /> Not on the map
           </p>
         )}
       </div>
@@ -304,7 +304,7 @@ function DetailView({ id, onBack, onLocate }: { id: string; onBack: () => void; 
             DILG SubayBAYAN – {info.label} <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
           </a>
         </p>
-        <p className="mt-0.5">Retrieved {SUBAYBAYAN_RETRIEVED_LABEL} (snapshot). The portal needs a sign-in; check it for the latest status.</p>
+        <p className="mt-0.5">Retrieved {SUBAYBAYAN_RETRIEVED_LABEL}. The portal (sign-in required) has the latest status.</p>
         {p.source_file && <p className="mt-0.5 text-muted">Export file {p.source_file}, row {p.source_row}.</p>}
       </div>
       <a href={projectHref(`subaybayan_${p.source_dataset}`, p.id)} className={`mt-4 inline-flex items-center gap-1 text-[12.5px] font-semibold ${textLinkClass}`}>

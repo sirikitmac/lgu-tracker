@@ -72,7 +72,7 @@ export default async function PublicContractPage({ params }: PageProps<'/project
                 </Link>
               ) : (
                 <span className="inline-flex items-center gap-1 text-muted">
-                  <MapPinOff className="w-4 h-4" aria-hidden="true" /> The source reports no coordinates for this contract.
+                  <MapPinOff className="w-4 h-4" aria-hidden="true" /> No coordinates reported, so not on the map.
                 </span>
               )}
             </dd>

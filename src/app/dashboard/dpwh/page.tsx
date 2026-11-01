@@ -37,8 +37,8 @@ function DpwhPageContent() {
                 DPWH Nationwide Infrastructure Directory
               </h1>
               <p className="text-sm text-muted max-w-3xl leading-relaxed">
-                Search, filter, and sort every DPWH infrastructure contract in the published BetterGov.ph snapshot of the
-                DPWH Transparency Portal. Kept separate from locally managed LGU projects.
+                Every DPWH contract in BetterGov.ph&apos;s snapshot of the DPWH Transparency Portal, kept separate from
+                locally managed LGU projects.
               </p>
             </div>
             <DpwhSyncButton />

@@ -93,8 +93,7 @@ const ProjectCard = memo(function ProjectCard({ point: p, selected, colorMode, o
               <dt className="text-muted">Progress</dt>
               <dd className="text-ink tabular-nums">{formatProgress(p.progress)} <span className="text-muted">reported</span></dd>
             </dl>
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-              <span className="text-xs text-muted">Location as reported by DPWH; not verified.</span>
+            <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
               <Link
                 href={`/projects/${encodeURIComponent(p.contract_id)}`}
                 className={`inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full bg-ink text-on-ink text-[13px] font-semibold hover:bg-ink-soft transition-colors ${focusRing}`}
@@ -235,11 +234,7 @@ export function DpwhMapProjectPanel({
           className="flex-1 px-8 py-14"
           icon={SearchX}
           title={onClearFilters ? 'No matching contracts here' : 'Nothing mapped here'}
-          description={
-            onClearFilters
-              ? 'No mapped contracts in this area match your search or filters. Zoom out, move the map, or clear them.'
-              : 'No contracts with reported coordinates in this area. Zoom out or move the map.'
-          }
+          description="Zoom out or move the map."
           action={
             onClearFilters && (
               <button type="button" onClick={onClearFilters} className={secondaryButtonSmClass}>

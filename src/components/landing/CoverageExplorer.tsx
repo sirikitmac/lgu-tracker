@@ -131,13 +131,12 @@ export function CoverageExplorer({
             </svg>
           ) : (
             <div className="aspect-[76/83] rounded-2xl bg-sunken flex items-center justify-center p-8 text-center text-[15px] text-subtle">
-              The map draws itself from contract locations, which could not be loaded right now.
+              Contract locations could not be loaded.
             </div>
           )}
           {hasPoints && (
             <figcaption className="mt-4 text-[13px] text-muted max-w-xl">
-              Each dot is one of the {pointsPerRegion} largest contracts in its region that DPWH reported
-              coordinates for. The shape of the islands is drawn by the records alone.
+              Each dot is one of the {pointsPerRegion} largest mapped contracts in its region. No basemap: the records draw the islands.
             </figcaption>
           )}
         </figure>
@@ -149,8 +148,8 @@ export function CoverageExplorer({
                 {formatCount(active.contracts)}
               </p>
               <p className="mt-2 text-[15px] text-subtle max-w-lg">
-                contracts stored for {regionName(active.region)}
-                {totalContracts ? `, ${Math.round((active.contracts / totalContracts) * 100)}% of all stored contracts.` : '.'}
+                contracts in {regionName(active.region)}
+                {totalContracts ? `, ${Math.round((active.contracts / totalContracts) * 100)}% of the total.` : '.'}
               </p>
               <Link
                 href={directoryHref(active.region)}
@@ -166,12 +165,12 @@ export function CoverageExplorer({
                 {totalContracts !== null ? formatCount(totalContracts) : ''}
               </p>
               <p className="mt-2 text-[15px] text-subtle max-w-lg">
-                DPWH contracts stored across ten regions. Choose a region to see its share and open its records.
+                DPWH contracts across ten regions. Choose one to see its share.
               </p>
             </>
           ) : (
             <p className="text-[15px] text-subtle max-w-lg">
-              Live counts are unavailable right now. The directory still lists every stored contract by region.
+              Live counts are unavailable. The directory still lists every contract.
             </p>
           )}
         </div>

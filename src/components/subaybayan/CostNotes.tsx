@@ -10,7 +10,7 @@ export function CostNote({ reported, basis }: { reported: number; basis: CostBas
     <span role="note" className="mt-1.5 flex items-start gap-1.5 rounded-lg border border-warn-line bg-warn-soft px-2.5 py-2 text-[12px] leading-snug text-warn-ink">
       <Info className="w-3.5 h-3.5 mt-px shrink-0" aria-hidden="true" />
       <span>
-        Reported total looked like a data-entry error; showing the {used} instead. SubayBAYAN reports{' '}
+        The reported total looked like a data-entry error, so the {used} is shown. SubayBAYAN reports{' '}
         <strong className="font-semibold tabular-nums">{formatPeso(reported)}</strong>.
       </span>
     </span>
@@ -23,9 +23,8 @@ export function ReviewNote() {
     <span role="note" className="mt-1.5 flex items-start gap-1.5 rounded-lg border border-warn-line bg-warn-soft px-2.5 py-2 text-[12px] leading-snug text-warn-ink">
       <TriangleAlert className="w-3.5 h-3.5 mt-px shrink-0" aria-hidden="true" />
       <span>
-        <strong className="font-semibold">Amount not verified.</strong> This total is at least ₱100 million and 100 times the typical total for
-        this kind of project, which often means a data-entry error. It is shown as reported, not corrected, and listed after verified amounts.
-        Check the SubayBAYAN portal before relying on it.
+        <strong className="font-semibold">Amount not verified.</strong> At least ₱100 million and 100 times the typical total for this kind of
+        project, often a data-entry error. Shown as reported; check the SubayBAYAN portal before relying on it.
       </span>
     </span>
   );

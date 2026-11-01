@@ -3,8 +3,8 @@ import { PHOTOS, type LandingPhoto } from './content';
 
 /**
  * The hero's photo wall: public works in the covered regions, from the
- * landing set and the category catalogue (Wikimedia Commons, credited in
- * "About the data"). Each tile keeps a short place caption and the word
+ * landing set and the category catalogue (Wikimedia Commons, credited on
+ * /credits). Each tile keeps a short place caption and the word
  * "Illustrative"; none of them is a project record.
  */
 export interface WallPhoto {

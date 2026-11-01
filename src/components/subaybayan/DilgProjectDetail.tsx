@@ -87,9 +87,9 @@ export function DilgProjectDetail({ p }: { p: SubaybayanDetail }) {
               <span>{placeLine(p)}{p.region ? <span className="text-subtle"> · {p.region}</span> : null}</span>
             </p>
             <p className="mt-1.5 text-[13px] text-subtle">
-              <span className="font-semibold">Location precision: {precisionLabel(p.location_precision)}.</span> {precisionNote(p.location_precision)}
+              <span className="font-semibold">{precisionLabel(p.location_precision)}.</span> {precisionNote(p.location_precision)}
+              {p.location_precision !== 'unresolved' && ' Approximate: not the project site.'}
             </p>
-            {p.latitude === null && <p className="mt-1.5 text-[13px] font-medium text-warn-ink">This project has no mappable location in the source.</p>}
             <Link href={projectMapLink(p)} className="mt-2 inline-flex items-center gap-1 text-[13px] font-semibold text-accent-ink hover:underline rounded-sm focus-visible:outline-2 focus-visible:outline-accent-ink">
               <MapPin className="w-3.5 h-3.5" aria-hidden="true" /> View on map
             </Link>
@@ -157,11 +157,11 @@ export function DilgProjectDetail({ p }: { p: SubaybayanDetail }) {
               DILG SubayBAYAN – {info.label} <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
             </a>
           </p>
-          <p>Retrieved {SUBAYBAYAN_RETRIEVED_LABEL} (one-time export). The portal needs a sign-in; check it for the latest status.</p>
+          <p>One-time export, retrieved {SUBAYBAYAN_RETRIEVED_LABEL}. The portal (sign-in required) has the latest status.</p>
           {p.source_file && <p className="text-muted">Export file {p.source_file}, row {p.source_row}.</p>}
           <p className="text-muted">
-            Values are as reported by the LGU to DILG and have not been verified by LGU Tracker. Coordinates are area centroids, not the
-            project site. DILG and DPWH may report the same project; records are kept separate and never merged.
+            As reported by the LGU to DILG, not verified. DPWH may list the same project; records are never merged.{' '}
+            <Link href="/credits" className="underline underline-offset-2 hover:text-ink">Credits</Link>
           </p>
         </section>
       </div>

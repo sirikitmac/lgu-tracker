@@ -199,7 +199,7 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
         <Notice tone="warn">No DPWH data has been imported yet, so the map has no markers. An administrator needs to run the initial sync.</Notice>
       )}
       {summaryState === 'error' && (
-        <Notice tone="danger">Could not load the data summary, so the region filter has no options. Search and the other filters still work.</Notice>
+        <Notice tone="danger">The data summary did not load, so the region filter is empty. Search and other filters still work.</Notice>
       )}
 
       <DpwhMapFilters
@@ -350,14 +350,13 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
         <div className="flex items-start gap-3 rounded-card bg-sunken px-4 py-3.5 text-[13px] leading-relaxed text-subtle">
           <MapPin className="w-4 h-4 shrink-0 mt-0.5 text-muted" aria-hidden="true" />
           <p>
-            <span className="font-semibold text-ink">Only contracts with reported coordinates appear on the map.</span>{' '}
-            Contracts without coordinates remain in the <Link href="/projects" className={textLinkClass}>project directory</Link>, as do FY 2027 NEP budget
-            proposals, which the source publishes <Link href="/projects?source=dpwh_nep_2027" className={textLinkClass}>without coordinates</Link>.
-            Locations are as reported by DPWH and have not been field-verified by the LGU.
+            <span className="font-semibold text-ink">Only contracts with coordinates are mapped.</span> The rest, and the{' '}
+            <Link href="/projects?source=dpwh_nep_2027" className={textLinkClass}>FY 2027 NEP proposals</Link>, are in the{' '}
+            <Link href="/projects" className={textLinkClass}>directory</Link>.
           </p>
         </div>
         <DataFreshness summary={summary} className="px-1" />
-        {summaryState !== 'loading' && <DataScopeNote summary={summary} />}
+        <DataScopeNote />
       </div>
     </div>
   );

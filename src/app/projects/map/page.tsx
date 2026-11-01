@@ -66,8 +66,8 @@ export default async function PublicProjectMapPage({ searchParams }: PageProps<'
           <h1 className="mt-2 page-title text-[30px] sm:text-[40px] text-ink">Project Map</h1>
           <p className="mt-2 max-w-[60ch] text-[15px] leading-relaxed text-subtle">
             {layer === 'dpwh'
-              ? 'Contracts placed at the coordinates DPWH reports. Move the map or filter to update the list; select a contract or a marker to see it on both.'
-              : 'Locally funded and 20% Development Fund projects reported to DILG SubayBAYAN, placed at the centre of their barangay, city or province. Select a cluster to zoom in, or a marker for details.'}
+              ? 'Contracts at the coordinates DPWH reports. The list follows the map; select a contract or marker to see it on both.'
+              : 'Locally funded and 20% Development Fund projects from DILG SubayBAYAN, placed at the centre of their barangay, town or province, not the project site.'}
           </p>
         </div>
         <nav aria-label="Other views" className="flex flex-wrap items-center gap-2 md:shrink-0">
