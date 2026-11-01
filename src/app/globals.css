@@ -258,9 +258,72 @@
   .photo > img {
     transition: opacity 0.6s var(--ease-out);
   }
-  [data-js] .photo > img:not([data-loaded]) {
+  /* First-screen wall tiles (data-critical) never wait: they are the
+     page's largest paint, and hiding them until hydration delayed LCP. */
+  [data-js] .photo > img:not([data-loaded]):not([data-critical]) {
     opacity: 0;
   }
+}
+
+/* ---- First-visit intro (src/components/landing/Intro.tsx) ------------------
+   Shown only while html[data-intro] is set by its inline script. On exit
+   (data-intro="out") the counter slides up out of its mask and the panel
+   wipes upward; transform only. The headline's rise waits underneath. */
+
+.intro {
+  display: none;
+}
+[data-intro] .intro {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  /* Failsafe: gone by 2.5 s even if the script's timers never ran. */
+  animation: intro-failsafe 0s linear 2.5s forwards;
+}
+[data-intro=""] .intro {
+  pointer-events: auto;
+}
+.intro-panel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.25rem 1rem 1.5rem;
+  background: var(--color-night);
+  color: #fff;
+  transition: transform 0.7s cubic-bezier(0.76, 0, 0.24, 1) 0.15s;
+}
+@media (min-width: 640px) {
+  .intro-panel { padding: 1.5rem 1.5rem 2rem; }
+}
+.intro-mask {
+  overflow: hidden;
+  align-self: flex-end;
+  font-size: clamp(5rem, 3rem + 12vw, 13rem);
+  line-height: 0.9;
+  padding-top: 0.06em;
+}
+.intro-count {
+  display: block;
+  font-variant-numeric: tabular-nums;
+  transition: transform 0.4s var(--ease-out);
+}
+[data-intro="out"] .intro-count {
+  transform: translate3d(0, -110%, 0);
+}
+[data-intro="out"] .intro-panel {
+  transform: translate3d(0, -100%, 0);
+}
+@keyframes intro-failsafe {
+  to { visibility: hidden; }
+}
+/* The headline holds its first frame under the panel, and rises as it leaves. */
+[data-intro=""] .hl-word,
+[data-intro=""] .hero-sub {
+  animation-play-state: paused;
 }
 
 /* ---- Hero: the drifting photo wall ---------------------------------------- */

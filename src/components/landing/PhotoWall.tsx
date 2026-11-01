@@ -9,6 +9,9 @@ import { WALL_COLUMNS } from './wall';
  */
 const SIZES = ['(min-width: 768px) 24vw, 68vw', '(min-width: 768px) 24vw, 68vw', '(min-width: 768px) 24vw, 1px'];
 
+/** How many tiles count as the first screen (first two per column), for the intro. */
+export const CRITICAL_TILES = WALL_COLUMNS.length * 2;
+
 /**
  * The hero's backdrop: three tilted columns of public-works photographs
  * drifting slowly in opposite directions, under a dark shade so the headline

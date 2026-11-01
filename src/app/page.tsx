@@ -7,7 +7,8 @@ import { BpCardButton } from '@/components/landing/BpCardButton';
 import { CountUp } from '@/components/landing/CountUp';
 import { CoverageExplorer } from '@/components/landing/CoverageExplorer';
 import { Photo } from '@/components/landing/Photo';
-import { PhotoWall } from '@/components/landing/PhotoWall';
+import { Intro } from '@/components/landing/Intro';
+import { CRITICAL_TILES, PhotoWall } from '@/components/landing/PhotoWall';
 import { Reveal } from '@/components/landing/Reveal';
 import { StackSteps } from '@/components/landing/StackSteps';
 import { anton } from '@/components/landing/fonts';
@@ -65,6 +66,7 @@ export default async function LandingPage() {
   return (
     <div className={`landing ${anton.variable} min-h-svh flex flex-col bg-ground`}>
       <script dangerouslySetInnerHTML={{ __html: HERO_PLAY_SCRIPT }} />
+      <Intro critical={CRITICAL_TILES} />
       <Navbar />
       <Reveal />
 
