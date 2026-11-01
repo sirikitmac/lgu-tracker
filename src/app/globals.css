@@ -230,15 +230,17 @@
   line-height: 0.92;
 }
 
-/* Scroll entrances (see src/components/landing/Reveal.tsx). */
+/* Scroll entrances (see src/components/landing/Reveal.tsx). The waiting
+   state is a nudge, never a blank: content is already legible (partial
+   opacity, a short offset), and Reveal triggers it well before it scrolls in. */
 .reveal-ready [data-reveal]:not(.is-in) {
-  opacity: 0;
-  transform: translate3d(0, 20px, 0);
+  opacity: 0.45;
+  transform: translate3d(0, 12px, 0);
 }
 .reveal-ready [data-reveal] {
   transition:
-    opacity 0.6s var(--ease-out),
-    transform 0.6s var(--ease-out);
+    opacity 0.45s var(--ease-out),
+    transform 0.45s var(--ease-out);
   transition-delay: var(--reveal-delay, 0ms);
 }
 
@@ -316,7 +318,14 @@
   }
 }
 
-/* ---- Hero: the headline rises part by part out of a mask ------------------ */
+/* ---- Hero: the headline rises part by part out of a mask ------------------
+   The headline is the LCP element, so the HTML renders it in place and
+   readable. The rise runs only under [data-hero-play], which a tiny inline
+   script (HERO_PLAY_SCRIPT in page.tsx) sets on <html> before the hero is
+   parsed, so it starts with the first paint and owes nothing to the JS
+   bundle or hydration. Without scripts, or with reduced motion, it never
+   runs. It starts from a short offset at partial opacity (legible from the
+   first frame) and is done in under 600 ms. */
 
 .hl-mask {
   display: inline-block;
@@ -328,19 +337,22 @@
 }
 .hl-word {
   display: inline-block;
-  animation: hl-rise 0.6s var(--ease-out) both;
-  animation-delay: calc(var(--hl-i, 0) * 80ms);
+}
+[data-hero-play] .hl-word {
+  /* 420 ms + 3 x 45 ms stagger = 555 ms for the last word. */
+  animation: hl-rise 0.42s var(--ease-out) both;
+  animation-delay: calc(var(--hl-i, 0) * 45ms);
 }
 @keyframes hl-rise {
-  from { transform: translate3d(0, 105%, 0); }
-  to { transform: translate3d(0, 0, 0); }
+  from { opacity: 0.4; transform: translate3d(0, 40%, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
-/* The sentence and actions follow the headline in. */
-.hero-sub {
-  animation: hero-sub-in 0.6s var(--ease-out) 0.3s both;
+/* The sentence and actions follow the headline in (120 + 400 = 520 ms). */
+[data-hero-play] .hero-sub {
+  animation: hero-sub-in 0.4s var(--ease-out) 0.12s both;
 }
 @keyframes hero-sub-in {
-  from { opacity: 0; transform: translate3d(0, 16px, 0); }
+  from { opacity: 0.5; transform: translate3d(0, 10px, 0); }
   to { opacity: 1; transform: none; }
 }
 
@@ -529,8 +541,8 @@
 @media (prefers-reduced-motion: reduce) {
   .wall-track,
   .marquee-track,
-  .hl-word,
-  .hero-sub {
+  [data-hero-play] .hl-word,
+  [data-hero-play] .hero-sub {
     animation: none;
   }
   .reveal-ready [data-reveal]:not(.is-in) {

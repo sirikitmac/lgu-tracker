@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createClient } from '@supabase/supabase-js';
-import { canonicalRegion, countRegionsCovered, fetchWithTimeout, listDatasets, loadLandingData } from '@/lib/landing/data';
+import { canonicalRegion, countRegionsCovered, describeError, fetchWithTimeout, listDatasets, loadLandingData } from '@/lib/landing/data';
 
 /**
  * The landing page is prerendered by `next build`, so its loader must never
@@ -92,4 +92,43 @@ test('regions from both agencies are counted once, whatever the spelling', () =>
 test('datasets list only those with records, and null when none was read', () => {
   assert.equal(listDatasets([{ label: 'a', records: null }, { label: 'b', records: null }]), null);
   assert.deepEqual(listDatasets([{ label: 'a', records: 3 }, { label: 'b', records: 0 }, { label: 'c', records: null }]), [{ label: 'a', records: 3 }]);
+});
+
+test('a bodiless HEAD 500 is logged with its status, not as an empty message', () => {
+  const line = describeError({ message: '' }, 500);
+  assert.match(line, /HTTP 500/);
+  assert.match(line, /statement timeout/);
+  assert.match(describeError({ message: 'permission denied for table x', code: '42501' }, 401), /permission denied.*HTTP 401.*code 42501/);
+});
+
+test('DILG counts retry a cold-cache timeout and split the total by dataset', async () => {
+  const tries = new Map<string, number>();
+  const fake: typeof fetch = async (input, init) => {
+    const url = new URL(String(input instanceof Request ? input.url : input));
+    const key = url.pathname + url.search;
+    tries.set(key, (tries.get(key) ?? 0) + 1);
+    const head = (init?.method ?? 'GET') === 'HEAD';
+    if (url.pathname.endsWith('/subaybayan_projects') && head) {
+      // First try times out the way PostgREST answers a HEAD: 500, no body.
+      if (tries.get(key) === 1) return new Response(null, { status: 500 });
+      return new Response(null, { status: 206, headers: { 'content-range': '*/41194' } });
+    }
+    if (url.pathname.endsWith('/project_directory') && head && url.searchParams.get('source') === 'eq.subaybayan_lgsf')
+      return new Response(null, { status: 206, headers: { 'content-range': '*/6963' } });
+    return new Response(JSON.stringify({ message: 'not in this test' }), { status: 400, headers: { 'content-type': 'application/json' } });
+  };
+  const logged: string[] = [];
+  const errors = console.error;
+  console.error = (...args: unknown[]) => void logged.push(args.join(' '));
+  try {
+    const data = await loadLandingData({ client: client(fake) });
+    assert.equal(data.dilgProjects, 41194);
+    assert.deepEqual(
+      data.datasets?.filter((d) => d.label.startsWith('DILG')).map((d) => d.records),
+      [6963, 34231]
+    );
+    assert.ok(logged.some((l) => l.includes('DILG count (all) failed (try 1 of 2)') && l.includes('HTTP 500')));
+  } finally {
+    console.error = errors;
+  }
 });

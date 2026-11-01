@@ -11,7 +11,6 @@ import { PhotoWall } from '@/components/landing/PhotoWall';
 import { Reveal } from '@/components/landing/Reveal';
 import { StackSteps } from '@/components/landing/StackSteps';
 import { anton } from '@/components/landing/fonts';
-import { FixtureToggle } from '@/components/landing/FixtureToggle';
 import { applyFixture, LANDING_FIXTURES, type LandingFixture } from '@/lib/landing/fixtures';
 import { PHOTOS, regionName } from '@/components/landing/content';
 import { pageCredits } from '@/components/landing/wall';
@@ -35,21 +34,35 @@ const FOCUS_ON_DARK = 'focus-visible:outline-3 focus-visible:outline-offset-3 fo
 const FOCUS_ON_LIGHT = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-night';
 const FOCUS_THEMED = 'focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent-ink';
 
+/**
+ * Runs inline, before the hero is parsed: marks <html> so the headline's rise
+ * (globals.css) starts with the first paint instead of waiting for the JS
+ * bundle. Skipped under reduced motion; without scripts the headline simply
+ * stands in place. After a client-side navigation it is not run again, and
+ * the mark left from an earlier visit (if any) still applies.
+ */
+const HERO_PLAY_SCRIPT = `try{if(matchMedia('(prefers-reduced-motion: no-preference)').matches)document.documentElement.setAttribute('data-hero-play','')}catch(e){}`;
+
 const delay = (ms: number) => ({ '--reveal-delay': `${ms}ms` }) as React.CSSProperties;
 
 export default async function LandingPage() {
   let data = await loadLandingData();
-  let fixture: LandingFixture | null = null;
-  // break-ui stress data, development only: the branch is removed from production builds.
+  let fixtureToggle: React.ReactNode = null;
+  // break-ui stress data, development only. The branch, and with it the
+  // toggle's import, is removed from production builds, so the switch is
+  // neither rendered nor shipped there.
   if (process.env.NODE_ENV === 'development') {
     const { cookies } = await import('next/headers');
+    const { FixtureToggle } = await import('@/components/landing/FixtureToggle');
     const value = (await cookies()).get('landing-fixture')?.value as LandingFixture | undefined;
-    fixture = value && LANDING_FIXTURES.includes(value) ? value : 'demo';
+    const fixture: LandingFixture = value && LANDING_FIXTURES.includes(value) ? value : 'demo';
     data = applyFixture(data, fixture);
+    fixtureToggle = <FixtureToggle current={fixture} />;
   }
 
   return (
     <div className={`landing ${anton.variable} min-h-svh flex flex-col bg-ground`}>
+      <script dangerouslySetInnerHTML={{ __html: HERO_PLAY_SCRIPT }} />
       <Navbar />
       <Reveal />
 
@@ -63,7 +76,7 @@ export default async function LandingPage() {
       </main>
 
       <Footer />
-      {fixture && <FixtureToggle current={fixture} />}
+      {fixtureToggle}
     </div>
   );
 }

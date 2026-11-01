@@ -26,3 +26,7 @@ next-env.d.ts
 # SubayBAYAN pipeline: downloaded boundaries, gazetteer and generated rows
 # (regenerate with npm run subaybayan:build)
 /.cache/
+
+# Design-review screenshots from the taste-skill inspector (the landing set is
+# ~110 MB of JPEGs and regenerable). Sets committed before this rule stay tracked.
+/.taste-skill/

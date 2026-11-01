@@ -95,13 +95,13 @@ function publicClient(): SupabaseClient | null {
 }
 
 async function loadStats(supabase: SupabaseClient) {
-  const { data, error } = await supabase
+  const { data, error, status } = await supabase
     .from('dpwh_directory_stats')
     .select('computed_at, stats')
     .eq('id', 1)
     .maybeSingle();
   if (error || !data) {
-    if (error) console.error('[LGU Tracker] Landing stats query failed:', error.message);
+    if (error) console.error('[LGU Tracker] Landing stats query failed:', describeError(error, status));
     return null;
   }
   return data as {
@@ -134,7 +134,7 @@ async function loadAllRegionPoints(supabase: SupabaseClient): Promise<[number, n
 
 /** Null when the query failed (so it can be retried); empty when the region has no mapped contracts. */
 async function loadRegionPoints(supabase: SupabaseClient, region: string): Promise<[number, number][] | null> {
-  const { data, error } = await supabase
+  const { data, error, status } = await supabase
     .from('dpwh_contracts_directory')
     .select('latitude, longitude')
     .eq('region', region)
@@ -143,34 +143,65 @@ async function loadRegionPoints(supabase: SupabaseClient, region: string): Promi
     .order('contract_amount', { ascending: false, nullsFirst: false })
     .limit(POINTS_PER_REGION);
   if (error || !data) {
-    if (error) console.error(`[LGU Tracker] Landing map points for ${region} failed:`, error.message);
+    if (error) console.error(`[LGU Tracker] Landing map points for ${region} failed:`, describeError(error, status));
     return null;
   }
   return (data as { latitude: number; longitude: number }[]).map((p) => [p.longitude, p.latitude]);
 }
 
 async function loadNepCount(supabase: SupabaseClient): Promise<number | null> {
-  const { count, error } = await supabase
-    .from('project_directory')
-    .select('record_id', { count: 'exact', head: true })
-    .eq('source', 'dpwh_nep_2027');
-  if (error) {
-    console.error('[LGU Tracker] Landing NEP count failed:', error.message);
-    return null;
-  }
-  return count;
+  return exactCount('NEP count', () =>
+    supabase.from('project_directory').select('record_id', { count: 'exact', head: true }).eq('source', 'dpwh_nep_2027')
+  );
 }
 
-/** Rows per SubayBAYAN dataset; null when the count failed. */
-async function loadDilgCount(supabase: SupabaseClient, dataset?: 'lgsf' | 'rlip'): Promise<number | null> {
-  let query = supabase.from('subaybayan_projects').select('id', { count: 'exact', head: true });
-  if (dataset) query = query.eq('source_dataset', dataset);
-  const { count, error } = await query;
-  if (error) {
-    console.error(`[LGU Tracker] Landing DILG count${dataset ? ` (${dataset})` : ''} failed:`, error.message);
-    return null;
+/**
+ * A PostgREST error as one log line. Count queries are HEAD requests, and a
+ * HEAD response has no body, so a statement timeout arrives as a bare 500
+ * with an empty message; the status (and code, when there is a body) is what
+ * tells the cases apart.
+ */
+export function describeError(error: { message?: string; code?: string; details?: string | null; hint?: string | null }, status?: number): string {
+  const parts = [error.message || '(no error body)'];
+  if (status) parts.push(`HTTP ${status}`);
+  if (error.code) parts.push(`code ${error.code}`);
+  if (error.details) parts.push(error.details);
+  if (error.hint) parts.push(`hint: ${error.hint}`);
+  if (!error.message && !error.code && status === 500) parts.push('a HEAD count with no body is almost always the 3 s anon statement timeout');
+  return parts.join(' · ');
+}
+
+/**
+ * One exact count, retried once: on the Free plan's small instance a cold
+ * cache can push a count past the 3 s anon statement timeout, and the retry
+ * finds the pages warm. Null when both tries failed.
+ */
+async function exactCount(label: string, run: () => PromiseLike<{ count: number | null; error: { message: string } | null; status: number }>): Promise<number | null> {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const { count, error, status } = await run();
+    if (!error && count !== null) return count;
+    console.error(`[LGU Tracker] Landing ${label} failed (try ${attempt} of 2):`, error ? describeError(error, status) : `no count (HTTP ${status})`);
   }
-  return count;
+  return null;
+}
+
+/**
+ * SubayBAYAN rows per dataset. Neither count reads the wide table row by row
+ * for a filter: the total is a plain count(*), and the smaller LGSF set is
+ * counted through project_directory, whose `source` expression is indexed
+ * (subaybayan_projects_directory_source_idx). RLIP, most of the table, is the
+ * difference, so no query scans the table for it. Filtering source_dataset
+ * directly had no index and timed out on a cold cache.
+ */
+async function loadDilgCounts(supabase: SupabaseClient): Promise<{ lgsf: number | null; rlip: number | null }> {
+  const [total, lgsf] = await Promise.all([
+    exactCount('DILG count (all)', () => supabase.from('subaybayan_projects').select('id', { count: 'exact', head: true })),
+    exactCount('DILG count (lgsf)', () =>
+      supabase.from('project_directory').select('record_id', { count: 'exact', head: true }).eq('source', 'subaybayan_lgsf')
+    ),
+  ]);
+  if (total === null || lgsf === null) return { lgsf, rlip: null };
+  return { lgsf, rlip: total - lgsf };
 }
 
 /** Most distinct regions the skip scan will read; the Philippines has 18. */
@@ -186,9 +217,9 @@ async function loadDilgRegions(supabase: SupabaseClient): Promise<string[] | nul
   for (let i = 0; i < MAX_REGIONS; i++) {
     let query = supabase.from('subaybayan_projects').select('region').not('region', 'is', null).order('region').limit(1);
     if (regions.length > 0) query = query.gt('region', regions[regions.length - 1]);
-    const { data, error } = await query;
+    const { data, error, status } = await query;
     if (error || !data) {
-      if (error) console.error('[LGU Tracker] Landing DILG regions failed:', error.message);
+      if (error) console.error('[LGU Tracker] Landing DILG regions failed:', describeError(error, status));
       return null;
     }
     if (data.length === 0) return regions;
@@ -232,14 +263,14 @@ export function listDatasets(counts: { label: string; records: number | null }[]
 }
 
 async function loadExample(supabase: SupabaseClient): Promise<ExampleContract | null> {
-  const { data, error } = await supabase
+  const { data, error, status } = await supabase
     .from('dpwh_contracts_directory')
     .select(
       'contract_id, title, province, region, category, status, contractor, contract_amount, progress, start_date, implementing_office, latitude, longitude'
     )
     .eq('contract_id', EXAMPLE_CONTRACT_ID)
     .maybeSingle();
-  if (error) console.error('[LGU Tracker] Landing example contract failed:', error.message);
+  if (error) console.error('[LGU Tracker] Landing example contract failed:', describeError(error, status));
   return (data as ExampleContract | null) ?? null;
 }
 
@@ -282,22 +313,24 @@ function emptyLandingData(): LandingData {
 async function loadFrom(supabase: SupabaseClient): Promise<LandingData> {
   const empty = emptyLandingData();
   try {
-    // The DILG skip scan is a chain of small queries; it runs beside everything else.
-    const dilg = Promise.all([
-      loadDilgCount(supabase, 'lgsf'),
-      loadDilgCount(supabase, 'rlip'),
-      loadDilgRegions(supabase),
-    ]).catch((err): [null, null, null] => {
-      console.error('[LGU Tracker] Landing DILG figures failed:', err instanceof Error ? err.message : err);
-      return [null, null, null];
+    // The counts run first, beside the small reads, rather than against the
+    // region scans below; the DILG skip scan is a chain of one-row reads and
+    // runs beside everything.
+    const dilgRegionsLoad = loadDilgRegions(supabase).catch((err) => {
+      console.error('[LGU Tracker] Landing DILG regions failed:', err instanceof Error ? err.message : err);
+      return null;
     });
-    const [stats, nepProposals, example] = await Promise.all([
+    const [stats, nepProposals, example, { lgsf, rlip }] = await Promise.all([
       loadStats(supabase),
       loadNepCount(supabase),
       loadExample(supabase),
+      loadDilgCounts(supabase).catch((err) => {
+        console.error('[LGU Tracker] Landing DILG counts failed:', err instanceof Error ? err.message : err);
+        return { lgsf: null, rlip: null };
+      }),
     ]);
     const points = await loadAllRegionPoints(supabase);
-    const [lgsf, rlip, dilgRegions] = await dilg;
+    const dilgRegions = await dilgRegionsLoad;
     const counts = new Map((stats?.stats.by_region ?? []).map((r) => [r.value, r.count]));
     const regions = DEFAULT_SCOPE_REGIONS.map((region, i) => ({
       region,
