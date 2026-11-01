@@ -3,17 +3,17 @@ import Link from 'next/link';
 import { ArrowRight, ArrowUpRight, ExternalLink, Map as MapIcon, Search } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { BpAssistant } from '@/components/bp/BpAssistant';
-import { ArcItem } from '@/components/landing/ArcItem';
+import { BpCardButton } from '@/components/landing/BpCardButton';
 import { CountUp } from '@/components/landing/CountUp';
 import { CoverageExplorer } from '@/components/landing/CoverageExplorer';
+import { Photo } from '@/components/landing/Photo';
 import { PhotoWall } from '@/components/landing/PhotoWall';
 import { Reveal } from '@/components/landing/Reveal';
 import { StackSteps } from '@/components/landing/StackSteps';
 import { anton } from '@/components/landing/fonts';
 import { applyFixture, LANDING_FIXTURES, type LandingFixture } from '@/lib/landing/fixtures';
 import { PHOTOS, regionName } from '@/components/landing/content';
-import { pageCredits } from '@/components/landing/wall';
+import { pageCredits, WAY_PHOTOS, type WallPhoto } from '@/components/landing/wall';
 import { contractMapHref, formatCount, formatDate, formatPeso } from '@/components/dpwh/format';
 import { BOUNDARY_SOURCE, SUBAYBAYAN_DATASET_INFO, SUBAYBAYAN_RETRIEVED_LABEL } from '@/lib/subaybayan/source';
 import { loadLandingData, POINTS_PER_REGION, type ExampleContract, type LandingData } from '@/lib/landing/data';
@@ -70,7 +70,7 @@ export default async function LandingPage() {
 
       <main className="flex-1">
         <Hero data={data} />
-        <Features data={data} />
+        <SixWaysIn data={data} />
         <HowItWorks example={data.example} regionPoints={data.regions.find((r) => r.region === 'Region X')?.points ?? []} />
         <Coverage data={data} />
         <AboutData data={data} />
@@ -220,126 +220,162 @@ function Stats({ data }: { data: LandingData }) {
 
 /* ------------------------------------------------------------------------- */
 
-const FIELD = {
-  night: { card: 'bg-night text-white dark:ring-1 dark:ring-white/12', soft: 'text-white/80', ui: 'bg-white/8 text-white', focus: FOCUS_ON_DARK },
-  signal: { card: 'bg-signal text-night', soft: 'text-night/85', ui: 'bg-night/10 text-night', focus: FOCUS_ON_LIGHT },
-  peach: { card: 'bg-peach text-night', soft: 'text-night/85', ui: 'bg-white/55 text-night', focus: FOCUS_ON_LIGHT },
-  surface: { card: 'bg-surface text-ink', soft: 'text-subtle', ui: 'bg-sunken text-ink', focus: FOCUS_THEMED },
-} as const;
+type Way = {
+  title: string;
+  text: string;
+  photo: WallPhoto | null;
+  /** A glimpse of the interface the card opens, laid over the photograph. */
+  ui: React.ReactNode;
+  large?: boolean;
+} & ({ href: string; bp?: never } | { href?: never; bp: true });
 
-function Features({ data }: { data: LandingData }) {
-  const cards: { title: string; text: string; href?: string; field: keyof typeof FIELD; visual: React.ReactNode; action?: React.ReactNode }[] = [
+/* Glass panels for the interface glimpses: legible over any photograph. */
+const GLASS = 'glass-chip rounded-full px-3.5 py-2 text-[14px]';
+
+function SixWaysIn({ data }: { data: LandingData }) {
+  const ways: Way[] = [
     {
       title: 'Search the directory',
       text:
         data.totalContracts !== null && data.dilgProjects !== null
-          ? `${formatCount(data.totalContracts + data.dilgProjects)} records by place, title, contractor, category or status.`
-          : 'Every record by place, title, contractor, category or status.',
+          ? `${formatCount(data.totalContracts + data.dilgProjects)} records by place, contractor or status.`
+          : 'Every record by place, contractor or status.',
       href: '/projects',
-      field: 'night',
-      visual: (
-        <span data-ui className="flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-2.5 text-[14px] text-white/85">
-          <Search className="w-4 h-4 shrink-0" aria-hidden="true" />
+      photo: WAY_PHOTOS.search,
+      large: true,
+      ui: (
+        <span className={`${GLASS} inline-flex max-w-full items-center gap-2`}>
+          <Search className="w-4 h-4 shrink-0" />
           <span className="truncate">flood control, Iligan City</span>
         </span>
       ),
     },
     {
       title: 'Read the map',
-      text: 'Mapped records cluster by area and open up as you zoom, coloured by status or region.',
+      text: 'Records cluster by area and open up as you zoom.',
       href: '/projects/map',
-      field: 'peach',
-      visual: <ClusterGlyph />,
+      photo: WAY_PHOTOS.map,
+      large: true,
+      ui: <ClusterGlyph />,
     },
     {
       title: 'Jump to a SubayBAYAN code',
-      text: 'Paste a DILG project code on the map and it flies straight to the project.',
+      text: 'Paste a DILG code; the map flies to the project.',
       href: '/projects/map?layer=subaybayan',
-      field: 'surface',
-      visual: (
-        <span data-ui className="flex items-center justify-between gap-2 rounded-xl bg-sunken px-3.5 py-2.5 text-[14px] text-ink">
-          <span className="truncate tabular-nums font-semibold">LIME-25-13-02-00-000-41</span>
-          <ArrowUpRight className="w-4 h-4 shrink-0 text-accent-ink" aria-hidden="true" />
+      photo: WAY_PHOTOS.code,
+      ui: (
+        <span className={`${GLASS} inline-flex max-w-full items-center gap-2 rounded-xl px-3`}>
+          <span className="truncate tabular-nums font-semibold text-[13px] tracking-[-0.01em]">LIME-25-13-02-00-000-41</span>
+          <ArrowUpRight className="w-4 h-4 shrink-0 text-signal" />
         </span>
       ),
     },
     {
       title: 'Filter by agency',
-      text: 'DPWH national contracts and DILG local projects side by side, never merged.',
+      text: 'DPWH and DILG side by side, never merged.',
       href: '/projects?agency=DILG',
-      field: 'signal',
-      visual: (
-        <span data-ui className="inline-flex rounded-full bg-night/10 p-1 text-[14px] font-semibold">
+      photo: WAY_PHOTOS.agency,
+      ui: (
+        <span className="glass-chip inline-flex rounded-full p-1 text-[14px] font-semibold">
           <span className="rounded-full px-4 py-1.5">DPWH</span>
-          <span className="rounded-full bg-night px-4 py-1.5 text-signal">DILG</span>
+          <span className="rounded-full bg-signal px-4 py-1.5 text-night">DILG</span>
         </span>
       ),
     },
     {
       title: 'Open the dashboard',
-      text: 'Totals by region, status, category and year, computed from the stored records.',
+      text: 'Totals by region, status, category and year.',
       href: '/projects/dashboard',
-      field: 'surface',
-      visual: <RegionBars data={data} />,
+      photo: WAY_PHOTOS.dashboard,
+      ui: <RegionBars data={data} />,
     },
     {
       title: 'Ask BP',
-      text: 'Ask the assistant about the stored records in plain words, and get answers drawn from them.',
-      field: 'night',
-      visual: (
-        <span data-ui className="block rounded-2xl rounded-bl-md bg-white/10 px-3.5 py-2.5 text-[14px] text-white/85">
-          How many bridge contracts are in Iligan City?
-        </span>
-      ),
-      action: <BpAssistant variant="button" />,
+      text: 'Questions in plain words, answers from the records.',
+      bp: true,
+      photo: WAY_PHOTOS.bp,
+      ui: <span className={`${GLASS} inline-block rounded-2xl rounded-bl-md`}>How many bridges in Iligan City?</span>,
     },
   ];
 
   return (
-    <section id="explore" className="bg-ground py-20 lg:py-32 scroll-mt-16 overflow-hidden" aria-labelledby="explore-title">
+    <section id="explore" className="bg-ground py-20 lg:py-32 scroll-mt-16" aria-labelledby="explore-title">
       <div className={FRAME}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-12 gap-y-4 items-end">
           <h2 id="explore-title" data-reveal className="display lg:col-span-7 text-[length:var(--step-head)] text-ink">
-            Six ways in<span className="text-accent-ink">.</span>
+            Six ways in
+            <sup className="ways-count ml-2 align-top font-sans text-[max(14px,0.22em)] font-semibold tracking-normal text-signal" aria-hidden="true">
+              (06)
+            </sup>
           </h2>
           <p data-reveal style={delay(70)} className="lg:col-span-5 text-[length:var(--step-lead)] leading-snug text-ink max-w-[40ch]">
             Every card opens a part of LGU Tracker that works today, with no account needed.
           </p>
         </div>
 
-        <ul className="arc-grid mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
-          {cards.map((card, i) => {
-            const f = FIELD[card.field];
-            const body = (
-              <>
-                <span className="block text-[22px] font-semibold tracking-[-0.02em] leading-tight pr-10">{card.title}</span>
-                <span className={`mt-2 block text-[15px] leading-snug max-w-[36ch] ${f.soft}`}>{card.text}</span>
-                <span className="mt-auto block pt-8">{card.visual}</span>
-              </>
-            );
-            return (
-              <ArcItem key={card.title} index={i}>
-                {card.href ? (
-                  <Link href={card.href} className={`feature-card group relative flex h-full min-h-[17rem] flex-col rounded-[24px] p-6 ${f.card} ${f.focus}`}>
-                    <span className="feature-arrow absolute top-5 right-5 inline-flex h-9 w-9 items-center justify-center rounded-full bg-current/10" aria-hidden="true">
-                      <ArrowUpRight className="w-4 h-4" />
-                    </span>
-                    {body}
-                  </Link>
-                ) : (
-                  <div className={`relative flex h-full min-h-[17rem] flex-col rounded-[24px] p-6 ${f.card}`}>
-                    <span className="block text-[22px] font-semibold tracking-[-0.02em] leading-tight">{card.title}</span>
-                    <span className={`mt-2 block text-[15px] leading-snug max-w-[36ch] ${f.soft}`}>{card.text}</span>
-                    <span className="mt-auto block pt-8">{card.visual}</span>
-                    <span className="landing-bp mt-4 block">{card.action}</span>
-                  </div>
-                )}
-              </ArcItem>
-            );
-          })}
+        <ul className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 lg:gap-5">
+          {ways.map((way, i) => (
+            <li key={way.title} data-reveal style={delay((i % 4) * 60)} className={way.large ? 'lg:col-span-6' : 'lg:col-span-3'}>
+              <WayCard way={way} n={String(i + 1).padStart(2, '0')} />
+            </li>
+          ))}
         </ul>
       </div>
     </section>
+  );
+}
+
+/**
+ * One card: the photograph fills it under a night gradient that rises from
+ * the bottom; number top left, arrow top right, title and line bottom left.
+ * The whole card is one link (or, for BP, one button). Hover and focus ease
+ * the photograph in a little, lift the gradient and send the arrow off on
+ * its diagonal (globals.css, .way); reduced motion keeps only the colours.
+ */
+function WayCard({ way, n }: { way: Way; n: string }) {
+  const className = `way group relative isolate flex h-full w-full flex-col overflow-hidden rounded-[24px] bg-night text-left text-white ${
+    way.large ? 'min-h-[24rem] lg:min-h-[32rem]' : 'min-h-[22rem] lg:min-h-[26rem]'
+  } ${FOCUS_THEMED}`;
+  const body = (
+    <>
+      {way.photo && (
+        <Photo
+          src={way.photo.src}
+          sizes={way.large ? '(min-width: 1280px) 616px, (min-width: 768px) 50vw, 100vw' : '(min-width: 1280px) 300px, (min-width: 1024px) 24vw, (min-width: 768px) 50vw, 100vw'}
+          className="way-media !absolute inset-0 -z-10"
+        />
+      )}
+      <span className="way-shade -z-10" aria-hidden="true" />
+
+      <span className="flex items-start justify-between p-5 lg:p-6" aria-hidden="true">
+        <span className="display text-[22px] leading-none tabular-nums">{n}</span>
+        <span className="way-arrow-box relative inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white/14 ring-1 ring-white/25">
+          <ArrowUpRight className="way-arrow w-4 h-4" />
+          <ArrowUpRight className="way-arrow way-arrow-next absolute w-4 h-4" />
+        </span>
+      </span>
+
+      <span className="mt-auto block p-5 lg:p-6">
+        <span className="block mb-5" aria-hidden="true">
+          {way.ui}
+        </span>
+        <span className={`block font-semibold tracking-[-0.02em] leading-tight ${way.large ? 'text-[26px] lg:text-[30px]' : 'text-[22px]'}`}>{way.title}</span>
+        <span className="mt-1.5 block text-[15px] leading-snug text-white/85 max-w-[38ch]">{way.text}</span>
+        {way.photo && (
+          <span className="mt-3 flex min-w-0 text-[12px] text-white/70" aria-hidden="true">
+            <span className="truncate">{way.photo.caption}</span>
+            <span className="shrink-0">&nbsp;· Illustrative</span>
+          </span>
+        )}
+      </span>
+    </>
+  );
+  return way.bp ? (
+    <BpCardButton className={className}>{body}</BpCardButton>
+  ) : (
+    <Link href={way.href} className={className}>
+      {body}
+    </Link>
   );
 }
 
@@ -353,10 +389,10 @@ function ClusterGlyph() {
     { x: 226, y: 34, r: 12, n: '97' },
   ];
   return (
-    <svg data-ui viewBox="0 0 260 104" className="w-full max-w-[18rem] h-auto" role="img" aria-label="Map clusters with record counts">
+    <svg viewBox="0 0 260 104" className="w-full max-w-[16rem] h-auto drop-shadow-[0_4px_12px_rgb(5_15_22/0.5)]">
       {dots.map((d) => (
         <g key={d.n}>
-          <circle cx={d.x} cy={d.y} r={d.r + 6} fill="#FF7A1F" opacity="0.3" />
+          <circle cx={d.x} cy={d.y} r={d.r + 6} fill="#FF7A1F" opacity="0.35" />
           <circle cx={d.x} cy={d.y} r={d.r} fill="#FF7A1F" stroke="#050F16" strokeWidth="2" />
           <text x={d.x} y={d.y + 4} textAnchor="middle" fontSize="11" fontWeight="700" fill="#050F16">
             {d.n}
@@ -367,6 +403,7 @@ function ClusterGlyph() {
   );
 }
 
+/** The three regions with the most stored contracts, as bars on glass. */
 function RegionBars({ data }: { data: LandingData }) {
   const top = data.regions
     .filter((r): r is typeof r & { contracts: number } => r.contracts !== null && r.contracts > 0)
@@ -375,19 +412,19 @@ function RegionBars({ data }: { data: LandingData }) {
   if (top.length === 0) return null;
   const max = top[0].contracts;
   return (
-    <dl data-ui className="w-full space-y-2" aria-label="Regions with the most stored DPWH contracts">
+    <span className="glass-chip block w-full max-w-[18rem] space-y-2 rounded-2xl p-3.5">
       {top.map((r) => (
-        <div key={r.region}>
-          <div className="flex items-baseline justify-between gap-3 text-[13px]">
-            <dt className="truncate text-subtle">{regionName(r.region)}</dt>
-            <dd className="font-semibold tabular-nums text-ink">{formatCount(r.contracts)}</dd>
-          </div>
-          <span className="mt-1 block h-1.5 rounded-full bg-sunken" aria-hidden="true">
-            <span className="block h-full origin-left rounded-full bg-accent" style={{ transform: `scaleX(${r.contracts / max})` }} />
+        <span key={r.region} className="block">
+          <span className="flex items-baseline justify-between gap-3 text-[12px]">
+            <span className="truncate">{regionName(r.region)}</span>
+            <span className="font-semibold tabular-nums">{formatCount(r.contracts)}</span>
           </span>
-        </div>
+          <span className="mt-1 block h-1.5 rounded-full bg-white/20">
+            <span className="block h-full origin-left rounded-full bg-signal" style={{ transform: `scaleX(${r.contracts / max})` }} />
+          </span>
+        </span>
       ))}
-    </dl>
+    </span>
   );
 }
 

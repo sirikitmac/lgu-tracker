@@ -248,17 +248,19 @@
    The blur placeholder is the box's background; the picture fades in over it
    once loaded. Only with scripts (html[data-js], set inline in page.tsx):
    without them nothing would ever mark the picture loaded. */
-.photo {
-  position: relative;
-  display: block;
-  overflow: hidden;
-  background-repeat: no-repeat;
-}
-.photo > img {
-  transition: opacity 0.6s var(--ease-out);
-}
-[data-js] .photo > img:not([data-loaded]) {
-  opacity: 0;
+@layer components {
+  .photo {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    background-repeat: no-repeat;
+  }
+  .photo > img {
+    transition: opacity 0.6s var(--ease-out);
+  }
+  [data-js] .photo > img:not([data-loaded]) {
+    opacity: 0;
+  }
 }
 
 /* ---- Hero: the drifting photo wall ---------------------------------------- */
@@ -413,41 +415,62 @@
   transform: translate3d(4px, 0, 0);
 }
 
-/* ---- Feature cards: a shallow 3D arc (src/components/landing/ArcItem.tsx) -- */
+/* ---- Six ways in: photo cards (WayCard in page.tsx) -----------------------
+   Hover and keyboard focus: the photograph eases in to 104% over 600 ms, the
+   gradient lifts a little, and the arrow leaves on its diagonal while a twin
+   arrives from the opposite corner. Transform and opacity only. */
 
-.arc-item {
-  transform-origin: 50% 100%;
-  backface-visibility: hidden;
-}
-.feature-card {
+.way {
   transition: transform 0.25s var(--ease-out);
 }
-.feature-card:active {
+.way:active {
   transform: scale(0.985);
   transition-duration: 0.1s;
 }
-.feature-arrow {
-  transition: transform 0.25s var(--ease-out);
+.way-media > img {
+  transition:
+    opacity 0.6s var(--ease-out),
+    transform 0.6s var(--ease-out);
+}
+/* Night rises from the bottom for the title; a light veil at the top keeps
+   the number and the arrow legible on bright skies. */
+.way-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgb(5 15 22 / 0.95) 0%, rgb(5 15 22 / 0.78) 34%, rgb(5 15 22 / 0.18) 66%, rgb(5 15 22 / 0.45) 100%);
+  transition: opacity 0.6s var(--ease-out);
+}
+.way-arrow {
+  transition: transform 0.45s var(--ease-out);
+}
+.way-arrow-next {
+  transform: translate3d(-180%, 180%, 0);
+}
+.way:focus-visible .way-media > img {
+  transform: scale(1.04);
+}
+.way:focus-visible .way-shade {
+  opacity: 0.86;
+}
+.way:focus-visible .way-arrow {
+  transform: translate3d(180%, -180%, 0);
+}
+.way:focus-visible .way-arrow-next {
+  transform: none;
 }
 @media (hover: hover) and (pointer: fine) {
-  .feature-card:hover {
-    transform: translate3d(0, -4px, 0);
+  .way:hover .way-media > img {
+    transform: scale(1.04);
   }
-  .feature-card:hover .feature-arrow {
-    transform: translate3d(2px, -2px, 0);
+  .way:hover .way-shade {
+    opacity: 0.86;
   }
-}
-.feature-card:focus-visible .feature-arrow {
-  transform: translate3d(2px, -2px, 0);
-}
-/* The BP button inside its night card takes the card's colours. */
-.landing-bp button {
-  border-color: rgb(255 255 255 / 0.4);
-  background-color: transparent;
-  color: #fff;
-}
-.landing-bp button:hover {
-  background-color: rgb(255 255 255 / 0.1);
+  .way:hover .way-arrow {
+    transform: translate3d(180%, -180%, 0);
+  }
+  .way:hover .way-arrow-next {
+    transform: none;
+  }
 }
 
 /* ---- How it works: sticky stacking cards (StackSteps.tsx) ----------------- */
@@ -553,11 +576,26 @@
 }
 
 /* Reduced motion: a still page. The wall, headline, marquee and entrances
-   stand in their final place; cards stop stacking (StackSteps and ArcItem
-   also render static); presses keep only their colour change. */
+   stand in their final place; cards stop stacking (StackSteps also renders
+   static); presses keep only their colour change. */
 @media (prefers-reduced-motion: reduce) {
-  .photo > img {
+  .photo > img,
+  .way-media > img {
     transition: none;
+  }
+  /* No zoom and no travelling arrow; the gradient still lifts. */
+  .way:hover .way-media > img,
+  .way:focus-visible .way-media > img,
+  .way:active {
+    transform: none;
+  }
+  .way-arrow,
+  .way:hover .way-arrow,
+  .way:focus-visible .way-arrow {
+    transform: none;
+  }
+  .way-arrow-next {
+    display: none;
   }
   .wall-track,
   .marquee-track,
@@ -573,9 +611,6 @@
     position: static;
   }
   .lt-btn:active,
-  .feature-card:active,
-  .feature-card:hover,
-  .feature-card:hover .feature-arrow,
   .lt-btn:hover .lt-btn-arrow {
     transform: none;
   }

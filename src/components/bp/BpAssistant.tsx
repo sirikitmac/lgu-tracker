@@ -120,6 +120,14 @@ function ReferenceList({ references }: { references: Reference[] }) {
   );
 }
 
+/**
+ * Window event that opens BP from anywhere on the page (the landing page's
+ * "Ask BP" card). Only the navigation's instance listens, so one panel opens;
+ * `detail.from` gets the focus back when the panel closes.
+ */
+export const BP_OPEN_EVENT = 'bp:open';
+export type BpOpenDetail = { from?: HTMLElement | null };
+
 export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav' }) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -129,6 +137,7 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
   const [confirmReset, setConfirmReset] = useState(false);
   const nextId = useRef(1);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -165,8 +174,20 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
 
   const close = useCallback(() => {
     setOpen(false);
-    triggerRef.current?.focus();
+    const back = returnFocusRef.current;
+    returnFocusRef.current = null;
+    (back?.isConnected ? back : triggerRef.current)?.focus();
   }, []);
+
+  useEffect(() => {
+    if (variant !== 'nav') return;
+    const onOpen = (e: Event) => {
+      returnFocusRef.current = (e as CustomEvent<BpOpenDetail>).detail?.from ?? null;
+      setOpen(true);
+    };
+    window.addEventListener(BP_OPEN_EVENT, onOpen);
+    return () => window.removeEventListener(BP_OPEN_EVENT, onOpen);
+  }, [variant]);
 
   const ask = async (text: string) => {
     const question = text.trim();
@@ -221,7 +242,11 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => (open ? close() : setOpen(true))}
+        onClick={() => {
+          returnFocusRef.current = null;
+          if (open) close();
+          else setOpen(true);
+        }}
         aria-expanded={open}
         aria-controls={panelId}
         aria-label={variant === 'nav' ? 'Ask BP, the AI assistant' : undefined}
