@@ -71,6 +71,19 @@ export interface LandingData {
   regions: { region: string; contracts: number | null; points: [number, number][] }[];
   nepProposals: number | null;
   example: ExampleContract | null;
+  /** DILG SubayBAYAN projects stored (both datasets), or null when unreadable. */
+  dilgProjects: number | null;
+  /**
+   * Regions with at least one stored record, DPWH and DILG together, keyed by
+   * region number (see canonicalRegion). Null unless both sides were read, so
+   * a partial answer is never shown as the whole.
+   */
+  regionsCovered: number | null;
+  /**
+   * Published datasets with at least one stored record: DPWH contracts, the
+   * FY 2027 NEP, and the two SubayBAYAN datasets. Null when none could be read.
+   */
+  datasets: { label: string; records: number }[] | null;
 }
 
 function publicClient(): SupabaseClient | null {
@@ -148,6 +161,76 @@ async function loadNepCount(supabase: SupabaseClient): Promise<number | null> {
   return count;
 }
 
+/** Rows per SubayBAYAN dataset; null when the count failed. */
+async function loadDilgCount(supabase: SupabaseClient, dataset?: 'lgsf' | 'rlip'): Promise<number | null> {
+  let query = supabase.from('subaybayan_projects').select('id', { count: 'exact', head: true });
+  if (dataset) query = query.eq('source_dataset', dataset);
+  const { count, error } = await query;
+  if (error) {
+    console.error(`[LGU Tracker] Landing DILG count${dataset ? ` (${dataset})` : ''} failed:`, error.message);
+    return null;
+  }
+  return count;
+}
+
+/** Most distinct regions the skip scan will read; the Philippines has 18. */
+const MAX_REGIONS = 30;
+
+/**
+ * Distinct SubayBAYAN region labels, read as a skip scan on the (region, …)
+ * index: one indexed one-row query per region instead of reading 41k rows.
+ * Null when any step fails.
+ */
+async function loadDilgRegions(supabase: SupabaseClient): Promise<string[] | null> {
+  const regions: string[] = [];
+  for (let i = 0; i < MAX_REGIONS; i++) {
+    let query = supabase.from('subaybayan_projects').select('region').not('region', 'is', null).order('region').limit(1);
+    if (regions.length > 0) query = query.gt('region', regions[regions.length - 1]);
+    const { data, error } = await query;
+    if (error || !data) {
+      if (error) console.error('[LGU Tracker] Landing DILG regions failed:', error.message);
+      return null;
+    }
+    if (data.length === 0) return regions;
+    regions.push((data[0] as { region: string }).region);
+  }
+  return regions;
+}
+
+const ROMAN = /^REGION\s+([IVX]+(?:-[AB])?)(?![A-Z])/i;
+
+/**
+ * One key per region whatever the source's spelling: DPWH writes "Region X",
+ * SubayBAYAN "REGION X - NORTHERN MINDANAO"; named regions (NCR, CAR,
+ * MIMAROPA, Negros Island, BARMM) are matched by name.
+ */
+export function canonicalRegion(label: string): string {
+  const text = label.trim().toUpperCase();
+  const roman = text.match(ROMAN);
+  if (roman) return `REGION ${roman[1]}`;
+  if (text.includes('NEGROS ISLAND')) return 'NIR';
+  if (text.includes('BANGSAMORO') || text.includes('BARMM') || text.includes('ARMM')) return 'BARMM';
+  if (text.includes('CORDILLERA') || text === 'CAR') return 'CAR';
+  if (text.includes('CAPITAL REGION') || text === 'NCR') return 'NCR';
+  if (text.includes('MIMAROPA') || text.includes('IV-B')) return 'MIMAROPA';
+  return text;
+}
+
+/** Union of DPWH regions with contracts and DILG regions; null unless both are known. */
+export function countRegionsCovered(dpwh: { region: string; contracts: number | null }[], dilg: string[] | null): number | null {
+  if (dilg === null || dpwh.some((r) => r.contracts === null)) return null;
+  const keys = new Set<string>();
+  for (const r of dpwh) if ((r.contracts ?? 0) > 0) keys.add(canonicalRegion(r.region));
+  for (const label of dilg) keys.add(canonicalRegion(label));
+  return keys.size;
+}
+
+/** The datasets that hold records; null when no count could be read. */
+export function listDatasets(counts: { label: string; records: number | null }[]): { label: string; records: number }[] | null {
+  if (counts.every((c) => c.records === null)) return null;
+  return counts.filter((c): c is { label: string; records: number } => c.records !== null && c.records > 0);
+}
+
 async function loadExample(supabase: SupabaseClient): Promise<ExampleContract | null> {
   const { data, error } = await supabase
     .from('dpwh_contracts_directory')
@@ -190,32 +273,55 @@ function emptyLandingData(): LandingData {
     regions: DEFAULT_SCOPE_REGIONS.map((region) => ({ region, contracts: null, points: [] })),
     nepProposals: null,
     example: null,
+    dilgProjects: null,
+    regionsCovered: null,
+    datasets: null,
   };
 }
 
 async function loadFrom(supabase: SupabaseClient): Promise<LandingData> {
   const empty = emptyLandingData();
   try {
+    // The DILG skip scan is a chain of small queries; it runs beside everything else.
+    const dilg = Promise.all([
+      loadDilgCount(supabase, 'lgsf'),
+      loadDilgCount(supabase, 'rlip'),
+      loadDilgRegions(supabase),
+    ]).catch((err): [null, null, null] => {
+      console.error('[LGU Tracker] Landing DILG figures failed:', err instanceof Error ? err.message : err);
+      return [null, null, null];
+    });
     const [stats, nepProposals, example] = await Promise.all([
       loadStats(supabase),
       loadNepCount(supabase),
       loadExample(supabase),
     ]);
     const points = await loadAllRegionPoints(supabase);
+    const [lgsf, rlip, dilgRegions] = await dilg;
     const counts = new Map((stats?.stats.by_region ?? []).map((r) => [r.value, r.count]));
+    const regions = DEFAULT_SCOPE_REGIONS.map((region, i) => ({
+      region,
+      contracts: stats ? (counts.get(region) ?? 0) : null,
+      points: points[i],
+    }));
+    const totalContracts = stats?.stats.total_contracts ?? null;
     return {
-      totalContracts: stats?.stats.total_contracts ?? null,
+      totalContracts,
       totalAmount: stats?.stats.contract_amount.sum ?? null,
       ongoingContracts: stats?.stats.by_status.find((s) => s.value === 'ongoing')?.count ?? null,
       completedContracts: stats?.stats.by_status.find((s) => s.value === 'completed')?.count ?? null,
       computedAt: stats?.computed_at ?? null,
-      regions: DEFAULT_SCOPE_REGIONS.map((region, i) => ({
-        region,
-        contracts: stats ? (counts.get(region) ?? 0) : null,
-        points: points[i],
-      })),
+      regions,
       nepProposals,
       example,
+      dilgProjects: lgsf !== null && rlip !== null ? lgsf + rlip : null,
+      regionsCovered: countRegionsCovered(regions, dilgRegions),
+      datasets: listDatasets([
+        { label: 'DPWH contracts (Transparency Portal)', records: totalContracts },
+        { label: 'DPWH proposals (FY 2027 NEP)', records: nepProposals },
+        { label: 'DILG SubayBAYAN locally funded projects', records: lgsf },
+        { label: 'DILG SubayBAYAN 20% development fund (LIME)', records: rlip },
+      ]),
     };
   } catch (err) {
     console.error('[LGU Tracker] Landing data failed:', err instanceof Error ? err.message : err);
