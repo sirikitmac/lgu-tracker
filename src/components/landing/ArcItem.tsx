@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react';
+import { motion, useScroll, useTransform } from 'motion/react';
 import { useMedia } from './useMedia';
 
 /**
@@ -11,11 +11,13 @@ import { useMedia } from './useMedia';
  * scrolling stays the browser's; the card is flat (and fully usable) once it
  * reaches the upper half of the screen.
  *
- * Phones and tablets get a plain rise; reduced motion gets no movement.
+ * Phones and tablets get a plain rise; reduced motion, and the prerendered
+ * HTML before scripts run, get the card standing still.
  */
 export function ArcItem({ index, children, className = '' }: { index: number; children: React.ReactNode; className?: string }) {
   const ref = useRef<HTMLLIElement>(null);
-  const reduce = useReducedMotion();
+  // False on the server and during hydration, so the prerendered card is in its final, flat state.
+  const animate = useMedia('(prefers-reduced-motion: no-preference)');
   const wide = useMedia('(min-width: 1024px)');
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'start 0.55'] });
 
@@ -29,7 +31,7 @@ export function ArcItem({ index, children, className = '' }: { index: number; ch
   const opacity = useTransform(scrollYProgress, [0, 0.6], [0.25, 1]);
 
   // The ref stays attached either way: useScroll needs a hydrated target.
-  if (reduce)
+  if (!animate)
     return (
       <li ref={ref} className={className}>
         {children}

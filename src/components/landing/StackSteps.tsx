@@ -1,7 +1,7 @@
 'use client';
 
 import { createRef, useMemo } from 'react';
-import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react';
+import { motion, useScroll, useTransform } from 'motion/react';
 import { useMedia } from './useMedia';
 
 /**
@@ -14,10 +14,10 @@ import { useMedia } from './useMedia';
  * follow each other; reduced motion gets the same static list.
  */
 export function StackSteps({ steps, label }: { steps: { key: string; className: string; content: React.ReactNode }[]; label: string }) {
-  const reduce = useReducedMotion();
+  const motionOk = useMedia('(prefers-reduced-motion: no-preference)');
   const wide = useMedia('(min-width: 768px)');
   const refs = useMemo(() => steps.map(() => createRef<HTMLLIElement>()), [steps]);
-  const animated = wide && !reduce;
+  const animated = wide && motionOk;
 
   return (
     <ol className="stack" aria-label={label}>
