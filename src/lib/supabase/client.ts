@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { AccountType } from '@/types/auth';
 import { LGUProject } from '@/types/project';
 import { SAMPLE_LGU_PROJECTS } from '@/data/sampleProjects';
 import { getSupabaseBrowserClient } from './browser';
@@ -127,19 +128,21 @@ export interface RegistrationAttemptResult {
 }
 
 /**
- * Prepared account creation helper for Supabase Auth.
+ * Account creation helper for Supabase Auth.
  *
- * `requestedRole` is sent only as Auth user metadata, never written to
- * public.profiles.role directly: the sign-up trigger (private.handle_new_user)
- * records it in the informational public.profiles.requested_role column and
- * always creates the profile with role = 'citizen'. Selecting a role here
- * cannot grant it — only an administrator changing `role` later can.
+ * `accountType` ("citizen", "organization_employee" or "technical_developer")
+ * and `claimedOrganization` are sent only as Auth user metadata. The sign-up
+ * trigger (private.handle_new_user) copies them into the informational
+ * public.profiles.account_type / claimed_organization columns and always
+ * creates the profile with role = 'citizen'. Declaring a type here cannot
+ * grant anything: only an administrator changing `role` later can.
  */
 export async function registerLGUAccount(
   fullName: string,
   email: string,
   password: string,
-  requestedRole: string
+  accountType: AccountType,
+  claimedOrganization?: string
 ): Promise<RegistrationAttemptResult> {
   const client = getSupabaseClient();
 
@@ -159,7 +162,8 @@ export async function registerLGUAccount(
     options: {
       data: {
         full_name: fullName,
-        requested_role: requestedRole,
+        account_type: accountType,
+        claimed_organization: accountType === 'organization_employee' ? (claimedOrganization ?? '').trim() : '',
       },
     },
   });

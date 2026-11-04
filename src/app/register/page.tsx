@@ -14,14 +14,15 @@ import {
   Info,
 } from 'lucide-react';
 import { isSupabaseConfigured, registerLGUAccount } from '@/lib/supabase/client';
-import { ROLE_REQUEST_OPTIONS } from '@/types/auth';
+import { ACCOUNT_TYPE_OPTIONS, type AccountType } from '@/types/auth';
 
 interface FormErrors {
   fullName?: string;
   email?: string;
   password?: string;
   confirmPassword?: string;
-  role?: string;
+  accountType?: string;
+  organization?: string;
   general?: string;
 }
 
@@ -32,7 +33,8 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [roleIndex, setRoleIndex] = useState('');
+  const [accountType, setAccountType] = useState<AccountType | ''>('');
+  const [organization, setOrganization] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusNotice, setStatusNotice] = useState<{
@@ -55,10 +57,10 @@ export default function RegisterPage() {
     }
 
     if (!email.trim()) {
-      nextErrors.email = 'Please enter your institutional LGU email address.';
+      nextErrors.email = 'Please enter your email address.';
     } else if (!validateEmailFormat(email)) {
       nextErrors.email =
-        'Please enter a valid email address (e.g., officer@lgu.gov.ph).';
+        'Please enter a valid email address (e.g., name@example.com).';
     }
 
     if (!password) {
@@ -73,8 +75,10 @@ export default function RegisterPage() {
       nextErrors.confirmPassword = 'Passwords do not match.';
     }
 
-    if (roleIndex === '') {
-      nextErrors.role = 'Please select the role you are requesting.';
+    if (accountType === '') {
+      nextErrors.accountType = 'Please choose the option that describes you.';
+    } else if (accountType === 'organization_employee' && !organization.trim()) {
+      nextErrors.organization = 'Please enter the organization you work for.';
     }
 
     setErrors(nextErrors);
@@ -89,7 +93,10 @@ export default function RegisterPage() {
       return;
     }
 
-    const selectedRole = ROLE_REQUEST_OPTIONS[Number(roleIndex)];
+    if (accountType === '') {
+      return;
+    }
+    const selected = ACCOUNT_TYPE_OPTIONS.find((option) => option.value === accountType);
 
     setIsSubmitting(true);
     try {
@@ -97,16 +104,17 @@ export default function RegisterPage() {
         fullName.trim(),
         email.trim(),
         password,
-        selectedRole.value
+        accountType,
+        organization
       );
 
       if (result.success) {
-        const isPrivilegedRequest = selectedRole.value !== 'citizen';
         setStatusNotice({
           type: 'success',
-          message: isPrivilegedRequest
-            ? `${result.message} You're registered with Public Viewer access for now. Your request for the "${selectedRole.label}" role has been recorded and is pending review by an LGU Administrator — you'll gain that access once it's approved.`
-            : `${result.message} You have Public Viewer access to published LGU project records.`,
+          message:
+            accountType === 'citizen'
+              ? `${result.message} You can browse every project and file reports on them.`
+              : `${result.message} You can browse projects and file reports now. Your "${selected?.label}" account has no extra access yet: an LGU Administrator reviews it before turning on anything more.`,
         });
         setRegistrationComplete(true);
       } else if (!result.configured) {
@@ -243,7 +251,7 @@ export default function RegisterPage() {
                         setErrors((prev) => ({ ...prev, email: undefined }));
                       }
                     }}
-                    placeholder="name@municipality.gov.ph"
+                    placeholder="name@example.com"
                     aria-invalid={Boolean(errors.email)}
                     aria-describedby={
                       errors.email ? 'register-email-error' : undefined
@@ -387,63 +395,105 @@ export default function RegisterPage() {
                   )}
                 </div>
 
-                {/* Requested Role */}
-                <div>
-                  <label
-                    htmlFor="register-role"
-                    className="block text-xs font-semibold text-ink mb-1.5"
-                  >
-                    Requested Role
-                  </label>
-                  <select
-                    id="register-role"
-                    name="role"
-                    value={roleIndex}
-                    onChange={(e) => {
-                      setRoleIndex(e.target.value);
-                      if (errors.role) {
-                        setErrors((prev) => ({ ...prev, role: undefined }));
-                      }
-                    }}
-                    aria-invalid={Boolean(errors.role)}
-                    aria-describedby={
-                      errors.role ? 'register-role-error' : 'register-role-hint'
-                    }
-                    className={`w-full h-11 px-3.5 text-sm text-ink bg-ground border rounded-lg focus:bg-white focus:outline-none focus:ring-2 transition-all ${
-                      errors.role
-                        ? 'border-[#DC2626] focus:border-[#DC2626] focus:ring-[#DC2626]/15'
-                        : 'border-line focus:border-accent focus:ring-accent-ink/15'
-                    }`}
-                  >
-                    <option value="" disabled>
-                      Select the role you are requesting...
-                    </option>
-                    {ROLE_REQUEST_OPTIONS.map((option, index) => (
-                      <option key={option.label} value={index}>
-                        {option.label}
-                      </option>
+                {/* Account type */}
+                <fieldset aria-describedby={errors.accountType ? 'register-type-error' : 'register-type-hint'}>
+                  <legend className="block text-xs font-semibold text-ink mb-1.5">
+                    I am a...
+                  </legend>
+                  <div className="space-y-2">
+                    {ACCOUNT_TYPE_OPTIONS.map((option) => (
+                      <label
+                        key={option.value}
+                        className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                          accountType === option.value
+                            ? 'border-ink bg-sunken'
+                            : errors.accountType
+                              ? 'border-[#DC2626] hover:bg-sunken'
+                              : 'border-line hover:bg-sunken'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="account-type"
+                          value={option.value}
+                          checked={accountType === option.value}
+                          onChange={() => {
+                            setAccountType(option.value);
+                            if (errors.accountType) {
+                              setErrors((prev) => ({ ...prev, accountType: undefined }));
+                            }
+                          }}
+                          className="mt-1 accent-ink"
+                        />
+                        <span className="text-sm">
+                          <span className="block font-medium text-ink">{option.label}</span>
+                          <span className="block text-xs text-muted mt-0.5">{option.description}</span>
+                        </span>
+                      </label>
                     ))}
-                  </select>
-                  {errors.role ? (
+                  </div>
+                  {errors.accountType ? (
                     <p
-                      id="register-role-error"
+                      id="register-type-error"
                       role="alert"
                       className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-[#DC2626]"
                     >
                       <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                      <span>{errors.role}</span>
+                      <span>{errors.accountType}</span>
                     </p>
                   ) : (
                     <p
-                      id="register-role-hint"
+                      id="register-type-hint"
                       className="mt-1.5 text-xs text-muted leading-relaxed"
                     >
-                      Selecting a role only submits a request. Staff, financial,
-                      procurement, and administrator access is granted by an LGU
-                      Administrator after review — it is never enabled automatically.
+                      This only tells us who you are. Every new account starts with the same access, and
+                      staff or developer access is turned on by an LGU Administrator after review, never
+                      automatically.
                     </p>
                   )}
-                </div>
+                </fieldset>
+
+                {accountType === 'organization_employee' && (
+                  <div>
+                    <label
+                      htmlFor="register-organization"
+                      className="block text-xs font-semibold text-ink mb-1.5"
+                    >
+                      Organization or office
+                    </label>
+                    <input
+                      id="register-organization"
+                      name="organization"
+                      type="text"
+                      value={organization}
+                      maxLength={200}
+                      onChange={(e) => {
+                        setOrganization(e.target.value);
+                        if (errors.organization) {
+                          setErrors((prev) => ({ ...prev, organization: undefined }));
+                        }
+                      }}
+                      aria-invalid={Boolean(errors.organization)}
+                      aria-describedby={errors.organization ? 'register-organization-error' : undefined}
+                      placeholder="e.g., City Engineer's Office"
+                      className={`w-full h-11 px-3.5 text-sm text-ink bg-ground border rounded-lg focus:bg-white focus:outline-none focus:ring-2 transition-all ${
+                        errors.organization
+                          ? 'border-[#DC2626] focus:border-[#DC2626] focus:ring-[#DC2626]/15'
+                          : 'border-line focus:border-accent focus:ring-accent-ink/15'
+                      }`}
+                    />
+                    {errors.organization && (
+                      <p
+                        id="register-organization-error"
+                        role="alert"
+                        className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-[#DC2626]"
+                      >
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        <span>{errors.organization}</span>
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {/* Status / Validation Notice */}
                 {statusNotice && (
