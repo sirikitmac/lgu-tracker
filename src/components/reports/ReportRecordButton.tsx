@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Flag } from 'lucide-react';
 import { ReportPanel } from '@/components/reports/ReportPanel';
-import { ShineLayers, shineOutlineClass } from '@/components/ui/shine';
+import { ShineLayers, shineOutlineClass, shineSolidClass, type ShineSize } from '@/components/ui/shine';
 import type { ReportTarget } from '@/types/report';
 
 /**
@@ -30,7 +30,8 @@ export function ReportRecordButton({
     () => ({ source, recordId, title: recordTitle, code: projectCode || recordId }),
     [source, recordId, recordTitle, projectCode]
   );
-  return <ReportDialogButton target={target} size="sm" />;
+  // Orange, so it stands out among a project's other details.
+  return <ReportDialogButton target={target} size="sm" solid />;
 }
 
 /**
@@ -44,10 +45,13 @@ export function ReportConcernButton({ size = 'xl' }: { size?: 'sm' | 'lg' | 'xl'
 function ReportDialogButton({
   target,
   size,
+  solid = false,
 }: {
   /** The project the form is about, filled in and fixed; null asks for a project code. */
   target: ReportTarget | null;
-  size: 'sm' | 'lg' | 'xl';
+  size: ShineSize;
+  /** Orange at rest instead of an outline. */
+  solid?: boolean;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
@@ -86,8 +90,8 @@ function ReportDialogButton({
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" className={shineOutlineClass(size)}>
-        <ShineLayers />
+      <button type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" className={solid ? shineSolidClass(size) : shineOutlineClass(size)}>
+        <ShineLayers solid={solid} />
         <span className="relative z-10 inline-flex items-center gap-1.5">
           <Flag className={`${size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4'} transition-transform duration-300 ease-out group-hover:-rotate-12 motion-reduce:transition-none`} aria-hidden="true" /> Report a concern
         </span>
