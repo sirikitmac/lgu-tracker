@@ -10,6 +10,7 @@ import { readableTitle } from '@/components/dpwh/format';
 import { DilgProjectDetail } from '@/components/subaybayan/DilgProjectDetail';
 import { categoryLabel, formatDate, formatPeso, warningLabel } from '@/components/dpwh/format';
 import { StatusPill } from '@/components/dpwh/StatusPill';
+import { ReportRecordButton } from '@/components/reports/ReportRecordButton';
 import type { InfrastructureProject } from '@/types/infrastructureProject';
 
 const RECORD_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{2,79}$/;
@@ -120,6 +121,9 @@ export default async function SourceProjectPage({ params }: PageProps<'/projects
             <MapPinOff className="w-4 h-4" /> No coordinates reported, so not on the map.
           </span>
         )}
+        <div>
+          <ReportRecordButton source={p.source} recordId={p.source_id} recordTitle={p.title} />
+        </div>
       </header>
 
       <div className="bg-surface border border-line rounded-card p-5 sm:p-8 space-y-8">
