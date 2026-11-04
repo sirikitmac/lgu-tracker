@@ -4,22 +4,18 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Eye, EyeOff, AlertCircle, CheckCircle2, Flag, Info, X } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, AlertCircle, CheckCircle2, Info, X } from 'lucide-react';
 import { FaApple, FaFacebook } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
-import { ProjectCodeFinder } from '@/components/reports/ProjectCodeFinder';
 import { BrandLockup } from '@/components/ui/BrandLockup';
-import { ShineLayers, shineOutlineClass } from '@/components/ui/shine';
 import { useToast } from '@/components/ui/Toast';
 import { safeNextPath } from '@/lib/auth/redirect';
-import { reportHref } from '@/lib/reports/href';
 import {
   requestLGUPasswordReset,
   signInWithLGUCredentials,
   signInWithOAuthProvider,
   type OAuthProviderId,
 } from '@/lib/supabase/client';
-import type { ReportTarget } from '@/types/report';
 
 /**
  * The sign-in form with a photo beside it. Shared by the pop-up that opens
@@ -69,18 +65,16 @@ function validateEmailFormat(value: string): boolean {
 function PrimaryButton({
   busy,
   busyLabel,
-  disabled = false,
   children,
 }: {
   busy: boolean;
   busyLabel: string;
-  disabled?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <button
       type="submit"
-      disabled={busy || disabled}
+      disabled={busy}
       className={`group relative isolate flex w-full min-h-[50px] cursor-pointer items-center justify-center overflow-hidden rounded-xl px-5 text-[15px] font-bold tracking-[0.005em] text-night bg-[linear-gradient(110deg,#FFB067_0%,#FF7A1F_45%,#F0620A_100%)] bg-[length:190%_100%] bg-[position:0%_50%] shadow-[0_10px_24px_-10px_rgba(255,122,31,0.85)] transition-[background-position,transform,box-shadow] duration-500 ease-out hover:bg-[position:100%_50%] hover:-translate-y-0.5 hover:shadow-[0_16px_30px_-10px_rgba(255,122,31,0.95)] active:translate-y-0 active:scale-[0.985] active:shadow-[0_6px_14px_-8px_rgba(255,122,31,0.9)] disabled:pointer-events-none disabled:opacity-60 disabled:shadow-none motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${focusRing}`}
     >
       <span
@@ -115,10 +109,6 @@ export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; on
   const [oauthPending, setOauthPending] = useState<OAuthProviderId | null>(null);
   const [statusNotice, setStatusNotice] = useState<Notice>(null);
 
-  // "Report a concern" starts here: the reporter gives a project code, signs in, and the report form opens with that project chosen.
-  const [reportMode, setReportMode] = useState(false);
-  const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
-
   const [forgotPasswordMode, setForgotPasswordMode] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [recoveryError, setRecoveryError] = useState('');
@@ -145,8 +135,6 @@ export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; on
   }, []);
 
   const nextPath = () => safeNextPath(new URLSearchParams(window.location.search).get('next'));
-  // A project chosen for a report wins over ?next, because that is what they came to do.
-  const afterSignIn = () => (reportTarget ? reportHref(reportTarget) : nextPath());
 
   const validateSignInForm = (): boolean => {
     const nextErrors: FormErrors = {};
@@ -183,7 +171,7 @@ export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; on
         // up the new session cookie in Server Components. The toast lives in
         // the root layout, so it stays up across the navigation.
         toast({ id: 'auth', tone: 'success', title: 'Signed in', description: 'Opening the LGU monitoring workspace.' });
-        router.push(afterSignIn());
+        router.push(nextPath());
         router.refresh();
       } else if (!result.configured) {
         setStatusNotice({ type: 'info', message: result.message });
@@ -204,7 +192,7 @@ export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; on
     setStatusNotice(null);
     setOauthPending(provider);
     try {
-      const result = await signInWithOAuthProvider(provider, afterSignIn());
+      const result = await signInWithOAuthProvider(provider, nextPath());
       // On success the browser is already on its way to the provider.
       if (!result.success) {
         setStatusNotice({ type: result.configured ? 'error' : 'info', message: result.message });
@@ -264,74 +252,17 @@ export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; on
         <BrandLockup variant="horizontal" sizes="160px" className="h-auto w-36 sm:w-40" />
 
         <h2 id="login-title" className="mt-5 text-xl font-bold tracking-tight text-ink sm:text-2xl">
-          {reportMode ? 'Report a concern' : forgotPasswordMode ? 'Reset your password' : 'Sign in to Bantay Proyekto'}
+          {forgotPasswordMode ? 'Reset your password' : 'Sign in to Bantay Proyekto'}
         </h2>
         <p className="mt-1 text-sm text-muted">
-          {reportMode
-            ? 'Start with the project code. You will sign in next, so LGU staff can follow up.'
-            : forgotPasswordMode
+          {forgotPasswordMode
             ? 'We will email you a link to choose a new one.'
-            : reportTarget
-            ? 'Sign in to finish your report. The project is already chosen.'
             : 'Use your account email and password, or a quick sign-in below.'}
         </p>
 
         <div className="mt-6">
-          {reportMode ? (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (reportTarget) setReportMode(false);
-              }}
-              noValidate
-              className="space-y-4"
-            >
-              <ProjectCodeFinder
-                id="login-report-code"
-                selected={reportTarget}
-                onSelect={setReportTarget}
-                onClear={() => setReportTarget(null)}
-                autoFocus
-                inputClassName={inputClass(false)}
-              />
-              <p className="text-xs leading-relaxed text-muted">
-                Reports are tied to an account so the system is not flooded with anonymous submissions. After you
-                sign in, the report form opens with this project filled in.
-              </p>
-              <div className="space-y-2.5">
-                <PrimaryButton busy={false} busyLabel="" disabled={!reportTarget}>
-                  Continue to sign in
-                </PrimaryButton>
-                <button
-                  type="button"
-                  onClick={() => setReportMode(false)}
-                  className="w-full min-h-[40px] py-2 px-4 text-xs font-semibold text-muted hover:text-ink hover:bg-sunken rounded-lg transition-colors cursor-pointer"
-                >
-                  Back to sign in
-                </button>
-              </div>
-            </form>
-          ) : !forgotPasswordMode ? (
+          {!forgotPasswordMode ? (
             <form onSubmit={handleSignInSubmit} noValidate className="space-y-4">
-              {reportTarget && (
-                <div className="flex items-start gap-2.5 rounded-lg border border-line bg-sunken p-3 text-xs">
-                  <Flag className="mt-0.5 h-4 w-4 shrink-0 text-accent-ink" aria-hidden="true" />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-ink">You will report this project after signing in</p>
-                    <p className="mt-0.5 truncate text-muted" title={`${reportTarget.code} · ${reportTarget.title}`}>
-                      <span className="font-mono tabular-nums">{reportTarget.code}</span> · {reportTarget.title}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setReportMode(true)}
-                    className="shrink-0 cursor-pointer font-semibold text-accent-ink hover:text-ink hover:underline"
-                  >
-                    Change
-                  </button>
-                </div>
-              )}
-
               <div>
                 <label htmlFor="login-email" className="block text-xs font-semibold text-ink mb-1.5">
                   Email address
@@ -469,31 +400,15 @@ export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; on
               </div>
 
               {/* Guests browse the public directory, map and dashboard; no session is created. */}
-              <div className="pt-1">
-                <div className="grid gap-2.5 min-[420px]:grid-cols-2">
-                  <Link
-                    href="/projects"
-                    className={`flex min-h-[48px] w-full items-center justify-center rounded-xl border border-line-strong bg-sunken px-4 text-sm font-semibold text-ink transition-[background-color,transform] duration-200 ease-out hover:bg-line active:scale-[0.99] motion-reduce:transition-none ${focusRing}`}
-                  >
-                    Continue as guest
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStatusNotice(null);
-                      setReportMode(true);
-                    }}
-                    className={shineOutlineClass('lg')}
-                  >
-                    <ShineLayers />
-                    <span className="relative z-10 inline-flex items-center gap-2">
-                      <Flag className="h-4 w-4 transition-transform duration-300 ease-out group-hover:-rotate-12 motion-reduce:transition-none" aria-hidden="true" />
-                      Report a concern
-                    </span>
-                  </button>
-                </div>
-                <p className="mt-2 text-center text-xs text-muted">
-                  Browse projects and the map without an account. Filing a report needs one.
+              <div className="pt-1 text-center">
+                <Link
+                  href="/projects"
+                  className={`flex min-h-[48px] w-full items-center justify-center rounded-xl border border-line-strong bg-sunken px-4 text-sm font-semibold text-ink transition-[background-color,transform] duration-200 ease-out hover:bg-line active:scale-[0.99] motion-reduce:transition-none ${focusRing}`}
+                >
+                  Continue as guest
+                </Link>
+                <p className="mt-2 text-xs text-muted">
+                  Browse projects and the map without an account. You need one to file a report.
                 </p>
               </div>
 

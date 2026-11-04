@@ -13,9 +13,13 @@ import React from 'react';
 
 const GRADIENT = 'bg-[linear-gradient(110deg,#FFB067_0%,#FF7A1F_45%,#F0620A_100%)]';
 
-export function shineOutlineClass(size: 'sm' | 'lg' = 'sm'): string {
+export function shineOutlineClass(size: 'sm' | 'lg' | 'xl' = 'sm'): string {
   const sizing =
-    size === 'sm' ? 'h-9 rounded-full px-3 text-[13px]' : 'min-h-[48px] w-full rounded-xl px-4 text-sm';
+    size === 'sm'
+      ? 'h-9 rounded-full px-3 text-[13px]'
+      : size === 'xl'
+      ? 'min-h-12 rounded-full px-6 text-[15px]'
+      : 'min-h-[48px] w-full rounded-xl px-4 text-sm';
   return `group relative isolate inline-flex cursor-pointer items-center justify-center overflow-hidden border border-line-strong bg-surface font-semibold text-ink transition-[transform,box-shadow,border-color,color] duration-300 ease-out hover:-translate-y-0.5 hover:border-[#FF9A4D] hover:text-night hover:shadow-[0_14px_26px_-12px_rgba(255,122,31,0.9)] focus-visible:text-night active:translate-y-0 active:scale-[0.97] motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink ${sizing}`;
 }
 

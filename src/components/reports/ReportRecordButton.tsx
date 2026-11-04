@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 
 import { Flag } from 'lucide-react';
 import { ReportPanel } from '@/components/reports/ReportPanel';
 import { ShineLayers, shineOutlineClass } from '@/components/ui/shine';
+import type { ReportTarget } from '@/types/report';
 
 /**
  * "Report a concern" for one project in the directory. Place it inside a
@@ -25,6 +26,29 @@ export function ReportRecordButton({
   /** The code the directory shows for this project; the record id when it has none. */
   projectCode?: string | null;
 }) {
+  const target = useMemo(
+    () => ({ source, recordId, title: recordTitle, code: projectCode || recordId }),
+    [source, recordId, recordTitle, projectCode]
+  );
+  return <ReportDialogButton target={target} size="sm" />;
+}
+
+/**
+ * "Report a concern" from a page that is not about one project (the landing
+ * page). The form asks for the project code first.
+ */
+export function ReportConcernButton({ size = 'xl' }: { size?: 'sm' | 'lg' | 'xl' }) {
+  return <ReportDialogButton target={null} size={size} />;
+}
+
+function ReportDialogButton({
+  target,
+  size,
+}: {
+  /** The project the form is about, filled in and fixed; null asks for a project code. */
+  target: ReportTarget | null;
+  size: 'sm' | 'lg' | 'xl';
+}) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
   const state = useRef({ busy: false, done: false });
@@ -34,11 +58,6 @@ export function ReportRecordButton({
   const [open, setOpen] = useState(false);
   // Changing the key starts the form fresh after a report was sent. Cancelling keeps what was typed.
   const [session, setSession] = useState(0);
-
-  const target = useMemo(
-    () => ({ source, recordId, title: recordTitle, code: projectCode || recordId }),
-    [source, recordId, recordTitle, projectCode]
-  );
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -67,10 +86,10 @@ export function ReportRecordButton({
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" className={shineOutlineClass('sm')}>
+      <button type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" className={shineOutlineClass(size)}>
         <ShineLayers />
         <span className="relative z-10 inline-flex items-center gap-1.5">
-          <Flag className="w-3.5 h-3.5 transition-transform duration-300 ease-out group-hover:-rotate-12 motion-reduce:transition-none" aria-hidden="true" /> Report a concern
+          <Flag className={`${size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4'} transition-transform duration-300 ease-out group-hover:-rotate-12 motion-reduce:transition-none`} aria-hidden="true" /> Report a concern
         </span>
       </button>
 
@@ -90,7 +109,7 @@ export function ReportRecordButton({
         <ReportPanel
           key={session}
           target={target}
-          locked
+          locked={Boolean(target)}
           active={open}
           titleId={titleId}
           descId={descId}

@@ -151,13 +151,31 @@ export function ReportPanel({
   const fieldError = (field: Field) => (error?.field === field ? error.message : null);
   const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in the reporter's timezone
 
+  // The project code field, for a form that was not opened from a project. Shown before signing in too, so the
+  // chosen project comes back with the reporter after they sign in.
+  const finder = (
+    <ProjectCodeFinder
+      id={`${fieldId}-code`}
+      selected={target}
+      onSelect={(t) => {
+        setTarget(t);
+        if (error?.field === 'project') setError(null);
+      }}
+      onClear={() => setTarget(null)}
+      initialCode={initialCode}
+      autoFocus={!initialCode}
+      error={fieldError('project')}
+      inputClassName={controlClass.replace('h-10', 'h-11')}
+    />
+  );
+
   return (
     <div className="p-5 sm:p-6">
       <h2 id={headingId} className="text-[17px] font-semibold tracking-[-0.01em] text-ink">
-        {doneId ? 'Report received' : auth === 'signed-in' ? 'Report a concern' : 'Sign in to report'}
+        {doneId ? 'Report received' : auth === 'signed-in' || !locked ? 'Report a concern' : 'Sign in to report'}
       </h2>
       <p id={hintId} className="mt-1.5 text-sm leading-relaxed text-subtle break-words">
-        {target ? (
+        {locked && target ? (
           <>
             About: <span className="font-medium text-ink">{target.title}</span>
           </>
@@ -180,13 +198,14 @@ export function ReportPanel({
 
       {auth === 'signed-out' && (
         <div className="mt-5 space-y-4">
+          {!locked && finder}
           <p className="text-sm leading-relaxed text-subtle">
             Reports are tied to an account so LGU staff can follow up and so the system is not
             flooded with anonymous submissions. Reading projects never needs an account.
           </p>
           <div className="flex flex-col sm:flex-row gap-2">
             <Link href={loginHref} className={primaryButtonClass}>
-              <LogIn className="w-4 h-4" aria-hidden="true" /> Sign in
+              <LogIn className="w-4 h-4" aria-hidden="true" /> {locked ? 'Sign in' : 'Sign in to continue'}
             </Link>
             <Link href="/register" className={secondaryButtonClass}>Create an account</Link>
           </div>
@@ -238,19 +257,7 @@ export function ReportPanel({
               </p>
             </div>
           ) : (
-            <ProjectCodeFinder
-              id={`${fieldId}-code`}
-              selected={target}
-              onSelect={(t) => {
-                setTarget(t);
-                if (error?.field === 'project') setError(null);
-              }}
-              onClear={() => setTarget(null)}
-              initialCode={initialCode}
-              autoFocus={!initialCode}
-              error={fieldError('project')}
-              inputClassName={controlClass.replace('h-10', 'h-11')}
-            />
+            finder
           )}
 
           <fieldset className="space-y-2" aria-describedby={fieldError('category') ? `${fieldId}-category-error` : undefined}>

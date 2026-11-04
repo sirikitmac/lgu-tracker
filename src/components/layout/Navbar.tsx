@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import { BpAssistant } from '@/components/bp/BpAssistant';
+import { BrandWordmark } from '@/components/ui/BrandWordmark';
 import { ThemeSegmented, ThemeToggle } from './ThemeToggle';
 
 /**
@@ -81,7 +82,7 @@ export function Navbar() {
       <div className="site-frame max-w-7xl mx-auto flex items-center justify-between gap-4 h-14 px-4 sm:px-6">
         <Link href="/" className={`flex items-center gap-2.5 shrink-0 rounded-lg ${focusRing}`} aria-label="LGU Tracker home">
           <LguMark />
-          <span className="text-[17px] font-bold tracking-[-0.02em] text-ink whitespace-nowrap">LGU Tracker</span>
+          <BrandWordmark sizes="140px" className="h-auto w-[132px] sm:w-[148px]" />
         </Link>
 
         <nav aria-label="Primary" className="hidden lg:block">
