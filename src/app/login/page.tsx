@@ -180,9 +180,6 @@ export default function LoginPage() {
           {/* Branding Header */}
           <div className="text-center space-y-1.5">
             <BrandLockup variant="stacked" sizes="176px" className="mx-auto mb-1 h-auto w-40 sm:w-44" />
-            <p className="font-display text-sm sm:text-base font-semibold text-[#F59E0B]">
-              Bantay Proyekto, Gabay sa Progreso.
-            </p>
             <h1 className="pt-2 text-sm font-semibold text-muted">
               {forgotPasswordMode
                 ? 'Reset LGU Account Password'
