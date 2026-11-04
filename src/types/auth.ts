@@ -23,11 +23,48 @@ export const STAFF_ROLES: readonly AppRole[] = [
   'council_member',
 ];
 
+/** Mirrors the public.account_type enum in supabase/migrations. */
+export type AccountType = 'organization_employee' | 'technical_developer' | 'citizen';
+
+export const DEFAULT_ACCOUNT_TYPE: AccountType = 'citizen';
+
+/**
+ * What a person says they are when they sign up. A category only: choosing
+ * one never grants access. Authorization comes from AppRole, which only an
+ * administrator can change (see supabase/migrations/..._account_type.sql).
+ */
+export const ACCOUNT_TYPE_OPTIONS: ReadonlyArray<{
+  value: AccountType;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: 'citizen',
+    label: 'Citizen',
+    description: 'A member of the public who wants to follow projects and report concerns.',
+  },
+  {
+    value: 'organization_employee',
+    label: 'Organization employee',
+    description: 'You work for an LGU office, a government agency, or a contractor.',
+  },
+  {
+    value: 'technical_developer',
+    label: 'Technical / developer',
+    description: 'You build, maintain, or work with the system and its data.',
+  },
+];
+
+export function isAccountType(value: unknown): value is AccountType {
+  return ACCOUNT_TYPE_OPTIONS.some((option) => option.value === value);
+}
+
 export interface CurrentProfile {
   id: string;
   email: string | null;
   fullName: string;
   role: AppRole;
+  accountType: AccountType;
   organizationId: string | null;
 }
 
