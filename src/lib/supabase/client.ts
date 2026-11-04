@@ -3,7 +3,7 @@ import type { AccountType } from '@/types/auth';
 import { LGUProject } from '@/types/project';
 import { SAMPLE_LGU_PROJECTS } from '@/data/sampleProjects';
 import { getSupabaseBrowserClient } from './browser';
-import { isSupabaseConfigured } from './env';
+import { isSupabaseConfigured, SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from './env';
 import { mapProjectRow, PROJECT_SELECT, type ProjectRow } from './projectMapper';
 
 /**
@@ -116,6 +116,71 @@ export async function signInWithLGUCredentials(
     success: true,
     message: 'Successfully authenticated with LGU Tracker.',
   };
+}
+
+export type OAuthProviderId = 'google' | 'facebook' | 'apple';
+
+const OAUTH_PROVIDER_LABEL: Record<OAuthProviderId, string> = {
+  google: 'Google',
+  facebook: 'Facebook',
+  apple: 'Apple',
+};
+
+/**
+ * Quick sign-in with Google, Facebook or Apple. The provider must be switched on
+ * in the Supabase dashboard (Authentication > Sign In / Providers) and this
+ * site's /auth/callback added to the allowed redirect URLs. Supabase answers a
+ * provider that is switched off with a bare JSON page, so this asks first and
+ * returns a message the form can show. On success the browser leaves for the
+ * provider and comes back through /auth/callback.
+ */
+export async function signInWithOAuthProvider(
+  provider: OAuthProviderId,
+  nextPath: string
+): Promise<AuthAttemptResult> {
+  const client = getSupabaseClient();
+  const label = OAUTH_PROVIDER_LABEL[provider];
+
+  if (!client) {
+    return {
+      configured: false,
+      success: false,
+      message:
+        'Supabase Auth is not yet connected in this environment. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (or NEXT_PUBLIC_SUPABASE_ANON_KEY) to enable sign-in.',
+    };
+  }
+
+  try {
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/settings`, {
+      headers: { apikey: SUPABASE_PUBLISHABLE_KEY },
+    });
+    if (response.ok) {
+      const settings = (await response.json()) as { external?: Record<string, boolean> };
+      if (settings.external && settings.external[provider] === false) {
+        return {
+          configured: true,
+          success: false,
+          message: `${label} sign-in is not turned on for this site yet. Please use your email and password for now.`,
+        };
+      }
+    }
+  } catch {
+    // The settings lookup is a courtesy; if it fails, let the sign-in attempt decide.
+  }
+
+  const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`;
+  const { error } = await client.auth.signInWithOAuth({ provider, options: { redirectTo } });
+
+  if (error) {
+    return {
+      configured: true,
+      success: false,
+      message: error.message || `Unable to start ${label} sign-in. Please try again.`,
+      errorDetails: error.code,
+    };
+  }
+
+  return { configured: true, success: true, message: `Redirecting to ${label}...` };
 }
 
 export interface RegistrationAttemptResult {
