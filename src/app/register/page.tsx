@@ -208,7 +208,7 @@ export default function RegisterPage() {
                     aria-describedby={
                       errors.fullName ? 'register-full-name-error' : undefined
                     }
-                    className={`w-full h-11 px-3.5 text-sm text-ink bg-ground border rounded-lg placeholder:text-muted focus:bg-white focus:outline-none focus:ring-2 transition-all ${
+                    className={`w-full h-11 px-3.5 text-sm text-ink bg-ground border rounded-lg placeholder:text-muted focus:bg-surface focus:outline-none focus:ring-2 transition-all ${
                       errors.fullName
                         ? 'border-[#DC2626] focus:border-[#DC2626] focus:ring-[#DC2626]/15'
                         : 'border-line focus:border-accent focus:ring-accent-ink/15'
@@ -251,7 +251,7 @@ export default function RegisterPage() {
                     aria-describedby={
                       errors.email ? 'register-email-error' : undefined
                     }
-                    className={`w-full h-11 px-3.5 text-sm text-ink bg-ground border rounded-lg placeholder:text-muted focus:bg-white focus:outline-none focus:ring-2 transition-all ${
+                    className={`w-full h-11 px-3.5 text-sm text-ink bg-ground border rounded-lg placeholder:text-muted focus:bg-surface focus:outline-none focus:ring-2 transition-all ${
                       errors.email
                         ? 'border-[#DC2626] focus:border-[#DC2626] focus:ring-[#DC2626]/15'
                         : 'border-line focus:border-accent focus:ring-accent-ink/15'
@@ -295,7 +295,7 @@ export default function RegisterPage() {
                       aria-describedby={
                         errors.password ? 'register-password-error' : undefined
                       }
-                      className={`w-full h-11 pl-3.5 pr-11 text-sm text-ink bg-ground border rounded-lg placeholder:text-muted focus:bg-white focus:outline-none focus:ring-2 transition-all ${
+                      className={`w-full h-11 pl-3.5 pr-11 text-sm text-ink bg-ground border rounded-lg placeholder:text-muted focus:bg-surface focus:outline-none focus:ring-2 transition-all ${
                         errors.password
                           ? 'border-[#DC2626] focus:border-[#DC2626] focus:ring-[#DC2626]/15'
                           : 'border-line focus:border-accent focus:ring-accent-ink/15'
@@ -357,7 +357,7 @@ export default function RegisterPage() {
                           ? 'register-confirm-password-error'
                           : undefined
                       }
-                      className={`w-full h-11 pl-3.5 pr-11 text-sm text-ink bg-ground border rounded-lg placeholder:text-muted focus:bg-white focus:outline-none focus:ring-2 transition-all ${
+                      className={`w-full h-11 pl-3.5 pr-11 text-sm text-ink bg-ground border rounded-lg placeholder:text-muted focus:bg-surface focus:outline-none focus:ring-2 transition-all ${
                         errors.confirmPassword
                           ? 'border-[#DC2626] focus:border-[#DC2626] focus:ring-[#DC2626]/15'
                           : 'border-line focus:border-accent focus:ring-accent-ink/15'
@@ -471,7 +471,7 @@ export default function RegisterPage() {
                       aria-invalid={Boolean(errors.organization)}
                       aria-describedby={errors.organization ? 'register-organization-error' : undefined}
                       placeholder="e.g., City Engineer's Office"
-                      className={`w-full h-11 px-3.5 text-sm text-ink bg-ground border rounded-lg focus:bg-white focus:outline-none focus:ring-2 transition-all ${
+                      className={`w-full h-11 px-3.5 text-sm text-ink bg-ground border rounded-lg focus:bg-surface focus:outline-none focus:ring-2 transition-all ${
                         errors.organization
                           ? 'border-[#DC2626] focus:border-[#DC2626] focus:ring-[#DC2626]/15'
                           : 'border-line focus:border-accent focus:ring-accent-ink/15'
