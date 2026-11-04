@@ -20,6 +20,7 @@ import {
   signInWithLGUCredentials,
   requestLGUPasswordReset,
 } from '@/lib/supabase/client';
+import { safeNextPath } from '@/lib/auth/redirect';
 
 interface FormErrors {
   email?: string;
@@ -91,7 +92,7 @@ export default function LoginPage() {
         // up the new session cookie in Server Components. The toast lives in
         // the root layout, so it stays up across the navigation.
         toast({ id: 'auth', tone: 'success', title: 'Signed in', description: 'Opening the LGU monitoring workspace.' });
-        router.push('/dashboard');
+        router.push(safeNextPath(new URLSearchParams(window.location.search).get('next')));
         router.refresh();
       } else if (!result.configured) {
         setStatusNotice({

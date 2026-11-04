@@ -3,6 +3,7 @@
 import React from 'react';
 import { ExternalLink } from 'lucide-react';
 import type { DpwhComponent } from '@/types/dpwh';
+import { ReportRecordButton } from '@/components/reports/ReportRecordButton';
 import type { DpwhContractDetail } from '@/lib/integrations/dpwh/nationwide/detail';
 import {
   categoryLabel,
@@ -10,6 +11,7 @@ import {
   formatDate,
   formatPeso,
   formatProgress,
+  readableTitle,
   statusLabel,
   warningLabel,
 } from './format';
@@ -51,6 +53,11 @@ export function DpwhContractDetails({ detail }: { detail: DpwhContractDetail }) 
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <p className="text-xs text-subtle">Something wrong with this record?</p>
+        <ReportRecordButton source="dpwh_contracts" recordId={c.contract_id} recordTitle={readableTitle(c.title)} />
+      </div>
+
       <p className="text-xs text-subtle leading-relaxed px-4 py-3 rounded-card bg-sunken">
         As published by the DPWH Transparency Portal via BetterGov.ph. Amounts are contract values, not
         disbursements. {detail.review?.is_field_verified

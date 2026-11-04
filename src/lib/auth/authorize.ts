@@ -2,7 +2,7 @@ import 'server-only';
 import { cache } from 'react';
 import { isSupabaseConfigured } from '@/lib/supabase/env';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import type { AppRole, CurrentProfile } from '@/types/auth';
+import { DEFAULT_ACCOUNT_TYPE, isAccountType, type AppRole, type CurrentProfile } from '@/types/auth';
 
 export type AuthorizationErrorCode = 'NOT_CONFIGURED' | 'UNAUTHENTICATED' | 'FORBIDDEN';
 
@@ -43,7 +43,7 @@ export const getCurrentProfile = cache(async (): Promise<CurrentProfile | null> 
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, full_name, role, organization_id, is_active')
+    .select('id, full_name, role, account_type, organization_id, is_active')
     .eq('id', user.id)
     .maybeSingle();
 
@@ -56,6 +56,7 @@ export const getCurrentProfile = cache(async (): Promise<CurrentProfile | null> 
     email: user.email ?? null,
     fullName: profile.full_name,
     role: profile.role as AppRole,
+    accountType: isAccountType(profile.account_type) ? profile.account_type : DEFAULT_ACCOUNT_TYPE,
     organizationId: profile.organization_id,
   };
 });
