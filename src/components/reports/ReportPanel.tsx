@@ -148,6 +148,7 @@ export function ReportPanel({
     }
   };
 
+  const signedOutLocked = auth === 'signed-out' && locked;
   const fieldError = (field: Field) => (error?.field === field ? error.message : null);
   const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in the reporter's timezone
 
@@ -174,15 +175,18 @@ export function ReportPanel({
       <h2 id={headingId} className="text-[17px] font-semibold tracking-[-0.01em] text-ink">
         {doneId ? 'Report received' : auth === 'signed-in' || !locked ? 'Report a concern' : 'Sign in to report'}
       </h2>
-      <p id={hintId} className="mt-1.5 text-sm leading-relaxed text-subtle break-words">
-        {locked && target ? (
-          <>
-            About: <span className="font-medium text-ink">{target.title}</span>
-          </>
-        ) : (
-          'Tell us which project this is about, using its project code.'
-        )}
-      </p>
+      {/* A signed-out visitor on a project only needs the sign-in prompt; the long project title would bury it. */}
+      {!signedOutLocked && (
+        <p id={hintId} className="mt-1.5 text-sm leading-relaxed text-subtle break-words">
+          {locked && target ? (
+            <>
+              About: <span className="font-medium text-ink">{target.title}</span>
+            </>
+          ) : (
+            'Tell us which project this is about, using its project code.'
+          )}
+        </p>
+      )}
 
       {auth === 'checking' && (
         <p className="mt-5 flex items-center gap-2 text-sm text-subtle" role="status">
@@ -199,7 +203,7 @@ export function ReportPanel({
       {auth === 'signed-out' && (
         <div className="mt-5 space-y-4">
           {!locked && finder}
-          <p className="text-sm leading-relaxed text-subtle">
+          <p id={signedOutLocked ? hintId : undefined} className="text-sm leading-relaxed text-subtle">
             Reports are tied to an account so LGU staff can follow up and so the system is not
             flooded with anonymous submissions. Reading projects never needs an account.
           </p>
