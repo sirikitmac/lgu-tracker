@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/brand/lockup-horizontal-on-dark.png">
+    <img src="public/brand/lockup-horizontal-on-light.png" width="380" alt="Bantay Proyekto, LGU Project Tracker">
+  </picture>
+</p>
+
 # 🏗️ LGU Tracker
 
 ### *Bantay Proyekto, Gabay sa Progreso.* 🇵🇭

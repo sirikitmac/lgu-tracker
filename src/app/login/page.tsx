@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { LguMark } from '@/components/layout/Navbar';
+import { BrandLockup } from '@/components/ui/BrandLockup';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/Toast';
@@ -12,7 +13,6 @@ import {
   AlertCircle,
   CheckCircle2,
   ArrowLeft,
-  Shield,
   Info,
 } from 'lucide-react';
 import {
@@ -179,12 +179,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md space-y-6">
           {/* Branding Header */}
           <div className="text-center space-y-1.5">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-card bg-ink text-on-ink mx-auto mb-2 shadow-xs">
-              <Shield className="w-5 h-5 text-[#F59E0B]" aria-hidden="true" />
-            </div>
-            <div className="font-display text-2xl sm:text-3xl font-bold text-ink tracking-tight">
-              LGU Tracker
-            </div>
+            <BrandLockup variant="stacked" sizes="176px" className="mx-auto mb-1 h-auto w-40 sm:w-44" />
             <p className="font-display text-sm sm:text-base font-semibold text-[#F59E0B]">
               Bantay Proyekto, Gabay sa Progreso.
             </p>

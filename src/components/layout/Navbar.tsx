@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import { BpAssistant } from '@/components/bp/BpAssistant';
@@ -34,14 +35,20 @@ const NAV_ITEMS: NavItem[] = [
 
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink';
 
-/** The product mark: a site pin in signal orange, as on DPWH work-zone signs. */
+/**
+ * The product mark: the official Bantay Proyekto app icon (public/brand). It is
+ * decorative here because the product name is always written beside it.
+ */
 export function LguMark({ className = 'w-7 h-7' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 28 28" className={className} aria-hidden="true">
-      <rect width="28" height="28" rx="8" fill="var(--color-accent)" />
-      <path d="M14 6.5a5.5 5.5 0 0 0-5.5 5.5c0 4.1 5.5 9.5 5.5 9.5s5.5-5.4 5.5-9.5A5.5 5.5 0 0 0 14 6.5Z" fill="#050F16" />
-      <circle cx="14" cy="12" r="2.1" fill="var(--color-accent)" />
-    </svg>
+    <Image
+      src="/brand/icon-96.png"
+      alt=""
+      width={96}
+      height={96}
+      sizes="36px"
+      className={`${className} shrink-0`}
+    />
   );
 }
 

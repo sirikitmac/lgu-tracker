@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import Link from 'next/link';
+import { LguMark } from '@/components/layout/Navbar';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -144,16 +145,19 @@ export function DashboardSidebar({
     <div className="flex flex-col h-full bg-night text-white w-64 shrink-0 select-none border-r border-white/10">
       {/* Brand Header */}
       <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
-        <div>
-          <Link
-            href="/"
-            className="font-display text-lg font-bold tracking-tight text-white hover:text-slate-200 transition-colors block rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F59E0B]"
-          >
-            LGU Tracker
-          </Link>
-          <p className="text-xs text-[#F59E0B] font-medium mt-0.5">
-            Bantay Proyekto, Gabay sa Progreso.
-          </p>
+        <div className="flex items-center gap-3 min-w-0">
+          <LguMark className="w-10 h-10" />
+          <div className="min-w-0">
+            <Link
+              href="/"
+              className="font-display text-lg font-bold tracking-tight text-white hover:text-slate-200 transition-colors block rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F59E0B]"
+            >
+              LGU Tracker
+            </Link>
+            <p className="text-xs text-[#F59E0B] font-medium mt-0.5">
+              Bantay Proyekto, Gabay sa Progreso.
+            </p>
+          </div>
         </div>
         <button
           type="button"
