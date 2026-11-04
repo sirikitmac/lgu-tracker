@@ -1,5 +1,4 @@
 import { Fragment } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, ArrowUpRight, ExternalLink, Map as MapIcon, Search } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
@@ -136,20 +135,6 @@ function Hero({ data }: { data: LandingData }) {
       <PhotoWall />
 
       <div className={`${FRAME} relative flex min-h-[calc(100svh-3.5rem)] flex-col justify-end pt-24 pb-10 lg:pb-14`}>
-        {/* The hero is always dark, so it always uses the on-dark lockup. The soft shade keeps it clear of the photo wall. */}
-        <div className="hero-sub relative mb-7 w-36 sm:w-44 lg:mb-9 lg:w-48">
-          <span aria-hidden="true" className="pointer-events-none absolute -inset-6 -z-10 rounded-full bg-night/75 blur-2xl" />
-          <Image
-            src="/brand/lockup-horizontal-on-dark.png"
-            alt="Bantay Proyekto, LGU Project Tracker"
-            width={1054}
-            height={669}
-            sizes="(min-width: 1024px) 192px, 176px"
-            priority
-            className="h-auto w-full"
-          />
-        </div>
-
         <h1 id="hero-title" className="display text-[length:var(--step-hero)] max-w-[14ch] lg:max-w-none">
           {HEADLINE.map((line, l) => (
             <span key={l} className="block">
