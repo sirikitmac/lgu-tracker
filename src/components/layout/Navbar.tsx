@@ -4,9 +4,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
+import { LayoutDashboard, LogOut, Menu, X } from 'lucide-react';
 import { BpAssistant } from '@/components/bp/BpAssistant';
 import { BrandWordmark } from '@/components/ui/BrandWordmark';
+import { signOutAction } from '@/lib/actions/auth';
+import { getSupabaseBrowserClient } from '@/lib/supabase/browser';
+import { STAFF_ROLES, type AppRole } from '@/types/auth';
 import { ThemeSegmented, ThemeToggle } from './ThemeToggle';
 
 /**
@@ -36,6 +39,84 @@ const NAV_ITEMS: NavItem[] = [
 
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink';
 
+type Account = { state: 'out' } | { state: 'in'; staff: boolean };
+
+/**
+ * Whether someone is signed in, and whether they are LGU staff, so the bar can
+ * offer the workspace to staff and a sign-out to everyone signed in. Only a
+ * convenience for what to show: the workspace and every action check the role
+ * again on the server. Until it is known, the bar shows "LGU Sign In".
+ */
+function useAccount(): Account {
+  const [userId, setUserId] = useState<string | null>(null);
+  const [staff, setStaff] = useState(false);
+
+  useEffect(() => {
+    const client = getSupabaseBrowserClient();
+    if (!client) return;
+    let active = true;
+    client.auth.getSession().then(({ data }) => active && setUserId(data.session?.user.id ?? null));
+    const { data: listener } = client.auth.onAuthStateChange((_event, session) => setUserId(session?.user.id ?? null));
+    return () => {
+      active = false;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  // A separate step, because the auth listener must not wait on a database call.
+  useEffect(() => {
+    const client = getSupabaseBrowserClient();
+    if (!client || !userId) {
+      setStaff(false);
+      return;
+    }
+    let active = true;
+    client
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .maybeSingle()
+      .then(({ data }) => active && setStaff(Boolean(data) && STAFF_ROLES.includes(data!.role as AppRole)));
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+
+  return userId ? { state: 'in', staff } : { state: 'out' };
+}
+
+/** "LGU Sign In" for visitors; the workspace (staff) and Sign out for someone signed in. */
+function AccountActions({ account, layout, onNavigate }: { account: Account; layout: 'bar' | 'menu'; onNavigate?: () => void }) {
+  const bar = layout === 'bar';
+  const pill = bar
+    ? `inline-flex items-center gap-1.5 h-9 px-4 rounded-full text-[13px] font-semibold whitespace-nowrap transition-colors ${focusRing}`
+    : `flex items-center justify-center gap-2 w-full min-h-11 rounded-full text-sm font-semibold transition-colors ${focusRing}`;
+  const dark = `${pill} bg-ink text-on-ink hover:bg-ink-soft`;
+  const quiet = `${pill} cursor-pointer border border-line-strong bg-surface text-ink hover:bg-sunken`;
+
+  if (account.state === 'out') {
+    return (
+      <Link href="/login" onClick={onNavigate} className={dark}>
+        LGU Sign In
+      </Link>
+    );
+  }
+  return (
+    <>
+      {account.staff && (
+        <Link href="/dashboard" onClick={onNavigate} className={dark}>
+          <LayoutDashboard className="w-4 h-4" aria-hidden="true" /> Workspace
+        </Link>
+      )}
+      <form action={signOutAction} className={bar ? undefined : 'w-full'}>
+        <button type="submit" className={quiet}>
+          <LogOut className="w-4 h-4" aria-hidden="true" /> Sign out
+        </button>
+      </form>
+    </>
+  );
+}
+
 /**
  * The product mark: the official Bantay Proyekto app icon (public/brand). It is
  * decorative here because the product name is always written beside it.
@@ -55,6 +136,7 @@ export function LguMark({ className = 'w-7 h-7' }: { className?: string }) {
 
 export function Navbar() {
   const pathname = usePathname() ?? '/';
+  const account = useAccount();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -111,12 +193,9 @@ export function Navbar() {
           <span className="hidden lg:block">
             <ThemeToggle />
           </span>
-          <Link
-            href="/login"
-            className={`hidden lg:inline-flex items-center h-9 px-4 rounded-full bg-ink text-on-ink text-[13px] font-semibold whitespace-nowrap hover:bg-ink-soft transition-colors ${focusRing}`}
-          >
-            LGU Sign In
-          </Link>
+          <span className="hidden lg:flex items-center gap-1.5">
+            <AccountActions account={account} layout="bar" />
+          </span>
           <button
             ref={menuButtonRef}
             type="button"
@@ -160,13 +239,7 @@ export function Navbar() {
           </nav>
           <div className="mt-4 pt-4 border-t border-line space-y-3">
             <ThemeSegmented />
-            <Link
-              href="/login"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center justify-center w-full min-h-11 rounded-full bg-ink text-on-ink text-sm font-semibold hover:bg-ink-soft transition-colors ${focusRing}`}
-            >
-              LGU Sign In
-            </Link>
+            <AccountActions account={account} layout="menu" onNavigate={() => setMobileMenuOpen(false)} />
           </div>
         </div>
       )}
