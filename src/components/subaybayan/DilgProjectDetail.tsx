@@ -16,6 +16,7 @@ import {
   subaybayanStatusFill,
 } from '@/lib/subaybayan/ui';
 import { formatCount, formatDate, formatPeso, readableTitle } from '@/components/dpwh/format';
+import { ReportRecordButton } from '@/components/reports/ReportRecordButton';
 import { CostNote, ReviewNote } from './CostNotes';
 
 function Field({ label, children, wide = false }: { label: string; children: React.ReactNode; wide?: boolean }) {
@@ -76,6 +77,13 @@ export function DilgProjectDetail({ p }: { p: SubaybayanDetail }) {
         <p className="text-xs text-muted">
           Category: LGU Tracker classification ({p.classification_reason}), not an official DILG category.
         </p>
+        <div>
+          <ReportRecordButton
+            source={p.source_dataset === 'lgsf' ? 'subaybayan_lgsf' : 'subaybayan_rlip'}
+            recordId={p.id}
+            recordTitle={readableTitle(p.title)}
+          />
+        </div>
       </header>
 
       <div className="bg-surface border border-line rounded-card p-5 sm:p-8 space-y-8">
