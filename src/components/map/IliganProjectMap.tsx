@@ -280,7 +280,7 @@ export default function IliganProjectMap({
         <button
           type="button"
           onClick={handleResetMapView}
-          className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-ink bg-surface/95 hover:bg-white border border-line rounded-lg shadow-sm transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-accent-ink"
+          className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-ink bg-surface/95 hover:bg-sunken border border-line rounded-lg shadow-sm transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-accent-ink"
         >
           <Compass className="w-3.5 h-3.5 text-accent-ink" aria-hidden="true" />
           <span>Reset Iligan City View</span>

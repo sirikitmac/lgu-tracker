@@ -72,7 +72,7 @@ export function ProjectFilters({
             value={filters.searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search by project title, code (e.g. LGU-2026), or barangay..."
-            className="w-full h-10 pl-10 pr-4 text-sm text-ink bg-ground border border-line rounded-lg placeholder:text-muted focus:bg-white focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ink/15 transition-all"
+            className="w-full h-10 pl-10 pr-4 text-sm text-ink bg-ground border border-line rounded-lg placeholder:text-muted focus:bg-surface focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ink/15 transition-all"
           />
         </div>
 
@@ -89,7 +89,7 @@ export function ProjectFilters({
               onChange={(e) =>
                 onCategoryChange(e.target.value as ProjectCategory | 'All')
               }
-              className="w-full h-10 px-3 text-xs sm:text-sm font-medium text-ink bg-ground border border-line rounded-lg focus:bg-white focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ink/15 transition-all cursor-pointer"
+              className="w-full h-10 px-3 text-xs sm:text-sm font-medium text-ink bg-ground border border-line rounded-lg focus:bg-surface focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ink/15 transition-all cursor-pointer"
             >
               <option value="All">All Project Categories</option>
               {PROJECT_CATEGORIES.map((category) => (
@@ -115,7 +115,7 @@ export function ProjectFilters({
               onChange={(e) =>
                 onSortChange(e.target.value as ProjectSortOption)
               }
-              className="w-full h-10 pl-8 pr-3 text-xs sm:text-sm font-medium text-ink bg-ground border border-line rounded-lg focus:bg-white focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ink/15 transition-all cursor-pointer"
+              className="w-full h-10 pl-8 pr-3 text-xs sm:text-sm font-medium text-ink bg-ground border border-line rounded-lg focus:bg-surface focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ink/15 transition-all cursor-pointer"
             >
               <option value="budget-desc">Budget: High to Low</option>
               <option value="budget-asc">Budget: Low to High</option>

@@ -3,8 +3,11 @@
  * so a visitor who was asked to sign in (for example to report a project) returns
  * to where they were. The value comes from the URL, so it is untrusted: only
  * same-site paths are allowed, which prevents an "open redirect" to another site.
+ *
+ * With nothing usable the fallback is /auth/continue, which sends staff to the
+ * workspace and everyone else to the projects directory.
  */
-export function safeNextPath(raw: string | null | undefined, fallback = '/dashboard'): string {
+export function safeNextPath(raw: string | null | undefined, fallback = '/auth/continue'): string {
   if (!raw || raw.length > 2000) return fallback;
   // Must be a path on this site: starts with a single slash, no backslashes or control characters.
   if (!raw.startsWith('/') || raw.startsWith('//') || /[\\\u0000-\u001f]/.test(raw)) return fallback;

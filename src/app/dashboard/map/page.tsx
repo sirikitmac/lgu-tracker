@@ -280,7 +280,7 @@ function ProjectMapPageContent() {
                     }))
                   }
                   placeholder="Search project name, code, or barangay..."
-                  className="w-full h-10 pl-10 pr-3.5 text-sm text-ink bg-ground border border-line rounded-lg placeholder:text-muted focus:bg-white focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ink/15 transition-all"
+                  className="w-full h-10 pl-10 pr-3.5 text-sm text-ink bg-ground border border-line rounded-lg placeholder:text-muted focus:bg-surface focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ink/15 transition-all"
                 />
               </div>
 
@@ -298,7 +298,7 @@ function ProjectMapPageContent() {
                       status: e.target.value as ProjectStatus | 'All',
                     }))
                   }
-                  className="w-full h-10 px-3 text-xs sm:text-sm font-medium text-ink bg-ground border border-line rounded-lg focus:bg-white focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ink/15 transition-all cursor-pointer"
+                  className="w-full h-10 px-3 text-xs sm:text-sm font-medium text-ink bg-ground border border-line rounded-lg focus:bg-surface focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ink/15 transition-all cursor-pointer"
                 >
                   <option value="All">All Statuses</option>
                   {PROJECT_STATUSES.map((status) => (
@@ -323,7 +323,7 @@ function ProjectMapPageContent() {
                       barangay: e.target.value,
                     }))
                   }
-                  className="w-full h-10 px-3 text-xs sm:text-sm font-medium text-ink bg-ground border border-line rounded-lg focus:bg-white focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ink/15 transition-all cursor-pointer"
+                  className="w-full h-10 px-3 text-xs sm:text-sm font-medium text-ink bg-ground border border-line rounded-lg focus:bg-surface focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ink/15 transition-all cursor-pointer"
                 >
                   <option value="All">All Iligan Barangays</option>
                   {availableBarangays.map((barangay) => (
@@ -348,7 +348,7 @@ function ProjectMapPageContent() {
                       category: e.target.value as ProjectCategory | 'All',
                     }))
                   }
-                  className="w-full h-10 px-3 text-xs sm:text-sm font-medium text-ink bg-ground border border-line rounded-lg focus:bg-white focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ink/15 transition-all cursor-pointer"
+                  className="w-full h-10 px-3 text-xs sm:text-sm font-medium text-ink bg-ground border border-line rounded-lg focus:bg-surface focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ink/15 transition-all cursor-pointer"
                 >
                   <option value="All">All Project Categories</option>
                   {PROJECT_CATEGORIES.map((category) => (

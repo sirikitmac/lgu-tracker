@@ -1,10 +1,11 @@
 'use server';
 
 import { requireRole } from '@/lib/auth/authorize';
+import { findReportTargets } from '@/lib/reports/lookup';
 import { loadReportableRecord } from '@/lib/reports/record';
 import { validateRecordReport, type RecordReportInput } from '@/lib/reports/validate';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { reportCategoryLabel } from '@/types/report';
+import { reportCategoryLabel, type ReportTarget } from '@/types/report';
 import { type ActionResult, toActionError } from './shared';
 
 /**
@@ -70,6 +71,26 @@ export async function submitRecordReport(
     }
 
     return { ok: true, data: { id: data.id as string } };
+  } catch (error) {
+    return toActionError(error);
+  }
+}
+
+/**
+ * Finds the project that goes with a typed project code, for the report form.
+ * The directory is public, so this needs no account; the report itself does.
+ */
+export async function lookupProjectByCode(code: unknown): Promise<ActionResult<{ matches: ReportTarget[] }>> {
+  try {
+    if (typeof code !== 'string' || code.length > 200) {
+      return { ok: false, error: 'Enter the project code first.' };
+    }
+    const supabase = await createSupabaseServerClient();
+    if (!supabase) {
+      return { ok: false, error: 'Project lookup is not available right now.' };
+    }
+    const result = await findReportTargets(supabase, code);
+    return result.ok ? { ok: true, data: { matches: result.matches } } : result;
   } catch (error) {
     return toActionError(error);
   }

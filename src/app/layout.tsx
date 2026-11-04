@@ -32,8 +32,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
+  modal,
 }: Readonly<{
   children: React.ReactNode;
+  /** Parallel route: windows opened over the current page, such as sign-in (src/app/@modal). */
+  modal: React.ReactNode;
 }>) {
   return (
     // Rendered light; the inline script swaps in a saved theme before first
@@ -48,7 +51,10 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-screen flex flex-col bg-ground text-ink">
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          {children}
+          {modal}
+        </ToastProvider>
       </body>
     </html>
   );

@@ -9,9 +9,9 @@ test('keeps same-site paths, including query and hash', () => {
 });
 
 test('falls back when there is nothing usable', () => {
-  assert.equal(safeNextPath(null), '/dashboard');
-  assert.equal(safeNextPath(undefined), '/dashboard');
-  assert.equal(safeNextPath(''), '/dashboard');
+  assert.equal(safeNextPath(null), '/auth/continue');
+  assert.equal(safeNextPath(undefined), '/auth/continue');
+  assert.equal(safeNextPath(''), '/auth/continue');
   assert.equal(safeNextPath('', '/projects'), '/projects');
 });
 
@@ -27,12 +27,12 @@ test('rejects anything that could leave the site', () => {
     'data:text/html,hi',
     `/${'a'.repeat(3000)}`,
   ]) {
-    assert.equal(safeNextPath(bad), '/dashboard', bad);
+    assert.equal(safeNextPath(bad), '/auth/continue', bad);
   }
 });
 
 test('does not send people back to the sign-in or sign-up pages', () => {
-  assert.equal(safeNextPath('/login'), '/dashboard');
-  assert.equal(safeNextPath('/login?next=/projects'), '/dashboard');
-  assert.equal(safeNextPath('/register'), '/dashboard');
+  assert.equal(safeNextPath('/login'), '/auth/continue');
+  assert.equal(safeNextPath('/login?next=/projects'), '/auth/continue');
+  assert.equal(safeNextPath('/register'), '/auth/continue');
 });

@@ -39,3 +39,13 @@ export function isReportCategory(value: unknown): value is ReportCategory {
 export function reportCategoryLabel(value: ReportCategory): string {
   return REPORT_CATEGORIES.find((category) => category.value === value)?.label ?? value;
 }
+
+/** A project a report is about, as the form shows it. */
+export interface ReportTarget {
+  /** The directory's `source` id, e.g. dpwh_contracts. */
+  source: string;
+  recordId: string;
+  title: string;
+  /** What the directory shows as the project code (the record id when the source has no separate code). */
+  code: string;
+}

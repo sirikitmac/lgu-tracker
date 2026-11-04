@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { LguMark } from '@/components/layout/Navbar';
+import { BrandLockup } from '@/components/ui/BrandLockup';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import {
   Eye,
@@ -10,7 +11,6 @@ import {
   AlertCircle,
   CheckCircle2,
   ArrowLeft,
-  Shield,
   Info,
 } from 'lucide-react';
 import { isSupabaseConfigured, registerLGUAccount } from '@/lib/supabase/client';
@@ -170,12 +170,7 @@ export default function RegisterPage() {
         <div className="w-full max-w-md space-y-6">
           {/* Branding Header */}
           <div className="text-center space-y-1.5">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-card bg-ink text-on-ink mx-auto mb-2 shadow-xs">
-              <Shield className="w-5 h-5 text-[#F59E0B]" aria-hidden="true" />
-            </div>
-            <div className="font-display text-2xl sm:text-3xl font-bold text-ink tracking-tight">
-              LGU Tracker
-            </div>
+            <BrandLockup variant="stacked" sizes="176px" className="mx-auto mb-1 h-auto w-40 sm:w-44" />
             <p className="font-display text-sm sm:text-base font-semibold text-[#F59E0B]">
               Bantay Proyekto, Gabay sa Progreso.
             </p>
@@ -213,7 +208,7 @@ export default function RegisterPage() {
                     aria-describedby={
                       errors.fullName ? 'register-full-name-error' : undefined
                     }
-                    className={`w-full h-11 px-3.5 text-sm text-ink bg-ground border rounded-lg placeholder:text-muted focus:bg-white focus:outline-none focus:ring-2 transition-all ${
+                    className={`w-full h-11 px-3.5 text-sm text-ink bg-ground border rounded-lg placeholder:text-muted focus:bg-surface focus:outline-none focus:ring-2 transition-all ${
                       errors.fullName
                         ? 'border-[#DC2626] focus:border-[#DC2626] focus:ring-[#DC2626]/15'
                         : 'border-line focus:border-accent focus:ring-accent-ink/15'
@@ -256,7 +251,7 @@ export default function RegisterPage() {
                     aria-describedby={
                       errors.email ? 'register-email-error' : undefined
                     }
-                    className={`w-full h-11 px-3.5 text-sm text-ink bg-ground border rounded-lg placeholder:text-muted focus:bg-white focus:outline-none focus:ring-2 transition-all ${
+                    className={`w-full h-11 px-3.5 text-sm text-ink bg-ground border rounded-lg placeholder:text-muted focus:bg-surface focus:outline-none focus:ring-2 transition-all ${
                       errors.email
                         ? 'border-[#DC2626] focus:border-[#DC2626] focus:ring-[#DC2626]/15'
                         : 'border-line focus:border-accent focus:ring-accent-ink/15'
@@ -300,7 +295,7 @@ export default function RegisterPage() {
                       aria-describedby={
                         errors.password ? 'register-password-error' : undefined
                       }
-                      className={`w-full h-11 pl-3.5 pr-11 text-sm text-ink bg-ground border rounded-lg placeholder:text-muted focus:bg-white focus:outline-none focus:ring-2 transition-all ${
+                      className={`w-full h-11 pl-3.5 pr-11 text-sm text-ink bg-ground border rounded-lg placeholder:text-muted focus:bg-surface focus:outline-none focus:ring-2 transition-all ${
                         errors.password
                           ? 'border-[#DC2626] focus:border-[#DC2626] focus:ring-[#DC2626]/15'
                           : 'border-line focus:border-accent focus:ring-accent-ink/15'
@@ -362,7 +357,7 @@ export default function RegisterPage() {
                           ? 'register-confirm-password-error'
                           : undefined
                       }
-                      className={`w-full h-11 pl-3.5 pr-11 text-sm text-ink bg-ground border rounded-lg placeholder:text-muted focus:bg-white focus:outline-none focus:ring-2 transition-all ${
+                      className={`w-full h-11 pl-3.5 pr-11 text-sm text-ink bg-ground border rounded-lg placeholder:text-muted focus:bg-surface focus:outline-none focus:ring-2 transition-all ${
                         errors.confirmPassword
                           ? 'border-[#DC2626] focus:border-[#DC2626] focus:ring-[#DC2626]/15'
                           : 'border-line focus:border-accent focus:ring-accent-ink/15'
@@ -476,7 +471,7 @@ export default function RegisterPage() {
                       aria-invalid={Boolean(errors.organization)}
                       aria-describedby={errors.organization ? 'register-organization-error' : undefined}
                       placeholder="e.g., City Engineer's Office"
-                      className={`w-full h-11 px-3.5 text-sm text-ink bg-ground border rounded-lg focus:bg-white focus:outline-none focus:ring-2 transition-all ${
+                      className={`w-full h-11 px-3.5 text-sm text-ink bg-ground border rounded-lg focus:bg-surface focus:outline-none focus:ring-2 transition-all ${
                         errors.organization
                           ? 'border-[#DC2626] focus:border-[#DC2626] focus:ring-[#DC2626]/15'
                           : 'border-line focus:border-accent focus:ring-accent-ink/15'
@@ -558,35 +553,6 @@ export default function RegisterPage() {
                 </Link>
               </div>
             )}
-
-            {/* Supabase Integration Readiness */}
-            <div className="mt-6 pt-5 border-t border-line space-y-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-ink">
-                  Supabase Auth Status
-                </span>
-                <span
-                  className={`tabular-nums font-medium ${
-                    isSupabaseConfigured ? 'text-[#16A34A]' : 'text-muted'
-                  }`}
-                >
-                  {isSupabaseConfigured ? 'Connected' : 'Prepared (Env Standby)'}
-                </span>
-              </div>
-              <p className="text-xs text-muted leading-relaxed">
-                Wired to the typed Supabase Auth adapter (
-                <code className="tabular-nums text-[11px] text-ink">
-                  src/lib/supabase/client.ts
-                </code>
-                ). Public transparency data never requires an account:
-              </p>
-              <Link
-                href="/dashboard?mode=public"
-                className="inline-flex items-center justify-center w-full min-h-[40px] px-3.5 py-2 text-xs font-semibold text-ink bg-ground hover:bg-sunken border border-line rounded-lg transition-colors whitespace-nowrap"
-              >
-                Browse Public Transparency View
-              </Link>
-            </div>
           </div>
         </div>
       </main>

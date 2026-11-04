@@ -7,6 +7,7 @@ import { BpCardButton } from '@/components/landing/BpCardButton';
 import { CountUp } from '@/components/landing/CountUp';
 import { CoverageExplorer } from '@/components/landing/CoverageExplorer';
 import { Photo } from '@/components/landing/Photo';
+import { ReportConcernButton } from '@/components/reports/ReportRecordButton';
 import { Intro } from '@/components/landing/Intro';
 import { CRITICAL_TILES, PhotoWall } from '@/components/landing/PhotoWall';
 import { Reveal } from '@/components/landing/Reveal';
@@ -78,6 +79,7 @@ export default async function LandingPage() {
         <HowItWorks example={data.example} regionPoints={data.regions.find((r) => r.region === 'Region X')?.points ?? []} />
         <Coverage data={data} />
         <AboutData data={data} />
+        <ReportCta />
         <Closing />
       </main>
 
@@ -743,6 +745,54 @@ function AboutData({ data }: { data: LandingData }) {
             </Link>
           </p>
         </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------------- */
+
+const REPORT_STEPS = [
+  { title: 'Find the project code', text: 'It is shown under every project title in the directory.' },
+  { title: 'Sign in', text: 'Reports are tied to an account so LGU staff can follow up.' },
+  { title: 'Say what you saw', text: 'Pick the closest concern and describe what you directly know.' },
+];
+
+/**
+ * Where a visitor who spots a problem is told how to report it. Follows "About
+ * the data", which says the values are shown as published and not verified.
+ * The button asks for the project code; the report itself needs an account.
+ */
+function ReportCta() {
+  return (
+    <section id="report" className="bg-sunken py-16 lg:py-24 scroll-mt-16" aria-labelledby="report-title">
+      <div className={`${FRAME} grid grid-cols-1 lg:grid-cols-12 gap-x-12 gap-y-10 items-center`}>
+        <div className="lg:col-span-6">
+          <h2 id="report-title" data-reveal className="display text-[length:var(--step-head)] text-ink">
+            See something wrong<span className="text-accent-ink">?</span>
+          </h2>
+          <p data-reveal style={delay(70)} className="mt-5 text-[17px] leading-snug text-ink max-w-[46ch]">
+            Wrong details, work that stopped, a hazard on site. Tell the LGU. Your report is private: only you and
+            LGU staff can read it until staff review it.
+          </p>
+          <div data-reveal style={delay(140)} className="mt-7">
+            <ReportConcernButton size="xl" />
+          </div>
+        </div>
+
+        <ol className="lg:col-span-6 grid grid-cols-1 gap-3">
+          {REPORT_STEPS.map((s, i) => (
+            <li key={s.title} data-reveal style={delay(i * 70)} className="flex items-start gap-4 rounded-[20px] bg-surface p-5">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent text-[15px] font-bold text-night" aria-hidden="true">
+                {i + 1}
+              </span>
+              <div>
+                <h3 className="text-[17px] font-semibold tracking-[-0.01em] text-ink">{s.title}</h3>
+                <p className="mt-1 text-[15px] leading-snug text-subtle">{s.text}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   );
