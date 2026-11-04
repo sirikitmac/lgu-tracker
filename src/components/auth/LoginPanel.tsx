@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { ArrowRight, Eye, EyeOff, AlertCircle, CheckCircle2, Info, X } from 'lucide-react';
 import { FaApple, FaFacebook } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
-import { PHOTOS } from '@/components/landing/content';
 import { BrandLockup } from '@/components/ui/BrandLockup';
 import { useToast } from '@/components/ui/Toast';
 import { safeNextPath } from '@/lib/auth/redirect';
@@ -30,6 +29,12 @@ interface FormErrors {
 }
 
 type Notice = { type: 'info' | 'success' | 'error'; message: string } | null;
+
+/** The picture beside the form: a Philippine tarsier (public/landing). */
+const LOGIN_PHOTO = {
+  src: '/landing/philippine-tarsier.webp',
+  alt: 'A Philippine tarsier clinging to a branch, looking at the camera with its large amber eyes',
+};
 
 // The marks are vector (SVG), so they stay sharp at any screen density.
 const PROVIDERS: { id: OAuthProviderId; label: string; icon: React.ReactNode }[] = [
@@ -227,7 +232,6 @@ export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; on
     }
   };
 
-  const photo = PHOTOS.sanJuanico;
   const busy = isSubmitting || oauthPending !== null;
 
   return (
@@ -465,21 +469,23 @@ export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; on
         </div>
       </div>
 
-      {/* Photo: one of the credited pictures from the landing page (listed on /credits). */}
+      {/* Photo. The shade is only along the bottom, behind the text, so the animal stays clear. */}
       <aside className="relative hidden min-h-[560px] bg-night md:block">
-        {/* object-cover scales by the panel's height, so the picture is wider than the panel:
+        {/* object-cover scales by the panel's height, so the picture can be wider than the panel:
             `sizes` says how wide, which keeps the optimizer from choosing a smaller, blurry file. */}
         <Image
-          src={photo.src}
-          alt={photo.alt}
+          src={LOGIN_PHOTO.src}
+          alt={LOGIN_PHOTO.alt}
           fill
           quality={90}
           loading="eager"
-          sizes="(min-width: 768px) 1000px, 0px"
-          className="object-cover object-[32%_center]"
+          sizes="(min-width: 768px) 640px, 0px"
+          className="object-cover object-[45%_center]"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-night/90 via-night/30 to-night/5" aria-hidden="true" />
-        <div className="absolute inset-0 bg-[linear-gradient(160deg,rgba(255,122,31,0.22)_0%,transparent_45%)]" aria-hidden="true" />
+        <div
+          className="absolute inset-0 bg-[linear-gradient(to_top,rgba(5,15,22,0.9)_0%,rgba(5,15,22,0.5)_24%,transparent_50%)]"
+          aria-hidden="true"
+        />
         <div className="absolute inset-x-0 bottom-0 p-7 text-white">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-peach">Bantay Proyekto</p>
           <p className="mt-2 text-2xl font-bold leading-tight tracking-tight">Track every peso. See every project.</p>
