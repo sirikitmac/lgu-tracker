@@ -82,6 +82,7 @@ export function DilgProjectDetail({ p }: { p: SubaybayanDetail }) {
             source={p.source_dataset === 'lgsf' ? 'subaybayan_lgsf' : 'subaybayan_rlip'}
             recordId={p.id}
             recordTitle={readableTitle(p.title)}
+            projectCode={p.project_code}
           />
         </div>
       </header>
