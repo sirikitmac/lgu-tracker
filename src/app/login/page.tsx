@@ -348,6 +348,24 @@ export default function LoginPage() {
                   {isSubmitting ? 'Verifying Credentials...' : 'Sign In'}
                 </button>
 
+                {/* Guests browse the public directory, map and dashboard; no session is created. */}
+                <div className="relative" aria-hidden="true">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-line" />
+                  </div>
+                  <p className="relative mx-auto w-fit bg-surface px-3 text-xs text-muted">or</p>
+                </div>
+
+                <Link
+                  href="/projects"
+                  className="flex w-full min-h-[44px] items-center justify-center py-2.5 px-4 text-sm font-semibold text-ink bg-surface border border-line-strong hover:bg-sunken rounded-lg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink"
+                >
+                  Continue as guest
+                </Link>
+                <p className="-mt-2 text-center text-xs text-muted">
+                  Browse projects and the map without an account. You need an account to file a report.
+                </p>
+
                 <p className="text-center text-xs text-muted">
                   Don&apos;t have an account?{' '}
                   <Link
