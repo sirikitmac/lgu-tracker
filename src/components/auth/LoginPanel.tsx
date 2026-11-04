@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, AlertCircle, CheckCircle2, Info, X } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, AlertCircle, CheckCircle2, Info, X } from 'lucide-react';
 import { FaApple, FaFacebook } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 import { PHOTOS } from '@/components/landing/content';
@@ -31,10 +31,11 @@ interface FormErrors {
 
 type Notice = { type: 'info' | 'success' | 'error'; message: string } | null;
 
+// The marks are vector (SVG), so they stay sharp at any screen density.
 const PROVIDERS: { id: OAuthProviderId; label: string; icon: React.ReactNode }[] = [
-  { id: 'google', label: 'Google', icon: <FcGoogle className="h-5 w-5" aria-hidden="true" /> },
-  { id: 'facebook', label: 'Facebook', icon: <FaFacebook className="h-5 w-5 text-[#1877F2]" aria-hidden="true" /> },
-  { id: 'apple', label: 'Apple', icon: <FaApple className="h-5 w-5 text-ink" aria-hidden="true" /> },
+  { id: 'google', label: 'Google', icon: <FcGoogle className="h-6 w-6" aria-hidden="true" /> },
+  { id: 'facebook', label: 'Facebook', icon: <FaFacebook className="h-6 w-6 text-[#1877F2]" aria-hidden="true" /> },
+  { id: 'apple', label: 'Apple', icon: <FaApple className="h-6 w-6 text-ink" aria-hidden="true" /> },
 ];
 
 const inputClass = (invalid: boolean) =>
@@ -48,6 +49,48 @@ const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-
 
 function validateEmailFormat(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+/**
+ * The orange call to action, in the site's own Public Sans. On hover the
+ * gradient slides, a glint crosses the button and the arrow nudges forward,
+ * with a small lift; a click presses it in. Dark text, because white on this
+ * orange would not be readable. Reduced motion keeps the colour change only.
+ */
+function PrimaryButton({
+  busy,
+  busyLabel,
+  children,
+}: {
+  busy: boolean;
+  busyLabel: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="submit"
+      disabled={busy}
+      className={`group relative isolate flex w-full min-h-[50px] cursor-pointer items-center justify-center overflow-hidden rounded-xl px-5 text-[15px] font-bold tracking-[0.005em] text-night bg-[linear-gradient(110deg,#FFB067_0%,#FF7A1F_45%,#F0620A_100%)] bg-[length:190%_100%] bg-[position:0%_50%] shadow-[0_10px_24px_-10px_rgba(255,122,31,0.85)] transition-[background-position,transform,box-shadow] duration-500 ease-out hover:bg-[position:100%_50%] hover:-translate-y-0.5 hover:shadow-[0_16px_30px_-10px_rgba(255,122,31,0.95)] active:translate-y-0 active:scale-[0.985] active:shadow-[0_6px_14px_-8px_rgba(255,122,31,0.9)] disabled:pointer-events-none disabled:opacity-60 disabled:shadow-none motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${focusRing}`}
+    >
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 -left-1/3 z-0 w-1/5 -skew-x-[20deg] bg-white/35 blur-[2px] group-hover:animate-[bp-shine_900ms_ease-in-out_1] motion-reduce:hidden"
+      />
+      <span className="relative z-10 inline-flex items-center gap-2">
+        {busy ? (
+          <>
+            <span className="h-4 w-4 rounded-full border-2 border-night/30 border-t-night motion-safe:animate-spin" aria-hidden="true" />
+            {busyLabel}
+          </>
+        ) : (
+          <>
+            {children}
+            <ArrowRight className="h-4 w-4 transition-transform duration-300 ease-out group-hover:translate-x-1 motion-reduce:transition-none" aria-hidden="true" />
+          </>
+        )}
+      </span>
+    </button>
+  );
 }
 
 export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; onClose?: () => void }) {
@@ -205,7 +248,7 @@ export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; on
         <BrandLockup variant="horizontal" sizes="160px" className="h-auto w-36 sm:w-40" />
 
         <h2 id="login-title" className="mt-5 text-xl font-bold tracking-tight text-ink sm:text-2xl">
-          {forgotPasswordMode ? 'Reset your password' : 'Sign in to LGU Tracker'}
+          {forgotPasswordMode ? 'Reset your password' : 'Sign in to Bantay Proyekto'}
         </h2>
         <p className="mt-1 text-sm text-muted">
           {forgotPasswordMode
@@ -319,14 +362,9 @@ export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; on
                 </div>
               )}
 
-              {/* Signal orange, with dark text: white on this orange would not be readable. */}
-              <button
-                type="submit"
-                disabled={busy}
-                className={`w-full min-h-[46px] py-2.5 px-4 text-sm font-bold text-night rounded-lg bg-[linear-gradient(135deg,#FFA352_0%,#FF7A1F_52%,#F0620A_100%)] shadow-[0_10px_24px_-10px_rgba(255,122,31,0.85)] hover:brightness-105 hover:shadow-[0_12px_28px_-10px_rgba(255,122,31,0.95)] active:brightness-95 disabled:opacity-60 disabled:shadow-none transition-all cursor-pointer ${focusRing}`}
-              >
-                {isSubmitting ? 'Signing in…' : 'Sign In'}
-              </button>
+              <PrimaryButton busy={busy} busyLabel={isSubmitting ? 'Signing in' : 'Please wait'}>
+                Sign In
+              </PrimaryButton>
 
               <div className="relative pt-1" role="separator" aria-label="or continue with">
                 <div className="absolute inset-0 flex items-center" aria-hidden="true">
@@ -337,7 +375,7 @@ export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; on
                 </p>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="flex justify-center gap-3.5">
                 {PROVIDERS.map((provider) => (
                   <button
                     key={provider.id}
@@ -346,7 +384,7 @@ export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; on
                     disabled={busy}
                     aria-label={`Continue with ${provider.label}`}
                     title={`Continue with ${provider.label}`}
-                    className={`inline-flex h-11 items-center justify-center rounded-lg border border-line-strong bg-surface hover:bg-sunken disabled:opacity-60 transition-colors cursor-pointer ${focusRing}`}
+                    className={`inline-flex h-14 w-14 cursor-pointer items-center justify-center rounded-xl border border-line-strong bg-surface transition-[transform,box-shadow,background-color] duration-200 ease-out hover:-translate-y-0.5 hover:bg-sunken hover:shadow-raise active:translate-y-0 active:scale-95 disabled:pointer-events-none disabled:opacity-60 motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${focusRing}`}
                   >
                     {oauthPending === provider.id ? (
                       <span className="h-4 w-4 rounded-full border-2 border-line-strong border-t-ink motion-safe:animate-spin" aria-hidden="true" />
@@ -361,11 +399,11 @@ export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; on
               <div className="pt-1 text-center">
                 <Link
                   href="/projects"
-                  className={`inline-flex min-h-[40px] w-full items-center justify-center rounded-lg px-4 text-sm font-semibold text-ink hover:bg-sunken transition-colors ${focusRing}`}
+                  className={`flex min-h-[48px] w-full items-center justify-center rounded-xl border border-line-strong bg-sunken px-4 text-sm font-semibold text-ink transition-[background-color,transform] duration-200 ease-out hover:bg-line active:scale-[0.99] motion-reduce:transition-none ${focusRing}`}
                 >
                   Continue as guest
                 </Link>
-                <p className="mt-0.5 text-xs text-muted">
+                <p className="mt-2 text-xs text-muted">
                   Browse projects and the map without an account. You need one to file a report.
                 </p>
               </div>
@@ -411,13 +449,9 @@ export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; on
               )}
 
               <div className="space-y-2.5">
-                <button
-                  type="submit"
-                  disabled={isSendingRecovery}
-                  className={`w-full min-h-[46px] py-2.5 px-4 text-sm font-bold text-night rounded-lg bg-[linear-gradient(135deg,#FFA352_0%,#FF7A1F_52%,#F0620A_100%)] shadow-[0_10px_24px_-10px_rgba(255,122,31,0.85)] hover:brightness-105 disabled:opacity-60 disabled:shadow-none transition-all cursor-pointer ${focusRing}`}
-                >
-                  {isSendingRecovery ? 'Sending…' : 'Send reset link'}
-                </button>
+                <PrimaryButton busy={isSendingRecovery} busyLabel="Sending">
+                  Send reset link
+                </PrimaryButton>
                 <button
                   type="button"
                   onClick={() => setForgotPasswordMode(false)}
@@ -431,13 +465,17 @@ export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; on
         </div>
       </div>
 
-      {/* Photo: one of the credited pictures from the landing page. */}
-      <aside className="relative hidden min-h-[560px] md:block">
+      {/* Photo: one of the credited pictures from the landing page (listed on /credits). */}
+      <aside className="relative hidden min-h-[560px] bg-night md:block">
+        {/* object-cover scales by the panel's height, so the picture is wider than the panel:
+            `sizes` says how wide, which keeps the optimizer from choosing a smaller, blurry file. */}
         <Image
           src={photo.src}
           alt={photo.alt}
           fill
-          sizes="(min-width: 768px) 420px, 0px"
+          quality={90}
+          loading="eager"
+          sizes="(min-width: 768px) 1000px, 0px"
           className="object-cover object-[32%_center]"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-night/90 via-night/30 to-night/5" aria-hidden="true" />
@@ -446,16 +484,6 @@ export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; on
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-peach">Bantay Proyekto</p>
           <p className="mt-2 text-2xl font-bold leading-tight tracking-tight">Track every peso. See every project.</p>
           <p className="mt-2 text-sm text-white/80">Public works records anyone can check, and a workspace for LGUs.</p>
-          <p className="mt-5 text-[11px] text-white/65">
-            Photo:{' '}
-            <a href={photo.sourceUrl} target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-white">
-              {photo.caption}
-            </a>
-            , {photo.creator},{' '}
-            <a href={photo.licenseUrl} target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-white">
-              {photo.license}
-            </a>
-          </p>
         </div>
       </aside>
     </div>
