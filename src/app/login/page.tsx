@@ -41,8 +41,8 @@ export default function LoginPage() {
       </header>
 
       <main className="flex-1 grid place-items-center px-3 sm:px-6 py-8 sm:py-14">
-        <div className="w-full max-w-4xl overflow-hidden rounded-3xl border border-line bg-surface shadow-float">
-          <LoginPanel variant="page" />
+        <div className="w-full max-w-[50rem] overflow-hidden rounded-3xl border border-line bg-surface shadow-float">
+          <LoginPanel />
         </div>
       </main>
 

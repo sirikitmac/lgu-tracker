@@ -10,13 +10,14 @@
     "lint": "tsc --noEmit",
     "dpwh:iligan-export": "tsx --conditions=react-server scripts/dpwh-iligan-export.ts",
     "dpwh:sync": "tsx --conditions=react-server --max-old-space-size=4096 scripts/dpwh-sync.ts",
-    "test": "tsx --conditions=react-server --test \"tests/dpwh/*.test.ts\" \"tests/bettergov/*.test.ts\" \"tests/bp/*.test.ts\" \"tests/subaybayan/*.test.ts\" \"tests/reports/*.test.ts\" \"tests/auth/*.test.ts\"",
+    "test": "tsx --conditions=react-server --test \"tests/dpwh/*.test.ts\" \"tests/bettergov/*.test.ts\" \"tests/bp/*.test.ts\" \"tests/subaybayan/*.test.ts\" \"tests/reports/*.test.ts\" \"tests/auth/*.test.ts\" \"tests/notifications/*.test.ts\"",
     "test:db": "tsx --conditions=react-server --test \"tests/db/*.test.ts\"",
     "test:db:full": "tsx --conditions=react-server --max-old-space-size=6144 tests/db/full-import.ts",
     "bettergov:sync": "tsx --conditions=react-server scripts/bettergov-sync.ts",
     "subaybayan:build": "tsx --conditions=react-server --max-old-space-size=4096 scripts/subaybayan/build.ts",
     "subaybayan:dedupe": "tsx --conditions=react-server --max-old-space-size=4096 scripts/subaybayan/dedupe.ts",
     "subaybayan:import": "tsx --conditions=react-server scripts/subaybayan/import.ts",
+    "reports:import": "tsx --conditions=react-server scripts/reports-import.ts",
     "landing:blur": "tsx scripts/landing-blur.ts"
   },
   "dependencies": {

@@ -29,7 +29,8 @@ export async function createTestDb(dataDir?: string): Promise<PGlite> {
     alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
     create schema auth;
     create table auth.users (id uuid primary key, email text, raw_user_meta_data jsonb default '{}'::jsonb,
-                             raw_app_meta_data jsonb default '{}'::jsonb, created_at timestamptz default now());
+                             raw_app_meta_data jsonb default '{}'::jsonb, created_at timestamptz default now(),
+                             email_confirmed_at timestamptz);
     create function auth.uid() returns uuid language sql stable as
       $$ select nullif(coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb ->> 'sub', '')::uuid $$;
     create function auth.jwt() returns jsonb language sql stable as
