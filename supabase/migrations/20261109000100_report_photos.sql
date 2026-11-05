@@ -96,14 +96,18 @@ begin
   $p$;
 
   -- Read a photo only when you can read its attachments row (RLS on that table
-  -- applies here too): the submitter and LGU staff.
+  -- applies here too): the submitter and LGU staff. You can always see your own
+  -- uploads, which is also what lets you clean up one that never got saved.
   execute $p$
     create policy "report photos: read what you can read"
       on storage.objects for select
       to authenticated
       using (
         bucket_id = 'report-photos'
-        and exists (select 1 from public.attachments a where a.storage_path = storage.objects.name)
+        and (
+          split_part(name, '/', 3) = (select auth.uid())::text
+          or exists (select 1 from public.attachments a where a.storage_path = storage.objects.name)
+        )
       )
   $p$;
 
