@@ -15,8 +15,9 @@
 --        status change    -> submitter
 --        role requested   -> administrators (only after the e-mail is confirmed)
 --        role decided     -> the person who asked
---   5. Declining a role request = an administrator clears profiles.requested_role
---      (already allowed by guard_profile_update); the person is told.
+--   5. Declining a request = an administrator clears profiles.requested_role
+--      and sets account_type back to citizen (both already allowed by
+--      guard_profile_update); the person is told.
 --   6. public.create_system_alert()  for technical alerts (failed imports...),
 --      callable only with the service role.
 --
@@ -324,15 +325,18 @@ begin
   if not found or p.role <> 'citizen' then
     return;
   end if;
-  if p.requested_role is null and p.account_type <> 'technical_developer' then
+  if p.requested_role is null and p.account_type = 'citizen' then
     return;
   end if;
 
   who := coalesce(nullif(btrim(p.full_name), ''), 'A new account');
-  admin_level := p.requested_role in ('super_admin', 'lgu_admin') or p.requested_role is null;
+  -- Administrator roles, and technical accounts, are for a super administrator.
+  admin_level := coalesce(p.requested_role in ('super_admin', 'lgu_admin'), false)
+    or (p.requested_role is null and p.account_type = 'technical_developer');
   what := case
     when p.requested_role is not null then 'Asked to be ' || private.role_label(p.requested_role)
-    else 'Signed up as a technical / developer account'
+    when p.account_type = 'technical_developer' then 'Signed up as a technical / developer account'
+    else 'Signed up as an organization employee'
   end || coalesce(' at ' || p.claimed_organization, '');
 
   for a in
@@ -366,7 +370,7 @@ $$;
 create trigger profiles_role_request_on_insert
   after insert on public.profiles
   for each row
-  when (new.requested_role is not null or new.account_type = 'technical_developer')
+  when (new.requested_role is not null or new.account_type <> 'citizen')
   execute function private.profile_role_request_on_insert();
 
 create or replace function private.profile_role_request_on_confirm()
@@ -399,12 +403,13 @@ begin
     perform private.notify(
       new.id, 'role_decided',
       case when new.role = 'citizen' then 'Your role was changed to Citizen'
-           else 'You are now a ' || private.role_label(new.role) end,
+           else 'Your role is now ' || private.role_label(new.role) end,
       case when new.role = 'citizen' then 'You can still browse every project and send reports.'
            else 'Your workspace now shows the tabs for this role.' end,
       '/inbox'
     );
-  elsif old.requested_role is not null and new.requested_role is null then
+  elsif (old.requested_role is not null and new.requested_role is null)
+     or (old.account_type <> 'citizen' and new.account_type = 'citizen') then
     perform private.notify(
       new.id, 'role_decided', 'Role request not approved',
       'An administrator reviewed your request. You can keep using LGU Tracker as a ' || lower(private.role_label(new.role)) || '.',
@@ -416,9 +421,11 @@ end;
 $$;
 
 create trigger profiles_after_role_decision
-  after update of role, requested_role on public.profiles
+  after update of role, requested_role, account_type on public.profiles
   for each row
-  when (old.role is distinct from new.role or old.requested_role is distinct from new.requested_role)
+  when (old.role is distinct from new.role
+        or old.requested_role is distinct from new.requested_role
+        or old.account_type is distinct from new.account_type)
   execute function private.after_profile_role_decision();
 
 -- -----------------------------------------------------------------------------

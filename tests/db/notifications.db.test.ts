@@ -152,13 +152,33 @@ test('admin-level requests only go to super administrators', async () => {
   assert.equal((await inbox(SUPER)).length, 1);
 });
 
+test('an organization employee sign-up reaches administrators and can be declined', async () => {
+  await db.exec(`delete from public.notifications`);
+  const id = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
+  await db.exec(`insert into auth.users (id, email, raw_user_meta_data, email_confirmed_at) values
+    ('${id}', 'office@test.local', '{"full_name":"Ben Cruz","account_type":"organization_employee","claimed_organization":"Iligan City Engineering Office"}', now())`);
+  assert.deepEqual((await inbox(USERS.admin)).map((n) => n.kind), ['role_requested']);
+  assert.match((await inbox(USERS.admin))[0].body ?? '', /organization employee at Iligan City Engineering Office/);
+
+  const tech = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
+  await db.exec(`delete from public.notifications`);
+  await db.exec(`insert into auth.users (id, email, raw_user_meta_data, email_confirmed_at) values
+    ('${tech}', 'dev@test.local', '{"full_name":"Dev","account_type":"technical_developer"}', now())`);
+  assert.equal((await inbox(USERS.admin)).length, 0, 'technical accounts go to super administrators');
+  assert.equal((await inbox(SUPER)).length, 1);
+
+  const no = await as(db, 'authenticated', USERS.admin, `update public.profiles set requested_role = null, account_type = 'citizen' where id = '${id}' returning id`);
+  assert.equal(no.error, undefined, String(no.error));
+  assert.equal((await inbox(id))[0].title, 'Role request not approved');
+});
+
 test('approving a request tells the person; declining clears it', async () => {
   await db.exec(`delete from public.notifications`);
   const ok = await as(db, 'authenticated', USERS.admin,
     `update public.profiles set role = 'planning_officer', requested_role = null where id = '${NEWCOMER}' returning role`);
   assert.equal(ok.error, undefined, String(ok.error));
   const approved = await inbox(NEWCOMER);
-  assert.equal(approved[0].title, 'You are now a Planning Officer');
+  assert.equal(approved[0].title, 'Your role is now Planning Officer');
 
   const no = await as(db, 'authenticated', USERS.admin, `update public.profiles set requested_role = null where id = '${UNCONFIRMED}' returning id`);
   assert.equal(no.error, undefined, String(no.error));
