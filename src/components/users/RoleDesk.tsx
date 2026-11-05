@@ -95,17 +95,15 @@ function RequestCard({ person, actor }: { person: Person; actor: AppRole }) {
           >
             Approve
           </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => run(person.id, 'decline', undefined, 'Request declined')}
+            className={`inline-flex h-10 cursor-pointer items-center rounded-full border border-line-strong bg-surface px-5 text-sm font-semibold text-ink transition-colors hover:bg-sunken disabled:cursor-not-allowed disabled:opacity-50 ${focusRing}`}
+          >
+            Decline
+          </button>
         </div>
-      )}
-      {!needsSuper && (
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => run(person.id, 'decline', undefined, 'Request declined')}
-          className={`mt-3 inline-flex h-9 cursor-pointer items-center rounded-full border border-line-strong bg-surface px-4 text-[13.5px] font-semibold text-ink transition-colors hover:bg-sunken disabled:cursor-not-allowed disabled:opacity-50 ${focusRing} `}
-        >
-          Decline
-        </button>
       )}
       {error && <p role="alert" className="mt-3 rounded-xl border border-danger-line bg-danger-soft px-3.5 py-2.5 text-[13px] text-danger-ink">{error}</p>}
     </li>
@@ -140,7 +138,7 @@ function MemberRow({ person, actor }: { person: Person; actor: AppRole }) {
           </button>
         </>
       ) : (
-        <p className="text-sm font-medium text-subtle">{ROLE_LABEL[person.role]}<span className="ml-2 text-xs font-normal text-muted">Super Administrator only</span></p>
+        <p className="text-sm text-subtle"><span className="font-medium text-ink">{ROLE_LABEL[person.role]}</span> · only a Super Administrator can change this</p>
       )}
       {error && <p role="alert" className="w-full rounded-xl border border-danger-line bg-danger-soft px-3.5 py-2 text-[13px] text-danger-ink">{error}</p>}
     </li>

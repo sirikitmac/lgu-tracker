@@ -4,7 +4,7 @@ import React, { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/Toast';
 import { updateReportStatus } from '@/lib/actions/reportReview';
-import { REPORT_STATUS_LABEL, REPORT_STATUS_MEANING, REVIEW_NOTE_MAX, type ReportStatus } from '@/lib/reports/workflow';
+import { REPORT_STATUS_LABEL, REPORT_STATUS_ACTION, REVIEW_NOTE_MAX, type ReportStatus } from '@/lib/reports/workflow';
 
 const CHOICES: ReportStatus[] = ['acknowledged', 'in_review', 'resolved', 'dismissed'];
 
@@ -67,7 +67,7 @@ export function ReviewPanel({ reportId, status }: { reportId: string; status: Re
                     {REPORT_STATUS_LABEL[value]}
                     {value === status && <span className="ml-2 text-xs font-medium text-muted">Current</span>}
                   </span>
-                  <span className="block text-[13px] leading-snug text-muted">{REPORT_STATUS_MEANING[value]}</span>
+                  <span className="block text-[13px] leading-snug text-muted">{REPORT_STATUS_ACTION[value]}</span>
                 </span>
               </label>
             );

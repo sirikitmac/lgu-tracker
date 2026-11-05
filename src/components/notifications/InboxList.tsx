@@ -152,7 +152,7 @@ export function InboxList({ initial }: { initial: AppNotification[] }) {
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="flex items-baseline gap-2">
-                          <span className={`truncate text-[15px] text-ink ${isUnread ? 'font-semibold' : 'font-medium'}`}>{n.title}</span>
+                          <span className={`break-words text-[15px] leading-snug text-ink ${isUnread ? 'font-semibold' : 'font-medium'}`}>{n.title}</span>
                           {isUnread && (
                             <>
                               <span aria-hidden="true" className="h-2 w-2 shrink-0 translate-y-[-1px] rounded-full bg-accent" />
@@ -160,16 +160,19 @@ export function InboxList({ initial }: { initial: AppNotification[] }) {
                             </>
                           )}
                         </span>
-                        {n.body && <span className="mt-0.5 line-clamp-2 block text-[13.5px] leading-relaxed text-subtle">{n.body}</span>}
+                        {n.body && <span className="mt-0.5 line-clamp-3 block text-[13.5px] leading-relaxed text-subtle sm:line-clamp-2">{n.body}</span>}
+                        <time dateTime={n.createdAt} className="mt-1 block text-xs text-muted sm:hidden">
+                          {timeLabel(n.createdAt)}
+                        </time>
                       </span>
-                      <time dateTime={n.createdAt} className="mt-1 shrink-0 text-xs text-muted">
+                      <time dateTime={n.createdAt} aria-hidden="true" className="mt-1 hidden shrink-0 text-xs text-muted sm:block">
                         {timeLabel(n.createdAt)}
                       </time>
                     </>
                   );
-                  const rowClass = `flex min-w-0 flex-1 items-start gap-3.5 px-4 py-3.5 text-left sm:px-5 ${focusRing} focus-visible:-outline-offset-2`;
+                  const rowClass = `flex min-w-0 flex-1 basis-full items-start gap-3.5 px-4 py-3.5 text-left sm:px-5 ${focusRing} focus-visible:-outline-offset-2`;
                   return (
-                    <li key={n.id} className={`group relative flex items-stretch ${isUnread ? 'bg-accent-soft/40' : ''}`}>
+                    <li key={n.id} className={`group relative flex flex-wrap items-stretch ${isUnread ? 'bg-accent-soft/40' : ''}`}>
                       {n.link ? (
                         <Link href={n.link} onClick={() => isUnread && markRead(n.id)} className={`${rowClass} hover:bg-sunken/60`}>
                           {content}
@@ -177,7 +180,7 @@ export function InboxList({ initial }: { initial: AppNotification[] }) {
                       ) : (
                         <div className={rowClass}>{content}</div>
                       )}
-                      <div className="flex shrink-0 items-center gap-0.5 pr-2 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
+                      <div className="flex basis-full items-center gap-0.5 pb-2.5 pl-[3.5rem] sm:absolute sm:right-3 sm:top-2.5 sm:basis-auto sm:rounded-full sm:bg-surface sm:px-1 sm:pb-0 sm:pl-1 sm:opacity-0 sm:shadow-raise sm:ring-1 sm:ring-line sm:transition-opacity sm:group-focus-within:opacity-100 sm:group-hover:opacity-100 sm:[@media(hover:none)]:opacity-100">
                         {isUnread && (
                           <button
                             type="button"

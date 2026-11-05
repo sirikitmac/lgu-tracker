@@ -25,6 +25,15 @@ export const REPORT_STATUS_MEANING: Record<ReportStatus, string> = {
   dismissed: 'Staff closed it without further action.',
 };
 
+/** The same statuses, worded for the person handling the report. */
+export const REPORT_STATUS_ACTION: Record<ReportStatus, string> = {
+  submitted: 'Back in the queue, not opened yet.',
+  acknowledged: 'You have seen it. The sender is told.',
+  in_review: 'You are checking the project.',
+  resolved: 'The concern was handled.',
+  dismissed: 'Close it with no further action.',
+};
+
 export const isFinalStatus = (status: ReportStatus) => status === 'resolved' || status === 'dismissed';
 
 /** RPT-00042: the short number people can quote. */
