@@ -142,7 +142,7 @@ test('a confirmed role request reaches administrators; an unconfirmed one waits'
     ('${NEWCOMER}', 'new@test.local', '{"full_name":"Ana Reyes","requested_role":"planning_officer","account_type":"organization_employee","claimed_organization":"City Planning Office"}', now())`);
   assert.deepEqual((await inbox(USERS.admin)).map((n) => n.kind), ['role_requested']);
   assert.deepEqual((await inbox(SUPER)).map((n) => n.kind), ['role_requested']);
-  assert.match((await inbox(USERS.admin))[0].body ?? '', /Planning Officer at City Planning Office/);
+  assert.match((await inbox(USERS.admin))[0].body ?? '', /Government Employee at City Planning Office/);
 
   await db.exec(`delete from public.notifications`);
   await db.exec(`insert into auth.users (id, email, raw_user_meta_data) values
@@ -187,7 +187,7 @@ test('approving a request tells the person; declining clears it', async () => {
     `update public.profiles set role = 'planning_officer', requested_role = null where id = '${NEWCOMER}' returning role`);
   assert.equal(ok.error, undefined, String(ok.error));
   const approved = await inbox(NEWCOMER);
-  assert.equal(approved[0].title, 'Your role is now Planning Officer');
+  assert.equal(approved[0].title, 'Your role is now Government Employee');
 
   const no = await as(db, 'authenticated', USERS.admin, `update public.profiles set requested_role = null where id = '${UNCONFIRMED}' returning id`);
   assert.equal(no.error, undefined, String(no.error));
