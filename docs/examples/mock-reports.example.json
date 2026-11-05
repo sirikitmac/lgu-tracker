@@ -1,0 +1,21 @@
+[
+  {
+    "submitter": "citizen@example.com",
+    "source": "dpwh_contracts",
+    "record_id": "REPLACE-WITH-A-REAL-CONTRACT-ID",
+    "category": "delayed_or_stalled",
+    "details": "No one has worked on the site for about two months, but the page says the project is more than half done.",
+    "observed_on": "2026-10-28",
+    "location_note": "Beside the barangay hall",
+    "created_at": "2026-10-30T09:00:00+08:00"
+  },
+  {
+    "submitter": "citizen@example.com",
+    "source": "dpwh_contracts",
+    "record_id": "REPLACE-WITH-ANOTHER-CONTRACT-ID",
+    "category": "poor_quality",
+    "details": "The concrete cracked within a month and water collects in the middle of the road when it rains.",
+    "status": "resolved",
+    "note": "Crew repaired the cracked section on Nov 3."
+  }
+]

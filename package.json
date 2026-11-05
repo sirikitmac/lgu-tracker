@@ -17,6 +17,7 @@
     "subaybayan:build": "tsx --conditions=react-server --max-old-space-size=4096 scripts/subaybayan/build.ts",
     "subaybayan:dedupe": "tsx --conditions=react-server --max-old-space-size=4096 scripts/subaybayan/dedupe.ts",
     "subaybayan:import": "tsx --conditions=react-server scripts/subaybayan/import.ts",
+    "reports:import": "tsx --conditions=react-server scripts/reports-import.ts",
     "landing:blur": "tsx scripts/landing-blur.ts"
   },
   "dependencies": {

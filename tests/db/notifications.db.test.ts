@@ -125,6 +125,15 @@ test('imports with the service role stay quiet', async () => {
   assert.equal(res.error, undefined, String(res.error));
   const after = Number((await db.query<{ n: number }>('select count(*)::int as n from public.notifications')).rows[0].n);
   assert.equal(after, before);
+
+  // The importer then moves some reports along; that is quiet too, but still on the timeline.
+  const moved = await as<{ id: string }>(db, 'service_role', null,
+    `update public.reports set status = 'resolved', resolution_notes = 'Fixed.' where record_id = '23AB0002' returning id`);
+  assert.equal(moved.error, undefined, String(moved.error));
+  const events = await db.query<{ n: number }>(`select count(*)::int as n from public.report_events where report_id = '${moved.rows![0].id}'`);
+  assert.equal(Number(events.rows[0].n), 2);
+  const stillQuiet = Number((await db.query<{ n: number }>('select count(*)::int as n from public.notifications')).rows[0].n);
+  assert.equal(stillQuiet, before);
 });
 
 test('a confirmed role request reaches administrators; an unconfirmed one waits', async () => {
