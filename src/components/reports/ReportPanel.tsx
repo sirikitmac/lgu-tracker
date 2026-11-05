@@ -4,10 +4,12 @@ import React, { useEffect, useId, useRef, useState } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, CheckCircle2, Loader2, LogIn } from 'lucide-react';
 import { controlClass, primaryButtonClass, secondaryButtonClass } from '@/components/dpwh/ui';
+import { PhotoPicker } from '@/components/reports/PhotoPicker';
 import { ProjectCodeFinder } from '@/components/reports/ProjectCodeFinder';
 import { submitRecordReport } from '@/lib/actions/reports';
 import { errorMessage } from '@/lib/http';
 import { reportHref } from '@/lib/reports/href';
+import { uploadReportPhotos, type PickedPhoto } from '@/lib/reports/uploadPhotos';
 import { validateRecordReport } from '@/lib/reports/validate';
 import { getSupabaseBrowserClient } from '@/lib/supabase/browser';
 import { REPORT_CATEGORIES, REPORT_LIMITS, type ReportCategory, type ReportTarget } from '@/types/report';
@@ -72,6 +74,7 @@ export function ReportPanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<FormError | null>(null);
   const [doneId, setDoneId] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<PickedPhoto[]>([]);
   const [loginHref, setLoginHref] = useState('/login');
 
   useEffect(() => {
@@ -105,7 +108,25 @@ export function ReportPanel({
     setLoginHref(`/login?next=${encodeURIComponent(back)}`);
   }, [active, locked, target]);
 
+  const patchPhoto = (key: string, patch: Partial<PickedPhoto>) =>
+    setPhotos((list) => list.map((p) => (p.key === key ? { ...p, ...patch } : p)));
+  const removePhoto = (key: string) =>
+    setPhotos((list) => {
+      list.filter((p) => p.key === key).forEach((p) => URL.revokeObjectURL(p.preview));
+      return list.filter((p) => p.key !== key);
+    });
+  const sendPhotos = async (reportId: string, list: PickedPhoto[]) => {
+    setBusy(true);
+    try {
+      await uploadReportPhotos(reportId, list, patchPhoto);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const reset = () => {
+    photos.forEach((p) => URL.revokeObjectURL(p.preview));
+    setPhotos([]);
     setDoneId(null);
     setCategory('');
     setDetails('');
@@ -138,6 +159,10 @@ export function ReportPanel({
       const result = await submitRecordReport(input);
       if (result.ok) {
         setDoneId(result.data.id);
+        if (photos.length > 0) {
+          setBusy(false);
+          await sendPhotos(result.data.id, photos);
+        }
       } else {
         setError({ message: result.error });
       }
@@ -228,9 +253,18 @@ export function ReportPanel({
               </span>
             </span>
           </p>
+          {photos.length > 0 && (
+            <PhotoPicker
+              photos={photos}
+              locked
+              onAdd={() => {}}
+              onRemove={() => {}}
+              onRetry={busy ? undefined : () => void sendPhotos(doneId, photos)}
+            />
+          )}
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
             {onClose ? (
-              <button type="button" onClick={onClose} className={primaryButtonClass}>Close</button>
+              <button type="button" onClick={onClose} disabled={busy} className={`${primaryButtonClass} disabled:opacity-60`}>Close</button>
             ) : (
               <>
                 <button type="button" onClick={reset} className={secondaryButtonClass}>Report another</button>
@@ -357,6 +391,8 @@ export function ReportPanel({
               />
             </div>
           </div>
+
+          <PhotoPicker photos={photos} locked={busy} onAdd={(added) => setPhotos((list) => [...list, ...added])} onRemove={removePhoto} />
 
           <p className="text-xs leading-relaxed text-subtle">
             Your report is private. Only you and LGU staff can read it until staff review it. It is sent
