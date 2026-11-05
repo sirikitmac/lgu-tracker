@@ -1,28 +1,36 @@
 import { ADMIN_ROLES, STAFF_ROLES, type AppRole } from '@/types/auth';
 
-/** Plain names for roles, the same wording the database uses in notifications. */
+/**
+ * The people-facing roles are four: Super Admin, Admin, Government Employee and
+ * Citizen. Government Employee is the database's planning_officer role. The
+ * other staff roles (budget, BAC, engineer, council, contractor) are no longer
+ * offered; any account that still has one is shown, and works, as a
+ * Government Employee.
+ */
 export const ROLE_LABEL: Record<AppRole, string> = {
-  super_admin: 'Super Administrator',
-  lgu_admin: 'LGU Administrator',
-  planning_officer: 'Planning Officer',
-  budget_officer: 'Budget Officer',
-  bac_member: 'BAC Member',
-  project_engineer: 'Project Engineer',
-  council_member: 'Council Member',
-  contractor: 'Contractor',
+  super_admin: 'Super Admin',
+  lgu_admin: 'Admin',
+  planning_officer: 'Government Employee',
+  budget_officer: 'Government Employee',
+  bac_member: 'Government Employee',
+  project_engineer: 'Government Employee',
+  council_member: 'Government Employee',
+  contractor: 'Government Employee',
   citizen: 'Citizen',
 };
+
+const EMPLOYEE_BLURB = 'Triages reports and keeps project details accurate.';
 
 /** One line on what each role is for; shown with the role in the sidebar and on role requests. */
 export const ROLE_BLURB: Record<AppRole, string> = {
   super_admin: 'Runs the system: approves administrators and technical alerts.',
-  lgu_admin: 'Approves staff roles and reviews every report.',
-  planning_officer: 'Triages reports and keeps project details accurate.',
-  budget_officer: 'Updates project budgets and disbursements.',
-  bac_member: 'Records procurement mode and awarded contractors.',
-  project_engineer: 'Updates progress and reviews reports on assigned projects.',
-  council_member: 'Follows projects and decides proposals when authorized.',
-  contractor: 'Follows the projects assigned to your company.',
+  lgu_admin: 'Approves government employees and reviews every report.',
+  planning_officer: EMPLOYEE_BLURB,
+  budget_officer: EMPLOYEE_BLURB,
+  bac_member: EMPLOYEE_BLURB,
+  project_engineer: EMPLOYEE_BLURB,
+  council_member: EMPLOYEE_BLURB,
+  contractor: EMPLOYEE_BLURB,
   citizen: 'Browse every project and send reports.',
 };
 
@@ -44,22 +52,12 @@ export const canManageUsers = (role: AppRole) => ADMIN_ROLES.includes(role);
 export const isStaffRole = (role: AppRole) => STAFF_ROLES.includes(role);
 export const isAdminRole = (role: AppRole) => ADMIN_ROLES.includes(role);
 
-/** Order used when listing roles to choose from. */
-const ASSIGNABLE_ORDER: readonly AppRole[] = [
-  'planning_officer',
-  'budget_officer',
-  'bac_member',
-  'project_engineer',
-  'council_member',
-  'contractor',
-  'lgu_admin',
-  'super_admin',
-  'citizen',
-];
+/** The roles offered when choosing one for an account. */
+const ASSIGNABLE_ORDER: readonly AppRole[] = ['planning_officer', 'lgu_admin', 'super_admin', 'citizen'];
 
 /**
- * Roles this administrator may give. An LGU Administrator can manage staff
- * and contractors; only a Super Administrator can create administrators. The
+ * Roles this administrator may give. An Admin can manage government
+ * employees; only a Super Administrator can create administrators. The
  * database enforces the same rule (private.guard_profile_update).
  */
 export function assignableRoles(actor: AppRole): AppRole[] {
