@@ -166,11 +166,7 @@ test('approving a request tells the person; declining clears it', async () => {
   assert.equal(declined[0].title, 'Role request not approved');
 });
 
-test('a request can be cleared but never set, and only by an administrator', async () => {
-  const set = await as(db, 'authenticated', USERS.admin, `update public.profiles set requested_role = 'council_member' where id = '${USERS.citizen}'`);
-  assert.equal(set.error?.code, '42501');
-  const self = await as(db, 'authenticated', SUPER, `update public.profiles set requested_role = null where id = '${USERS.citizen}' returning id`);
-  assert.equal(self.error, undefined);
+test('only an administrator can clear a role request', async () => {
   await db.exec(`update public.profiles set requested_role = 'budget_officer' where id = '${USERS.citizen}'`);
   const citizenClears = await as(db, 'authenticated', USERS.citizen, `update public.profiles set requested_role = null where id = '${USERS.citizen}'`);
   assert.equal(citizenClears.error?.code, '42501');

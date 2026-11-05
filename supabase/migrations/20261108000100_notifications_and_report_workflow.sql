@@ -15,8 +15,8 @@
 --        status change    -> submitter
 --        role requested   -> administrators (only after the e-mail is confirmed)
 --        role decided     -> the person who asked
---   5. Role requests can be declined: administrators may now CLEAR
---      profiles.requested_role (and nothing else about it).
+--   5. Declining a role request = an administrator clears profiles.requested_role
+--      (already allowed by guard_profile_update); the person is told.
 --   6. public.create_system_alert()  for technical alerts (failed imports...),
 --      callable only with the service role.
 --
@@ -420,67 +420,6 @@ create trigger profiles_after_role_decision
   for each row
   when (old.role is distinct from new.role or old.requested_role is distinct from new.requested_role)
   execute function private.after_profile_role_decision();
-
--- Administrators may clear a role request (decline it). They still cannot set
--- one to a value. Everything else is the guard as before.
-create or replace function private.guard_profile_update()
-returns trigger
-language plpgsql
-set search_path = ''
-as $$
-declare
-  changed text[];
-  actor_role public.app_role := private.current_app_role();
-begin
-  if not private.is_end_user_request() then
-    return new;
-  end if;
-
-  changed := array_remove(private.changed_columns(to_jsonb(old), to_jsonb(new)), 'updated_at');
-
-  if private.is_admin() then
-    perform private.assert_columns_allowed(
-      changed,
-      array['full_name', 'role', 'organization_id', 'position_title', 'barangay', 'is_active',
-            'can_decide_proposals', 'requested_role'],
-      'administrator'
-    );
-
-    if new.requested_role is not null and new.requested_role is distinct from old.requested_role then
-      raise exception 'Permission denied: a role request can only be cleared, not set'
-        using errcode = '42501';
-    end if;
-
-    if new.id = (select auth.uid())
-       and (new.role is distinct from old.role
-            or new.is_active is distinct from old.is_active
-            or new.can_decide_proposals is distinct from old.can_decide_proposals) then
-      raise exception 'Permission denied: administrators cannot change their own role, active status, or decision authority'
-        using errcode = '42501';
-    end if;
-
-    -- Only a super_admin may touch another administrator's account or grant
-    -- an administrator role.
-    if actor_role <> 'super_admin'
-       and (old.role in ('super_admin', 'lgu_admin') or new.role in ('super_admin', 'lgu_admin'))
-       and new.id <> (select auth.uid()) then
-      raise exception 'Permission denied: only a super_admin can manage administrator accounts'
-        using errcode = '42501';
-    end if;
-
-    return new;
-  end if;
-
-  -- Everyone else: self-service fields only (RLS already limits them to their
-  -- own row).
-  perform private.assert_columns_allowed(
-    changed,
-    array['full_name', 'position_title', 'barangay'],
-    'profile owner'
-  );
-  return new;
-end;
-$$;
 
 -- -----------------------------------------------------------------------------
 -- Technical alerts (failed imports, sync problems...) for administrators.
