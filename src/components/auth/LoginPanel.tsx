@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Eye, EyeOff, AlertCircle, CheckCircle2, Info, X } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, AlertCircle, CheckCircle2, Info } from 'lucide-react';
 import { FaApple, FaFacebook } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 import { BrandLockup } from '@/components/ui/BrandLockup';
@@ -44,7 +44,7 @@ const PROVIDERS: { id: OAuthProviderId; label: string; icon: React.ReactNode }[]
 ];
 
 const inputClass = (invalid: boolean) =>
-  `w-full h-11 px-3.5 text-sm text-ink bg-ground border rounded-lg placeholder:text-muted focus:outline-none focus:ring-2 transition-all ${
+  `w-full h-11 md:h-10 px-3.5 text-sm text-ink bg-ground border rounded-lg placeholder:text-muted focus:outline-none focus:ring-2 transition-all ${
     invalid
       ? 'border-[#DC2626] focus:border-[#DC2626] focus:ring-[#DC2626]/15'
       : 'border-line focus:border-accent focus:ring-accent-ink/15'
@@ -75,7 +75,7 @@ function PrimaryButton({
     <button
       type="submit"
       disabled={busy}
-      className={`group relative isolate flex w-full min-h-[50px] cursor-pointer items-center justify-center overflow-hidden rounded-xl px-5 text-[15px] font-bold tracking-[0.005em] text-night bg-[linear-gradient(110deg,#FFB067_0%,#FF7A1F_45%,#F0620A_100%)] bg-[length:190%_100%] bg-[position:0%_50%] shadow-[0_10px_24px_-10px_rgba(255,122,31,0.85)] transition-[background-position,transform,box-shadow] duration-500 ease-out hover:bg-[position:100%_50%] hover:-translate-y-0.5 hover:shadow-[0_16px_30px_-10px_rgba(255,122,31,0.95)] active:translate-y-0 active:scale-[0.985] active:shadow-[0_6px_14px_-8px_rgba(255,122,31,0.9)] disabled:pointer-events-none disabled:opacity-60 disabled:shadow-none motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${focusRing}`}
+      className={`group relative isolate flex w-full min-h-12 md:min-h-[46px] cursor-pointer items-center justify-center overflow-hidden rounded-xl px-5 text-[15px] font-bold tracking-[0.005em] text-night bg-[linear-gradient(110deg,#FFB067_0%,#FF7A1F_45%,#F0620A_100%)] bg-[length:190%_100%] bg-[position:0%_50%] shadow-[0_10px_24px_-10px_rgba(255,122,31,0.85)] transition-[background-position,transform,box-shadow] duration-500 ease-out hover:bg-[position:100%_50%] hover:-translate-y-0.5 hover:shadow-[0_16px_30px_-10px_rgba(255,122,31,0.95)] active:translate-y-0 active:scale-[0.985] active:shadow-[0_6px_14px_-8px_rgba(255,122,31,0.9)] disabled:pointer-events-none disabled:opacity-60 disabled:shadow-none motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${focusRing}`}
     >
       <span
         aria-hidden="true"
@@ -98,7 +98,7 @@ function PrimaryButton({
   );
 }
 
-export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; onClose?: () => void }) {
+export function LoginPanel() {
   const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
@@ -235,23 +235,13 @@ export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; on
   const busy = isSubmitting || oauthPending !== null;
 
   return (
-    <div className="relative grid md:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
-      {variant === 'modal' && onClose && (
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close sign in"
-          className={`absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface/90 text-ink shadow-xs backdrop-blur hover:bg-sunken transition-colors cursor-pointer ${focusRing}`}
-        >
-          <X className="h-4 w-4" aria-hidden="true" />
-        </button>
-      )}
-
+    <div className="grid md:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
       {/* Form */}
-      <div className="flex flex-col justify-center p-6 sm:p-9">
-        <BrandLockup variant="horizontal" sizes="160px" className="h-auto w-36 sm:w-40" />
+      {/* --px is the column's side padding; on a phone the sticky guest bar below reaches back out to the edges with it. */}
+      <div className="flex flex-col justify-center p-[var(--px)] [--px:1.25rem] sm:[--px:1.75rem] max-md:pb-0">
+        <BrandLockup variant="horizontal" sizes="128px" className="h-auto w-28 sm:w-32" />
 
-        <h2 id="login-title" className="mt-5 text-xl font-bold tracking-tight text-ink sm:text-2xl">
+        <h2 id="login-title" className="mt-4 text-xl font-bold tracking-tight text-ink sm:text-[22px]">
           {forgotPasswordMode ? 'Reset your password' : 'Sign in to Bantay Proyekto'}
         </h2>
         <p className="mt-1 text-sm text-muted">
@@ -260,9 +250,9 @@ export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; on
             : 'Use your account email and password, or a quick sign-in below.'}
         </p>
 
-        <div className="mt-6">
+        <div className="mt-5">
           {!forgotPasswordMode ? (
-            <form onSubmit={handleSignInSubmit} noValidate className="space-y-4">
+            <form onSubmit={handleSignInSubmit} noValidate className="space-y-3.5">
               <div>
                 <label htmlFor="login-email" className="block text-xs font-semibold text-ink mb-1.5">
                   Email address
@@ -388,7 +378,7 @@ export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; on
                     disabled={busy}
                     aria-label={`Continue with ${provider.label}`}
                     title={`Continue with ${provider.label}`}
-                    className={`inline-flex h-14 w-14 cursor-pointer items-center justify-center rounded-xl border border-line-strong bg-surface transition-[transform,box-shadow,background-color] duration-200 ease-out hover:-translate-y-0.5 hover:bg-sunken hover:shadow-raise active:translate-y-0 active:scale-95 disabled:pointer-events-none disabled:opacity-60 motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${focusRing}`}
+                    className={`inline-flex h-12 w-12 cursor-pointer items-center justify-center rounded-xl border border-line-strong bg-surface transition-[transform,box-shadow,background-color] duration-200 ease-out hover:-translate-y-0.5 hover:bg-sunken hover:shadow-raise active:translate-y-0 active:scale-95 disabled:pointer-events-none disabled:opacity-60 motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${focusRing}`}
                   >
                     {oauthPending === provider.id ? (
                       <span className="h-4 w-4 rounded-full border-2 border-line-strong border-t-ink motion-safe:animate-spin" aria-hidden="true" />
@@ -400,24 +390,26 @@ export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; on
               </div>
 
               {/* Guests browse the public directory, map and dashboard; no session is created. */}
-              <div className="pt-1 text-center">
+              {/* On a phone the form can be taller than the screen, so guest access and Sign Up stay pinned to the bottom edge
+                  (not on a very short, landscape screen, where they would take too much of the room). */}
+              <div className="text-center max-md:-mx-[var(--px)] max-md:border-t max-md:border-line max-md:bg-surface max-md:px-[var(--px)] max-md:pb-4 max-md:pt-3 [@media(max-width:767.98px)_and_(min-height:480px)]:sticky [@media(max-width:767.98px)_and_(min-height:480px)]:bottom-0 [@media(max-width:767.98px)_and_(min-height:480px)]:z-10">
                 <Link
                   href="/projects"
-                  className={`flex min-h-[48px] w-full items-center justify-center rounded-xl border border-line-strong bg-sunken px-4 text-sm font-semibold text-ink transition-[background-color,transform] duration-200 ease-out hover:bg-line active:scale-[0.99] motion-reduce:transition-none ${focusRing}`}
+                  className={`flex min-h-11 w-full items-center justify-center rounded-xl border border-line-strong bg-sunken px-4 text-sm font-semibold text-ink transition-[background-color,transform] duration-200 ease-out hover:bg-line active:scale-[0.99] motion-reduce:transition-none ${focusRing}`}
                 >
                   Continue as guest
                 </Link>
                 <p className="mt-2 text-xs text-muted">
                   Browse projects and the map without an account. You need one to file a report.
                 </p>
+                <p className="mt-2.5 text-xs text-muted">
+                  Don&apos;t have an account?{' '}
+                  <Link href="/register" className="font-semibold text-accent-ink hover:text-ink hover:underline transition-colors">
+                    Sign Up
+                  </Link>
+                </p>
               </div>
 
-              <p className="text-center text-xs text-muted">
-                Don&apos;t have an account?{' '}
-                <Link href="/register" className="font-semibold text-accent-ink hover:text-ink hover:underline transition-colors">
-                  Sign Up
-                </Link>
-              </p>
             </form>
           ) : (
             <form onSubmit={handlePasswordRecoverySubmit} noValidate className="space-y-4">
@@ -470,7 +462,7 @@ export function LoginPanel({ variant, onClose }: { variant: 'modal' | 'page'; on
       </div>
 
       {/* Photo. The shade is only along the bottom, behind the text, so the animal stays clear. */}
-      <aside className="relative hidden min-h-[560px] bg-night md:block">
+      <aside className="relative hidden min-h-[500px] bg-night md:block">
         {/* object-cover scales by the panel's height, so the picture can be wider than the panel:
             `sizes` says how wide, which keeps the optimizer from choosing a smaller, blurry file. */}
         <Image

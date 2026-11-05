@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { X } from 'lucide-react';
 import { LoginPanel } from './LoginPanel';
 
 /**
@@ -46,10 +47,21 @@ export function LoginModal() {
         // A click on the dimmed area outside the window is a click on the dialog itself.
         if (event.target === dialogRef.current) close();
       }}
-      className="m-auto w-[min(56rem,calc(100vw-1.5rem))] max-w-none overflow-visible border-0 bg-transparent p-0 text-ink backdrop:bg-night/60 backdrop:backdrop-blur-sm"
+      className="m-auto w-[min(50rem,calc(100vw-1.5rem))] max-w-none overflow-visible border-0 bg-transparent p-0 text-ink backdrop:bg-night/60 backdrop:backdrop-blur-sm"
     >
-      <div className="max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain rounded-3xl border border-line bg-surface shadow-float motion-safe:animate-[bp-in_220ms_var(--ease-out)]">
-        <LoginPanel variant="modal" onClose={close} />
+      {/* The close button sits on this frame, not inside the scrolling part, so it stays in reach however far the form is scrolled. */}
+      <div className="relative rounded-3xl border border-line bg-surface shadow-float motion-safe:animate-[bp-in_220ms_var(--ease-out)]">
+        <button
+          type="button"
+          onClick={close}
+          aria-label="Close sign in"
+          className="absolute right-2.5 top-2.5 z-20 inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-line bg-surface/90 text-ink shadow-xs backdrop-blur transition-colors hover:bg-sunken focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink md:h-9 md:w-9"
+        >
+          <X className="h-4 w-4" aria-hidden="true" />
+        </button>
+        <div className="max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain rounded-3xl">
+          <LoginPanel />
+        </div>
       </div>
     </dialog>
   );
