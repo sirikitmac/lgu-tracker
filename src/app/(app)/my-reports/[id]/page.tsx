@@ -3,11 +3,12 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import { ReportDetails } from '@/components/reports/ReportDetails';
+import { ReportPhotos } from '@/components/reports/ReportPhotos';
 import { ReportStatusPill } from '@/components/reports/ReportStatusPill';
 import { ReportTimeline } from '@/components/reports/ReportTimeline';
 import { NotAvailable } from '@/components/workspace/PageStates';
 import { pageAccess } from '@/lib/auth/page';
-import { loadTimeline } from '@/lib/reports/queries';
+import { loadReportPhotos, loadTimeline } from '@/lib/reports/queries';
 import { isReportStatus, reportRef } from '@/lib/reports/workflow';
 import { UUID_PATTERN } from '@/lib/actions/shared';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -30,7 +31,10 @@ export default async function MyReportPage({ params }: PageProps<'/my-reports/[i
     .maybeSingle();
   if (!report || !isReportStatus(report.status)) notFound();
 
-  const events = await loadTimeline(supabase, id, { id: access.profile.id, showNames: false });
+  const [events, photos] = await Promise.all([
+    loadTimeline(supabase, id, { id: access.profile.id, showNames: false }),
+    loadReportPhotos(supabase, id),
+  ]);
 
   return (
     <>
@@ -49,6 +53,7 @@ export default async function MyReportPage({ params }: PageProps<'/my-reports/[i
         <section aria-labelledby="sent-heading" className="order-2 rounded-3xl border border-line bg-surface p-5 sm:p-6 xl:order-1">
           <h2 id="sent-heading" className="mb-4 text-base font-bold tracking-tight text-ink">What you sent</h2>
           <ReportDetails report={report} />
+          <ReportPhotos photos={photos} />
         </section>
         <section aria-labelledby="trail-heading" className="order-1 rounded-3xl border border-line bg-surface p-5 shadow-raise sm:p-6 xl:order-2 xl:self-start">
           <h2 id="trail-heading" className="mb-5 text-base font-bold tracking-tight text-ink">What happened</h2>

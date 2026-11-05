@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import { ReportDetails } from '@/components/reports/ReportDetails';
+import { ReportPhotos } from '@/components/reports/ReportPhotos';
 import { ReportStatusPill } from '@/components/reports/ReportStatusPill';
 import { ReportTimeline } from '@/components/reports/ReportTimeline';
 import { ReviewPanel } from '@/components/reports/ReviewPanel';
@@ -11,7 +12,7 @@ import { NoAccess, NotAvailable } from '@/components/workspace/PageStates';
 import { UUID_PATTERN } from '@/lib/actions/shared';
 import { pageAccess } from '@/lib/auth/page';
 import { REPORT_HANDLER_ROLES } from '@/lib/auth/roles';
-import { loadNames, loadTimeline } from '@/lib/reports/queries';
+import { loadNames, loadReportPhotos, loadTimeline } from '@/lib/reports/queries';
 import { isReportStatus, reportRef } from '@/lib/reports/workflow';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
@@ -33,9 +34,10 @@ export default async function ReportReviewPage({ params }: PageProps<'/reports/[
     .maybeSingle();
   if (!report || !isReportStatus(report.status)) notFound();
 
-  const [events, names] = await Promise.all([
+  const [events, names, photos] = await Promise.all([
     loadTimeline(supabase, id, { id: access.profile.id, showNames: true }),
     loadNames(supabase, [report.submitted_by as string]),
+    loadReportPhotos(supabase, id),
   ]);
   const sender = names.get(report.submitted_by as string) ?? 'A citizen';
   const snapshot = Object.entries((report.record_snapshot ?? {}) as Record<string, unknown>).filter(
@@ -61,6 +63,7 @@ export default async function ReportReviewPage({ params }: PageProps<'/reports/[
           <section aria-labelledby="sent-heading" className="rounded-3xl border border-line bg-surface p-5 sm:p-6">
             <h2 id="sent-heading" className="mb-4 text-base font-bold tracking-tight text-ink">What was reported</h2>
             <ReportDetails report={report} />
+            <ReportPhotos photos={photos} />
           </section>
 
           {snapshot.length > 0 && (
