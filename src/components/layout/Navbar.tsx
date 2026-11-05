@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, LogOut, Menu, X } from 'lucide-react';
 import { BpAssistant } from '@/components/bp/BpAssistant';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { BrandWordmark } from '@/components/ui/BrandWordmark';
 import { signOutAction } from '@/lib/actions/auth';
 import { getSupabaseBrowserClient } from '@/lib/supabase/browser';
@@ -103,6 +104,7 @@ function AccountActions({ account, layout, onNavigate }: { account: Account; lay
   }
   return (
     <>
+      <NotificationBell label={!bar} />
       {account.staff && (
         <Link href="/dashboard" onClick={onNavigate} className={dark}>
           <LayoutDashboard className="w-4 h-4" aria-hidden="true" /> Workspace
