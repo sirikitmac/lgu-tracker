@@ -81,3 +81,30 @@ export async function loadTimeline(
     ];
   });
 }
+
+export interface ReportPhoto {
+  id: string;
+  fileName: string;
+  /** Short-lived signed link: the bucket is private. */
+  url: string;
+}
+
+/** The photos on a report, with signed links that expire after 10 minutes. Whoever the database lets read them. */
+export async function loadReportPhotos(supabase: SupabaseClient, reportId: string): Promise<ReportPhoto[]> {
+  const { data: rows } = await supabase
+    .from('attachments')
+    .select('id, file_name, storage_path')
+    .eq('report_id', reportId)
+    .eq('purpose', 'concern_evidence')
+    .order('created_at', { ascending: true });
+  if (!rows?.length) return [];
+  const { data: signed } = await supabase.storage.from('report-photos').createSignedUrls(
+    rows.map((r) => r.storage_path as string),
+    600,
+  );
+  const urls = new Map((signed ?? []).map((s) => [s.path, s.signedUrl]));
+  return rows.flatMap((r) => {
+    const url = urls.get(r.storage_path as string);
+    return url ? [{ id: r.id as string, fileName: r.file_name as string, url }] : [];
+  });
+}
