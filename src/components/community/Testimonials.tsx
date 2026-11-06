@@ -46,8 +46,8 @@ export function Testimonials({ frameClass }: { frameClass: string }) {
                 <figcaption className="mt-6 flex items-center gap-3">
                   <Avatar profile={person} size={44} />
                   <span className="min-w-0">
-                    <span className="block truncate text-[15px] font-semibold">{person.name}</span>
-                    <span className={`block truncate text-[13px] ${featured ? 'text-white/75' : 'text-subtle'}`}>
+                    <span className="block text-[15px] font-semibold">{person.name}</span>
+                    <span className={`block text-[13px] leading-snug ${featured ? 'text-white/75' : 'text-subtle'}`}>
                       {person.tag} · {person.place}
                     </span>
                   </span>

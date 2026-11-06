@@ -68,7 +68,7 @@ export function CommunityHome() {
     <>
       <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="display text-[length:var(--step-head)] text-ink">
+          <h1 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">
             Bantay Community<span className="text-accent-ink">.</span>
           </h1>
           <p className="mt-3 max-w-[52ch] text-[16px] leading-snug text-subtle">

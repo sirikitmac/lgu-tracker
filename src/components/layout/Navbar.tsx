@@ -179,7 +179,7 @@ export function Navbar() {
                   <Link
                     href={item.href}
                     aria-current={active ? 'page' : undefined}
-                    className={`inline-flex items-center h-8 px-3 rounded-full text-[13.5px] font-medium whitespace-nowrap transition-colors ${focusRing} ${
+                    className={`inline-flex items-center h-8 px-2.5 xl:px-3 rounded-full text-[13.5px] font-medium whitespace-nowrap transition-colors ${focusRing} ${
                       active ? 'bg-sunken text-ink' : 'text-subtle hover:text-ink hover:bg-sunken/70'
                     }`}
                   >
