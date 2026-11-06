@@ -7,7 +7,7 @@ import type { AppRole } from '@/types/auth';
 export type SessionRole =
   | { state: 'loading' }
   | { state: 'out' }
-  | { state: 'in'; role: AppRole; name: string };
+  | { state: 'in'; id: string; role: AppRole; name: string };
 
 /**
  * Who is signed in and what role they hold, for parts of public pages that
@@ -58,5 +58,5 @@ export function useSessionRole(): SessionRole {
 
   if (userId === undefined) return { state: 'loading' };
   if (!userId) return { state: 'out' };
-  return profile ? { state: 'in', ...profile } : { state: 'loading' };
+  return profile ? { state: 'in', id: userId, ...profile } : { state: 'loading' };
 }
