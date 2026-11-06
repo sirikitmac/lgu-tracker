@@ -16,7 +16,7 @@ import { ThemeSegmented, ThemeToggle } from './ThemeToggle';
 /**
  * Primary navigation for every public page: the app pages and Community first (each
  * shows when it is open), then two anchors on the home page. Below `lg` the
- * links move into a menu panel; BP and the menu button stay in the bar.
+ * links move into a menu panel; Suri and the menu button stay in the bar.
  */
 
 interface NavItem {

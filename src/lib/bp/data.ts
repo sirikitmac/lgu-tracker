@@ -4,7 +4,7 @@ import { SUBAYBAYAN_CATEGORY_LABELS, isSubaybayanCategory } from '@/lib/subaybay
 import { DPWH_CATEGORY_LABELS, DPWH_STATUS_LABELS, type DpwhCategory, type DpwhDirectoryStats, type DpwhStatus } from '@/types/dpwh';
 
 /**
- * Read-only data access for BP, the LGU Tracker assistant. Two predefined
+ * Read-only data access for Suri, the LGU Tracker assistant. Two predefined
  * queries, nothing else: the cached directory summary and one page of the
  * existing project directory search. Every parameter the model supplies goes
  * through parseDirectoryQuery, the same validator as /api/dpwh/contracts, and

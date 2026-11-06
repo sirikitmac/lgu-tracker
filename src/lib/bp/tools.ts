@@ -5,7 +5,7 @@ import { SUBAYBAYAN_CATEGORIES } from '@/lib/subaybayan/categories';
 import { BP_MAX_RESULTS, getDirectoryOverview, searchProjects, type BpRecord, type BpSupabase, type DirectoryOverview } from './data';
 
 /**
- * The only operations BP can ask for. Both are read-only; the dispatcher
+ * The only operations Suri can ask for. Both are read-only; the dispatcher
  * ignores any other name. Region and province names are offered as enums
  * (from the cached summary) so the model picks values that actually exist.
  */

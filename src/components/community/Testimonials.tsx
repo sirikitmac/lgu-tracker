@@ -1,6 +1,7 @@
 import React from 'react';
 import { Quote } from 'lucide-react';
 import { Avatar } from '@/components/community/Avatar';
+import { Suri } from '@/components/suri/Suri';
 import { TESTIMONIALS } from '@/lib/community/mock';
 import { profileById } from '@/lib/community/profiles';
 
@@ -14,13 +15,16 @@ export function Testimonials({ frameClass }: { frameClass: string }) {
   return (
     <section id="reviews" className="bg-ground py-20 lg:py-32 scroll-mt-16" aria-labelledby="reviews-title">
       <div className={frameClass}>
-        <div className="max-w-2xl">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-2xl">
           <h2 id="reviews-title" data-reveal className="display text-[length:var(--step-head)] text-ink">
             Ano ang sabi nila<span className="text-accent-ink">?</span>
           </h2>
           <p data-reveal style={delay(70)} className="mt-5 text-[17px] leading-snug text-ink max-w-[46ch]">
             What residents, students, reporters and LGU staff say about Bantay Proyekto.
           </p>
+          </div>
+          <Suri pose="communicator" size={150} className="shrink-0 self-start sm:self-end" />
         </div>
 
         <ul className="mt-10 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">

@@ -5,7 +5,7 @@ import { runTool, toolDeclarations } from './tools';
 import type { ChatTurn } from './validate';
 
 /**
- * Gemini side of BP. Server-only: GEMINI_API_KEY is read here and never
+ * Gemini side of Suri, the assistant. Server-only: GEMINI_API_KEY is read here and never
  * leaves the server. The model may only call the read-only tools in
  * tools.ts; their arguments are validated before any query runs.
  */
@@ -13,7 +13,7 @@ import type { ChatTurn } from './validate';
 /**
  * Pinned model ids (the `-latest` aliases and older ids were overloaded or
  * retired for new keys when tested). When the primary is busy (503/429/slow),
- * BP falls back to the lighter model. Override with GEMINI_MODEL and
+ * Suri falls back to the lighter model. Override with GEMINI_MODEL and
  * GEMINI_FALLBACK_MODEL.
  */
 export const DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash';
@@ -70,7 +70,7 @@ async function generateWithFallback(
 }
 
 export function systemInstruction(today: string): string {
-  return `You are BP, the AI assistant for LGU Tracker, a public infrastructure transparency platform in the Philippines.
+  return `You are Suri, the AI assistant for Bantay Proyekto (LGU Tracker), a public infrastructure transparency platform in the Philippines.
 
 Your purpose is to help users understand and explore infrastructure project and DPWH contract information retrieved from the application's database. You have not been trained on this dataset: for every factual question, call the provided tools and answer from what they return.
 

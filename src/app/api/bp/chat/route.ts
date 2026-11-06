@@ -8,7 +8,7 @@ import { createRateLimiter, validateChatRequest } from '@/lib/bp/validate';
 /**
  * POST /api/bp/chat  { question: string, history?: { role, content }[] }
  *
- * BP, the LGU Tracker assistant. Retrieves public directory data with the
+ * Suri, the LGU Tracker assistant. Retrieves public directory data with the
  * caller's Supabase client (publishable key, RLS applies) through predefined
  * read-only queries, and asks Gemini to explain it. GEMINI_API_KEY is
  * server-only. Without it, development serves a labelled non-AI preview and
@@ -29,13 +29,13 @@ const fail = (status: number, code: string, error: string, headers?: HeadersInit
   Response.json({ error, code }, { status, headers });
 
 const GEMINI_ERRORS: Record<GeminiFailure, [number, string]> = {
-  rate_limited: [503, 'BP is receiving too many requests right now. Please try again in a minute.'],
+  rate_limited: [503, 'Suri is receiving too many requests right now. Please try again in a minute.'],
   busy: [503, 'The AI service is busy right now (high demand). Please try again in a minute.'],
-  auth: [503, 'BP is not configured correctly on the server (the Gemini API key was rejected).'],
-  timeout: [504, 'BP took too long to answer. Please try again or ask a narrower question.'],
-  upstream: [502, 'BP could not reach the AI service. Please try again shortly.'],
-  empty: [502, 'BP could not produce an answer. Please rephrase your question.'],
-  database: [502, 'BP could not read the project database right now. Please try again shortly.'],
+  auth: [503, 'Suri is not configured correctly on the server (the Gemini API key was rejected).'],
+  timeout: [504, 'Suri took too long to answer. Please try again or ask a narrower question.'],
+  upstream: [502, 'Suri could not reach the AI service. Please try again shortly.'],
+  empty: [502, 'Suri could not produce an answer. Please rephrase your question.'],
+  database: [502, 'Suri could not read the project database right now. Please try again shortly.'],
 };
 
 function clientKey(request: NextRequest): string {
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
 
   const config = geminiConfig();
   if (!config && process.env.NODE_ENV === 'production') {
-    return fail(503, 'gemini_not_configured', 'BP is not available yet: the Gemini API key has not been configured on the server.');
+    return fail(503, 'gemini_not_configured', 'Suri is not available yet: the Gemini API key has not been configured on the server.');
   }
 
   const overview = await getDirectoryOverview(supabase);
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const kind = classifyGeminiError(error);
     // Status and kind only: never the request, the records, or the key.
-    console.error('[LGU Tracker] BP chat failed:', kind, (error as { status?: number })?.status ?? '');
+    console.error('[LGU Tracker] Suri chat failed:', kind, (error as { status?: number })?.status ?? '');
     const [status, message] = GEMINI_ERRORS[kind];
     return fail(status, `gemini_${kind}`, message);
   }

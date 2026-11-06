@@ -13,6 +13,7 @@ import { CRITICAL_TILES, PhotoWall } from '@/components/landing/PhotoWall';
 import { Reveal } from '@/components/landing/Reveal';
 import { StackSteps } from '@/components/landing/StackSteps';
 import { Testimonials } from '@/components/community/Testimonials';
+import { Suri } from '@/components/suri/Suri';
 import { anton } from '@/components/landing/fonts';
 import { applyFixture, LANDING_FIXTURES, type LandingFixture } from '@/lib/landing/fixtures';
 import { regionName } from '@/components/landing/content';
@@ -298,11 +299,16 @@ function SixWaysIn({ data }: { data: LandingData }) {
       ui: <RegionBars data={data} />,
     },
     {
-      title: 'Ask BP',
+      title: 'Ask Suri',
       text: 'Questions in plain words, answers from the records.',
       bp: true,
       photo: WAY_PHOTOS.bp,
-      ui: <span className={`${GLASS} inline-block rounded-2xl rounded-bl-md`}>How many bridges in Iligan City?</span>,
+      ui: (
+        <span className="flex items-end gap-2">
+          <Suri pose="assistant" size={92} className="shrink-0 drop-shadow-[0_4px_12px_rgb(5_15_22/0.5)]" />
+          <span className={`${GLASS} inline-block rounded-2xl rounded-bl-md`}>How many bridges in Iligan City?</span>
+        </span>
+      ),
     },
   ];
 
@@ -336,7 +342,7 @@ function SixWaysIn({ data }: { data: LandingData }) {
 /**
  * One card: the photograph fills it under a night gradient that rises from
  * the bottom; number top left, arrow top right, title and line bottom left.
- * The whole card is one link (or, for BP, one button). Hover and focus ease
+ * The whole card is one link (or, for Suri, one button). Hover and focus ease
  * the photograph in a little, lift the gradient and send the arrow off on
  * its diagonal (globals.css, .way); reduced motion keeps only the colours.
  */
@@ -777,8 +783,9 @@ function ReportCta() {
             Wrong details, work that stopped, a hazard on site. Tell the LGU. Your report is private: only you and
             LGU staff can read it until staff review it.
           </p>
-          <div data-reveal style={delay(140)} className="mt-7">
+          <div data-reveal style={delay(140)} className="mt-7 flex flex-wrap items-end gap-x-6 gap-y-4">
             <ReportConcernButton size="xl" />
+            <Suri pose="checker" size={132} className="-mb-2" />
           </div>
         </div>
 

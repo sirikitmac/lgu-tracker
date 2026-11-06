@@ -1,6 +1,6 @@
-# BP — LGU Tracker AI Assistant
+# Suri (BP) — LGU Tracker AI Assistant
 
-"Talk to BP" on the Project Directory (`/projects`) opens a floating chat that answers questions from the
+"Ask Suri" on the Project Directory (`/projects`) opens a floating chat that answers questions from the
 directory's Supabase data, with Gemini writing the explanation.
 
 ## How it works
@@ -67,7 +67,7 @@ Server logs record only the error kind and HTTP status, never questions, records
 - City / municipality is not reported for DPWH contracts; place questions use full-text search on titles, IDs,
   contractors, and offices, which can match records that only mention the place (for example a road name).
 - Overview statistics cover DPWH contracts and refresh after each successful sync (`dpwh_directory_stats`).
-- Some rare filters can hit the anonymous statement timeout on the count query; BP then reports the count as
+- Some rare filters can hit the anonymous statement timeout on the count query; Suri then reports the count as
   unavailable rather than guessing.
 
 ## Tests

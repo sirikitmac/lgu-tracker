@@ -9,7 +9,7 @@ import { AlertTriangle, CheckCircle2, Info, X, XCircle } from 'lucide-react';
  * Not for validation errors (those belong beside the field) and not for
  * ordinary navigation.
  *
- * - One stack, bottom-left on wide screens (clear of BP, bottom-right) and
+ * - One stack, bottom-left on wide screens (clear of Suri, bottom-right) and
  *   full-width at the bottom on phones; at most three at once.
  * - Calling toast() with an id that is already showing updates that toast
  *   and restarts its timer instead of stacking a copy. Without an id, the

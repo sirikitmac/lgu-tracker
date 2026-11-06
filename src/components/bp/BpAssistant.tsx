@@ -1,20 +1,22 @@
 'use client';
 
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { AlertTriangle, ArrowUpRight, Bot, Loader2, RotateCcw, Send, Sparkles, X } from 'lucide-react';
+import { AlertTriangle, ArrowUpRight, Loader2, RotateCcw, Send, X } from 'lucide-react';
 import { formatPeso } from '@/components/dpwh/format';
 import { StatusPill } from '@/components/dpwh/StatusPill';
 import { secondaryButtonClass } from '@/components/dpwh/ui';
+import { Suri, SuriFace } from '@/components/suri/Suri';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Tooltip } from '@/components/ui/Tooltip';
 
 /**
- * "Ask BP" button and the floating, non-modal chat panel. The page stays
- * usable behind it. The panel is portalled to <body> so a translucent
- * navigation bar (backdrop-filter) never becomes its containing block. Answers come from POST /api/bp/chat; reference links are
- * the records the server actually retrieved, never parsed from the answer.
+ * "Ask Suri" button and Suri's chat window. Suri is Bantay Proyekto's
+ * tarsier assistant. The chat is a modal dialog: the native <dialog> keeps
+ * the page behind it inert, holds focus inside, closes on Escape and sits in
+ * the browser's top layer, so a translucent navigation bar never gets in
+ * the way. Answers come from POST /api/bp/chat; reference links are the
+ * records the server actually retrieved, never parsed from the answer.
  */
 
 interface Reference {
@@ -40,7 +42,7 @@ interface Message {
 }
 
 const WELCOME =
-  "Hi! I'm BP, LGU Tracker's assistant. 👋\n\nAsk me about project records: amounts, locations, categories and statuses.\n\nWhat would you like to know?";
+  "Hi! I'm Suri, Bantay Proyekto's AI assistant.\n\nI help you explore infrastructure projects, understand project information and navigate public data. Ask me about amounts, locations, categories and statuses.\n\nWhat would you like to know?";
 
 const SUGGESTIONS = [
   'How many contracts are listed in the directory?',
@@ -121,9 +123,9 @@ function ReferenceList({ references }: { references: Reference[] }) {
 }
 
 /**
- * Window event that opens BP from anywhere on the page (the landing page's
- * "Ask BP" card). Only the navigation's instance listens, so one panel opens;
- * `detail.from` gets the focus back when the panel closes.
+ * Window event that opens Suri from anywhere on the page (the landing page's
+ * "Ask Suri" card). Only the navigation's instance listens, so one chat opens;
+ * `detail.from` gets the focus back when it closes.
  */
 export const BP_OPEN_EVENT = 'bp:open';
 export type BpOpenDetail = { from?: HTMLElement | null };
@@ -138,6 +140,7 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
   const nextId = useRef(1);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -164,8 +167,23 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
     }
   }, [messages]);
 
+  // Open and close the native modal with the state, and keep the page behind from scrolling.
   useEffect(() => {
-    if (open) inputRef.current?.focus();
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (open && !dialog.open) {
+      dialog.showModal();
+      inputRef.current?.focus();
+    } else if (!open && dialog.open) {
+      dialog.close();
+    }
+    if (!open) return;
+    const html = document.documentElement;
+    const before = html.style.overflow;
+    html.style.overflow = 'hidden';
+    return () => {
+      html.style.overflow = before;
+    };
   }, [open]);
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
@@ -212,7 +230,7 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
       });
       const body = await res.json().catch(() => null);
       if (!res.ok || !body || typeof body.answer !== 'string') {
-        throw new Error(body?.error ?? 'BP could not answer right now. Please try again.');
+        throw new Error(body?.error ?? 'Suri could not answer right now. Please try again.');
       }
       setMessages((prev) => [
         ...prev,
@@ -247,35 +265,38 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
           if (open) close();
           else setOpen(true);
         }}
-        aria-expanded={open}
-        aria-controls={panelId}
-        aria-label={variant === 'nav' ? 'Ask BP, the AI assistant' : undefined}
+        aria-haspopup="dialog"
+        aria-label={variant === 'nav' ? 'Ask Suri, the AI assistant' : undefined}
         className={
           variant === 'nav'
-            ? 'inline-flex items-center justify-center gap-1.5 h-9 w-10 sm:w-auto sm:px-3.5 rounded-full border border-line-strong bg-surface text-[13px] font-semibold text-ink hover:bg-sunken transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink aria-expanded:bg-sunken'
+            ? 'inline-flex items-center justify-center gap-1.5 h-9 w-9 sm:w-auto sm:pl-1.5 sm:pr-3.5 rounded-full border border-line-strong bg-surface text-[13px] font-semibold text-ink hover:bg-sunken transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink'
             : secondaryButtonClass
         }
       >
-        <Sparkles className="w-4 h-4 text-accent-ink" aria-hidden="true" />
-        <span className={variant === 'nav' ? 'hidden sm:inline' : undefined}>Ask BP</span>
+        <SuriFace size={22} />
+        <span className={variant === 'nav' ? 'hidden sm:inline' : undefined}>Ask Suri</span>
       </button>
 
-      {open && typeof document !== 'undefined' && createPortal(
-        <section
-          id={panelId}
-          role="dialog"
-          aria-modal="false"
-          aria-labelledby={titleId}
-          onKeyDown={(e) => e.key === 'Escape' && close()}
-          className="fixed z-[900] inset-x-2 bottom-2 top-16 sm:inset-x-auto sm:top-auto sm:right-6 sm:bottom-6 sm:w-[400px] sm:h-[min(640px,calc(100dvh-7rem))] flex flex-col glass-strong border border-line rounded-[22px] shadow-float overflow-hidden motion-safe:animate-[bp-in_220ms_var(--ease-out)]"
-        >
-          <header className="flex items-start gap-3 px-4 py-3 border-b border-line/80">
-            <span className="mt-0.5 flex items-center justify-center w-9 h-9 shrink-0 rounded-full bg-accent text-ink" aria-hidden="true">
-              <Bot className="w-5 h-5" />
-            </span>
+      <dialog
+        ref={dialogRef}
+        id={panelId}
+        aria-labelledby={titleId}
+        onClose={() => {
+          // Escape or dialog.close(): bring the state and the focus back to where they were.
+          if (open) close();
+        }}
+        onClick={(e) => {
+          if (e.target === dialogRef.current) close(); // a click on the dimmed page behind
+        }}
+        className="m-auto w-[calc(100%-1.5rem)] max-w-xl h-[min(720px,calc(100dvh-2rem))] p-0 overflow-hidden rounded-[24px] bg-raised text-ink border border-line shadow-float backdrop:bg-night/55 backdrop:backdrop-blur-[3px] open:flex open:flex-col open:motion-safe:animate-[bp-in_220ms_var(--ease-out)]"
+      >
+        {open && (
+          <>
+          <header className="flex shrink-0 items-start gap-3 px-4 py-3 border-b border-line/80">
+            <SuriFace size={40} className="mt-0.5 ring-2 ring-accent/60" />
             <div className="min-w-0 flex-1">
               <h2 id={titleId} className="font-display text-base font-bold text-ink leading-tight">
-                BP <span className="font-sans text-xs font-medium text-muted">· LGU Tracker AI Assistant</span>
+                Suri <span className="font-sans text-xs font-medium text-muted">· Bantay Proyekto AI Assistant</span>
               </h2>
               <p className="text-xs text-muted">Your guide to public infrastructure data.</p>
             </div>
@@ -292,7 +313,7 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
               </button>
             </Tooltip>
             <Tooltip content="Close (Esc)" side="bottom">
-              <button type="button" onClick={close} className="p-2 rounded-lg text-subtle hover:bg-sunken focus-visible:outline-2 focus-visible:outline-accent-ink" aria-label="Close BP">
+              <button type="button" onClick={close} className="p-2 rounded-lg text-subtle hover:bg-sunken focus-visible:outline-2 focus-visible:outline-accent-ink" aria-label="Close Suri">
                 <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </Tooltip>
@@ -301,15 +322,18 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
             open={confirmReset}
             onOpenChange={setConfirmReset}
             title="Start a new conversation?"
-            description="This clears the questions and answers in this BP conversation. It cannot be undone."
+            description="This clears the questions and answers in this Suri conversation. It cannot be undone."
             confirmLabel="Clear conversation"
             tone="danger"
             onConfirm={reset}
           />
 
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 text-sm" aria-live="polite" aria-busy={pending}>
-            <div className="max-w-[90%] rounded-2xl rounded-tl-sm bg-surface border border-line px-3.5 py-2.5 text-ink space-y-2 leading-relaxed">
-              <RichText text={WELCOME} />
+          <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-4 space-y-3 text-sm" aria-live="polite" aria-busy={pending}>
+            <div className="flex items-end gap-2">
+              <Suri pose="assistant" size={messages.length === 0 ? 96 : 56} className="shrink-0 transition-all" />
+              <div className="max-w-[85%] rounded-2xl rounded-bl-sm bg-surface border border-line px-3.5 py-2.5 text-ink space-y-2 leading-relaxed">
+                <RichText text={WELCOME} />
+              </div>
             </div>
 
             {messages.length === 0 && (
@@ -337,7 +361,9 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
                   <p className="max-w-[85%] rounded-2xl rounded-tr-sm bg-ink px-3.5 py-2.5 text-on-ink whitespace-pre-wrap break-words">{m.content}</p>
                 </div>
               ) : (
-                <div key={m.id} className="max-w-[95%]">
+                <div key={m.id} className="flex max-w-[95%] items-start gap-2">
+                  <SuriFace size={28} className="mt-1" />
+                  <div className="min-w-0">
                   <div className="rounded-2xl rounded-tl-sm bg-surface border border-line px-3.5 py-2.5 text-ink space-y-2 leading-relaxed break-words">
                     {m.mode === 'preview' && (
                       <p className="inline-block px-2 py-0.5 rounded-full border border-warn-line bg-warn-soft text-[11px] font-semibold text-warn-ink">
@@ -352,13 +378,14 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
                       ? 'Built from database results, without AI.'
                       : 'AI-generated from LGU Tracker records. Check the linked records.'}
                   </p>
+                  </div>
                 </div>
               )
             )}
 
             {pending && (
               <div className="inline-flex items-center gap-2 rounded-2xl rounded-tl-sm bg-sunken px-3.5 py-2.5 text-xs text-subtle" role="status">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> BP is looking up the records…
+                <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> Suri is looking up the records…
               </div>
             )}
             {error && (
@@ -373,9 +400,9 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
               e.preventDefault();
               ask(input);
             }}
-            className="flex items-end gap-2 border-t border-line/80 p-3"
+            className="flex shrink-0 items-end gap-2 border-t border-line/80 p-3"
           >
-            <label htmlFor={`${panelId}-input`} className="sr-only">Ask BP a question</label>
+            <label htmlFor={`${panelId}-input`} className="sr-only">Ask Suri a question</label>
             <textarea
               id={`${panelId}-input`}
               ref={inputRef}
@@ -401,12 +428,12 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
               {pending ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Send className="w-4 h-4" aria-hidden="true" />}
             </button>
           </form>
-          <p className="px-4 pb-3 -mt-1 text-[11.5px] leading-snug text-muted">
+          <p className="shrink-0 px-4 pb-3 -mt-1 text-[11.5px] leading-snug text-muted">
             Values are as published, not verified by the LGU. Questions go to Google Gemini, so leave out personal details. Kept only in this tab.
           </p>
-        </section>,
-        document.body
-      )}
+          </>
+        )}
+      </dialog>
     </>
   );
 }

@@ -8,7 +8,7 @@ import { primaryButtonClass, secondaryButtonClass } from '@/components/dpwh/ui';
 /**
  * Asks before a consequential action. Built on the native modal <dialog>,
  * so the page behind is inert, focus stays inside, and Escape cancels; the
- * dialog sits in the browser's top layer above the map, drawers and BP.
+ * dialog sits in the browser's top layer above the map, drawers and Suri.
  *
  * Focus starts on Cancel (the safe choice) and returns to the control that
  * opened the dialog. If onConfirm returns a promise, both buttons lock and
@@ -86,7 +86,7 @@ export function ConfirmDialog({
       ref={ref}
       aria-labelledby={titleId}
       aria-describedby={descriptionId}
-      // Escape: let the dialog decide, and keep the key from also closing a panel behind it (BP, drawers).
+      // Escape: let the dialog decide, and keep the key from also closing a panel behind it (Suri, drawers).
       onCancel={(e) => {
         e.preventDefault();
         close();
