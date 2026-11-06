@@ -329,9 +329,9 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
           />
 
           <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-4 space-y-3 text-sm" aria-live="polite" aria-busy={pending}>
-            <div className="flex items-end gap-2">
+            <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-end sm:gap-2">
               <Suri pose="assistant" size={messages.length === 0 ? 96 : 56} className="shrink-0 transition-all" />
-              <div className="max-w-[85%] rounded-2xl rounded-bl-sm bg-surface border border-line px-3.5 py-2.5 text-ink space-y-2 leading-relaxed">
+              <div className="max-w-full sm:max-w-[85%] rounded-2xl rounded-tl-sm sm:rounded-bl-sm sm:rounded-tl-2xl bg-surface border border-line px-3.5 py-2.5 text-ink space-y-2 leading-relaxed">
                 <RichText text={WELCOME} />
               </div>
             </div>

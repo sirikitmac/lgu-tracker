@@ -783,7 +783,7 @@ function ReportCta() {
             Wrong details, work that stopped, a hazard on site. Tell the LGU. Your report is private: only you and
             LGU staff can read it until staff review it.
           </p>
-          <div data-reveal style={delay(140)} className="mt-7 flex flex-wrap items-end gap-x-6 gap-y-4">
+          <div data-reveal style={delay(140)} className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-2">
             <ReportConcernButton size="xl" />
             <Suri pose="checker" size={132} className="-mb-2" />
           </div>
