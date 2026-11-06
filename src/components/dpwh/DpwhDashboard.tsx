@@ -1,5 +1,6 @@
 'use client';
 
+import { Suri } from '@/components/suri/Suri';
 import React, { useEffect, useId, useMemo, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -475,9 +476,12 @@ export function DpwhDashboard({
 function DashboardHeader({ children }: { children?: React.ReactNode }) {
   return (
     <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div className="min-w-0">
-        <h1 className="page-title text-[30px] sm:text-[36px] text-ink">Dashboard</h1>
-        <p className="mt-1.5 text-[15px] text-subtle">What the published DPWH contracts show, by region, status and category.</p>
+      <div className="flex min-w-0 items-center gap-4">
+        <Suri pose="data" size={88} className="hidden shrink-0 sm:block" />
+        <div className="min-w-0">
+          <h1 className="page-title text-[30px] sm:text-[36px] text-ink">Dashboard</h1>
+          <p className="mt-1.5 text-[15px] text-subtle">What the published DPWH contracts show, by region, status and category.</p>
+        </div>
       </div>
       {children && <div className="flex flex-wrap items-center gap-2 sm:shrink-0">{children}</div>}
     </header>

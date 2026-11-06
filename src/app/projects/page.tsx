@@ -1,3 +1,4 @@
+import { Suri } from '@/components/suri/Suri';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BarChart3, MapPin } from 'lucide-react';
@@ -33,11 +34,14 @@ export default async function PublicProjectsPage({ searchParams }: PageProps<'/p
   return (
     <>
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="page-title text-[30px] sm:text-[36px] text-ink">Projects</h1>
-          <p className="mt-1.5 text-[15px] text-subtle">
-            DPWH contracts across the Visayas and Mindanao, FY 2027 budget proposals nationwide, and DILG SubayBAYAN LGU projects.
-          </p>
+        <div className="flex min-w-0 items-center gap-4">
+          <Suri pose="explorer" size={88} className="hidden shrink-0 sm:block" />
+          <div className="min-w-0">
+            <h1 className="page-title text-[30px] sm:text-[36px] text-ink">Projects</h1>
+            <p className="mt-1.5 text-[15px] text-subtle">
+              DPWH contracts across the Visayas and Mindanao, FY 2027 budget proposals nationwide, and DILG SubayBAYAN LGU projects.
+            </p>
+          </div>
         </div>
         <nav aria-label="Other views" className="flex flex-wrap items-center gap-2 sm:shrink-0">
           <Link href="/projects/dashboard" className={secondaryButtonClass}>

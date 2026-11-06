@@ -19,6 +19,7 @@ export default function AppError({ error, retry }: { error: unknown; retry: () =
     <main className="flex-1 grid place-items-center px-4 py-16">
       <ErrorState
         className={`${panelClass} w-full max-w-lg`}
+        suri="analyst"
         title="Something went wrong"
         description="This page could not be shown. Nothing was changed. Try again, or return to the home page."
         onRetry={retry}

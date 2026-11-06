@@ -47,6 +47,7 @@ export default async function MyReportsPage() {
         <div className="rounded-3xl border border-dashed border-line-strong bg-surface">
           <EmptyState
             icon={ClipboardList}
+            suri="checker"
             title="You have not sent a report yet"
             description="Open any project and choose Report a concern. You can follow what happens to it here."
           />

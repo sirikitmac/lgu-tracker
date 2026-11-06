@@ -128,6 +128,7 @@ export function InboxList({ initial }: { initial: AppNotification[] }) {
         <div className="rounded-3xl border border-dashed border-line-strong bg-surface">
           <EmptyState
             icon={BellRing}
+            suri="friendly"
             title={filter === 'unread' ? 'You are all caught up' : 'Nothing here yet'}
             description={
               filter === 'unread'

@@ -70,6 +70,7 @@ export default async function ReportQueuePage({ searchParams }: PageProps<'/repo
         <div className="rounded-3xl border border-dashed border-line-strong bg-surface">
           <EmptyState
             icon={Inbox}
+            suri="friendly"
             title={filter.id === 'open' ? 'No open reports' : 'No reports here'}
             description={filter.id === 'open' ? 'New reports appear here and in your inbox as soon as they are sent.' : 'Try another filter.'}
           />

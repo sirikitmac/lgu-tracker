@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle, Info, Loader2, RotateCcw, SearchX, type LucideIcon } from 'lucide-react';
 import { secondaryButtonSmClass } from '@/components/dpwh/ui';
+import { Suri, type SuriPose } from '@/components/suri/Suri';
 
 /**
  * The three non-content states every data view can be in, drawn one way
@@ -33,14 +34,19 @@ export function EmptyState({
   title,
   description,
   action,
+  suri,
   compact = false,
   className = '',
-}: StateProps & { icon?: LucideIcon; action?: React.ReactNode }) {
+}: StateProps & { icon?: LucideIcon; action?: React.ReactNode; /** Show Suri in this mood instead of the icon. */ suri?: SuriPose }) {
   return (
     <div className={`flex flex-col items-center justify-center text-center ${compact ? 'gap-2 px-4 py-8' : 'gap-3 px-6 py-12'} ${className}`}>
-      <span className={`grid place-items-center rounded-full bg-sunken ${compact ? 'w-9 h-9' : 'w-11 h-11'}`}>
-        <Icon className={`${compact ? 'w-4 h-4' : 'w-5 h-5'} text-muted`} aria-hidden="true" />
-      </span>
+      {suri ? (
+        <Suri pose={suri} size={compact ? 84 : 120} />
+      ) : (
+        <span className={`grid place-items-center rounded-full bg-sunken ${compact ? 'w-9 h-9' : 'w-11 h-11'}`}>
+          <Icon className={`${compact ? 'w-4 h-4' : 'w-5 h-5'} text-muted`} aria-hidden="true" />
+        </span>
+      )}
       <p className={`${compact ? 'text-sm' : 'text-[15px]'} font-semibold text-ink`}>{title}</p>
       {description && <p className="max-w-sm text-[13px] leading-relaxed text-subtle">{description}</p>}
       {action && <div className="mt-1 flex flex-wrap items-center justify-center gap-2">{action}</div>}
@@ -54,12 +60,14 @@ export function ErrorState({
   onRetry,
   retrying = false,
   children,
+  suri,
   compact = false,
   className = '',
-}: StateProps & { onRetry?: () => void; retrying?: boolean; children?: React.ReactNode }) {
+}: StateProps & { onRetry?: () => void; retrying?: boolean; children?: React.ReactNode; /** Show Suri in this mood next to the message. */ suri?: SuriPose }) {
   return (
     <div role="alert" className={`flex flex-col items-center justify-center text-center ${compact ? 'gap-2 px-4 py-8' : 'gap-3 px-6 py-12'} ${className}`}>
-      <span className={`grid place-items-center rounded-full bg-danger-soft ${compact ? 'w-9 h-9' : 'w-11 h-11'}`}>
+      {suri && <Suri pose={suri} size={compact ? 84 : 120} />}
+      <span className={`${suri ? 'sr-only' : 'grid place-items-center'} rounded-full bg-danger-soft ${compact ? 'w-9 h-9' : 'w-11 h-11'}`}>
         <AlertTriangle className={`${compact ? 'w-4 h-4' : 'w-5 h-5'} text-danger-ink`} aria-hidden="true" />
       </span>
       <p className={`${compact ? 'text-sm' : 'text-[15px]'} font-semibold text-ink`}>{title}</p>

@@ -1,5 +1,6 @@
 'use client';
 
+import { Suri } from '@/components/suri/Suri';
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { MessageSquare, Plus } from 'lucide-react';
@@ -67,13 +68,16 @@ export function CommunityHome() {
   return (
     <>
       <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
+        <div className="flex items-center gap-4">
+          <Suri pose="communicator" size={104} className="hidden shrink-0 sm:block" />
+          <div>
           <h1 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">
             Bantay Community<span className="text-accent-ink">.</span>
           </h1>
           <p className="mt-3 max-w-[52ch] text-[16px] leading-snug text-subtle">
             Usapang bayan tungkol sa mga proyekto at alalahanin ng komunidad. Talk about public projects and what is happening in your town.
           </p>
+          </div>
         </div>
         <button type="button" onClick={start} className={`${accentButtonClass} h-11 shrink-0 px-5`}>
           <Plus className="h-4 w-4" aria-hidden="true" /> New discussion

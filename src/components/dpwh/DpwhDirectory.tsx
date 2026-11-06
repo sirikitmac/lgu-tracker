@@ -677,6 +677,7 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
             <EmptyState
               className={panelClass}
               icon={SearchX}
+              suri="analyst"
               title="No projects found"
               description="Try fewer filters or a different search."
               action={
@@ -689,6 +690,7 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
             <EmptyState
               className={panelClass}
               icon={FolderSearch}
+              suri="builder"
               title="No projects available yet"
               description="Records appear here once the data is imported."
             />
