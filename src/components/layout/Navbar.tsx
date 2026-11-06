@@ -14,7 +14,7 @@ import { STAFF_ROLES, type AppRole } from '@/types/auth';
 import { ThemeSegmented, ThemeToggle } from './ThemeToggle';
 
 /**
- * Primary navigation for every public page: the three app pages first (each
+ * Primary navigation for every public page: the app pages and Community first (each
  * shows when it is open), then two anchors on the home page. Below `lg` the
  * links move into a menu panel; BP and the menu button stay in the bar.
  */
@@ -34,6 +34,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   { href: '/projects/map', label: 'Map', match: (p) => p.startsWith('/projects/map') },
   { href: '/projects/dashboard', label: 'Dashboard', match: (p) => p.startsWith('/projects/dashboard') },
+  { href: '/community', label: 'Community', match: (p) => p === '/community' || p.startsWith('/community/') },
   { href: '/#coverage', label: 'Coverage' },
   { href: '/#about', label: 'About' },
 ];
