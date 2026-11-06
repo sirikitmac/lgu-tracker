@@ -7,9 +7,26 @@ export interface Profile {
   place: string;
   /** A short label shown beside the name. */
   tag: string;
-  /** Avatar background (0-5) and silhouette (0-2); see Avatar. */
+  /** Avatar background (0-5) and silhouette (0-2); kept for older callers, see Avatar. */
   tone: number;
   shape: number;
+  /** The drawn face; see Avatar. Made up from the id when a profile has none. */
+  look?: Look;
+}
+
+export type HairStyle = 'short' | 'side' | 'crop' | 'curly' | 'long' | 'wave' | 'bob' | 'bun';
+
+/** How a sample person is drawn. Indexes point into the palettes in Avatar. */
+export interface Look {
+  /** Skin tone, 0 (lightest) to 4. */
+  skin: number;
+  hair: HairStyle;
+  /** 0 black, 1 dark brown, 2 brown, 3 grey. */
+  hairColor: number;
+  /** Clothing colour, 0-5. */
+  top: number;
+  glasses?: boolean;
+  facial?: 'stubble' | 'mustache';
 }
 
 /** A project a discussion is about. `href` is where it opens in the directory. */
