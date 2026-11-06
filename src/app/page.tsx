@@ -12,6 +12,7 @@ import { Intro } from '@/components/landing/Intro';
 import { CRITICAL_TILES, PhotoWall } from '@/components/landing/PhotoWall';
 import { Reveal } from '@/components/landing/Reveal';
 import { StackSteps } from '@/components/landing/StackSteps';
+import { Testimonials } from '@/components/community/Testimonials';
 import { anton } from '@/components/landing/fonts';
 import { applyFixture, LANDING_FIXTURES, type LandingFixture } from '@/lib/landing/fixtures';
 import { regionName } from '@/components/landing/content';
@@ -79,6 +80,7 @@ export default async function LandingPage() {
         <HowItWorks example={data.example} regionPoints={data.regions.find((r) => r.region === 'Region X')?.points ?? []} />
         <Coverage data={data} />
         <AboutData data={data} />
+        <Testimonials frameClass={FRAME} />
         <ReportCta />
         <Closing />
       </main>
