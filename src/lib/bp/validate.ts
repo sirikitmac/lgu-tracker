@@ -33,7 +33,7 @@ export function validateChatRequest(body: unknown): { ok: true; question: string
   // Oldest turns are dropped first so the context stays small.
   let total = turns.reduce((n, t) => n + t.content.length, 0);
   while (total > MAX_HISTORY_CHARS && turns.length) total -= turns.shift()!.content.length;
-  // Gemini expects the conversation to start with a user turn.
+  // Chat models expect the conversation to start with a user turn.
   while (turns[0]?.role === 'assistant') turns.shift();
 
   return { ok: true, question: question.trim(), history: turns };

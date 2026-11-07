@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getDirectoryOverview, searchProjects, type BpRecord } from '@/lib/bp/data';
-import { answerWithGemini, classifyGeminiError, geminiConfig, type GeminiFailure } from '@/lib/bp/gemini';
+import { answerWithOllama, classifyAiError, ollamaConfig, type AiFailure } from '@/lib/bp/ollama';
 import { planPreview, previewOverviewAnswer, previewSearchAnswer } from '@/lib/bp/preview';
 import { createRateLimiter, validateChatRequest } from '@/lib/bp/validate';
 
@@ -10,11 +10,11 @@ import { createRateLimiter, validateChatRequest } from '@/lib/bp/validate';
  *
  * BP, the LGU Tracker assistant. Retrieves public directory data with the
  * caller's Supabase client (publishable key, RLS applies) through predefined
- * read-only queries, and asks Gemini to explain it. GEMINI_API_KEY is
- * server-only. Without it, development serves a labelled non-AI preview and
- * production answers 503.
+ * read-only queries, and asks an Ollama model to explain it. OLLAMA_API_KEY
+ * is server-only. Without it (and with a non-local OLLAMA_BASE_URL),
+ * development serves a labelled non-AI preview and production answers 503.
  *
- * 200 → { mode: 'gemini' | 'preview', answer, references }
+ * 200 → { mode: 'ai' | 'preview', answer, references }
  * 4xx/5xx → { error, code } with a message safe to show to users.
  */
 
@@ -28,10 +28,10 @@ const perHour = createRateLimiter({ limit: 60, windowMs: 3_600_000 });
 const fail = (status: number, code: string, error: string, headers?: HeadersInit) =>
   Response.json({ error, code }, { status, headers });
 
-const GEMINI_ERRORS: Record<GeminiFailure, [number, string]> = {
+const AI_ERRORS: Record<AiFailure, [number, string]> = {
   rate_limited: [503, 'BP is receiving too many requests right now. Please try again in a minute.'],
   busy: [503, 'The AI service is busy right now (high demand). Please try again in a minute.'],
-  auth: [503, 'BP is not configured correctly on the server (the Gemini API key was rejected).'],
+  auth: [503, 'BP is not configured correctly on the server (the AI service rejected its API key).'],
   timeout: [504, 'BP took too long to answer. Please try again or ask a narrower question.'],
   upstream: [502, 'BP could not reach the AI service. Please try again shortly.'],
   empty: [502, 'BP could not produce an answer. Please rephrase your question.'],
@@ -65,16 +65,16 @@ export async function POST(request: NextRequest) {
   const supabase = await createSupabaseServerClient();
   if (!supabase) return fail(503, 'database_not_configured', 'The project database is not configured on this server.');
 
-  const config = geminiConfig();
+  const config = ollamaConfig();
   if (!config && process.env.NODE_ENV === 'production') {
-    return fail(503, 'gemini_not_configured', 'BP is not available yet: the Gemini API key has not been configured on the server.');
+    return fail(503, 'ai_not_configured', 'BP is not available yet: the AI service API key has not been configured on the server.');
   }
 
   const overview = await getDirectoryOverview(supabase);
 
   if (!config) {
     // Development preview: same read-only queries, templated answer, no AI.
-    if (!overview.ok) return fail(502, 'database_error', GEMINI_ERRORS.database[1]);
+    if (!overview.ok) return fail(502, 'database_error', AI_ERRORS.database[1]);
     const plan = planPreview(input.question, overview.data);
     let answer: string;
     let references: BpRecord[] = [];
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       answer = previewOverviewAnswer(overview.data, plan.focus);
     } else {
       const result = await searchProjects(supabase, plan.args);
-      if (!result.ok) return fail(502, 'database_error', GEMINI_ERRORS.database[1]);
+      if (!result.ok) return fail(502, 'database_error', AI_ERRORS.database[1]);
       answer = previewSearchAnswer(result.data);
       references = result.data.records;
     }
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { answer, records } = await answerWithGemini({
+    const { answer, records } = await answerWithOllama({
       config,
       supabase,
       overview: overview.ok ? overview.data : null,
@@ -98,12 +98,12 @@ export async function POST(request: NextRequest) {
       question: input.question,
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
-    return Response.json({ mode: 'gemini', answer, references: records });
+    return Response.json({ mode: 'ai', answer, references: records });
   } catch (error) {
-    const kind = classifyGeminiError(error);
+    const kind = classifyAiError(error);
     // Status and kind only: never the request, the records, or the key.
     console.error('[LGU Tracker] BP chat failed:', kind, (error as { status?: number })?.status ?? '');
-    const [status, message] = GEMINI_ERRORS[kind];
-    return fail(status, `gemini_${kind}`, message);
+    const [status, message] = AI_ERRORS[kind];
+    return fail(status, `ai_${kind}`, message);
   }
 }

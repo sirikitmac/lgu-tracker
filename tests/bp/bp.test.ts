@@ -1,8 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { ApiError } from '@google/genai';
 import { BP_MAX_RESULTS, searchProjects, toDirectoryParams, getDirectoryOverview, type BpSupabase } from '@/lib/bp/data';
-import { BpGeminiError, classifyGeminiError, geminiConfig, systemInstruction } from '@/lib/bp/gemini';
+import { answerWithOllama, BpAiError, classifyAiError, isLocalBaseUrl, OllamaHttpError, ollamaConfig, systemInstruction, type OllamaConfig } from '@/lib/bp/ollama';
 import { planPreview, previewSearchAnswer } from '@/lib/bp/preview';
 import { runTool, toolDeclarations } from '@/lib/bp/tools';
 import { createRateLimiter, validateChatRequest } from '@/lib/bp/validate';
@@ -162,7 +161,7 @@ test('only the two read-only tools exist; unknown tool names do nothing', async 
   const run = await runTool(client, 'execute_sql', { sql: 'delete from dpwh_contracts' });
   assert.match(String(run.response.error), /Unknown tool/);
   assert.equal(calls.length, 0);
-  assert.deepEqual(toolDeclarations(null).map((t) => t.name), ['get_directory_overview', 'search_projects']);
+  assert.deepEqual(toolDeclarations(null).map((t) => t.function.name), ['get_directory_overview', 'search_projects']);
 });
 
 test('preview planner routes the suggested questions to the right query', async () => {
@@ -179,21 +178,204 @@ test('preview planner routes the suggested questions to the right query', async 
   assert.deepEqual(planPreview('Bridges in Cebu', o), { tool: 'search', args: { limit: 5, category: 'bridges', province: 'Cebu' } });
 });
 
-test('Gemini config is server-env only and errors are classified without leaking', () => {
-  const saved = process.env.GEMINI_API_KEY;
-  delete process.env.GEMINI_API_KEY;
-  assert.equal(geminiConfig(), null);
-  process.env.GEMINI_API_KEY = '  test-key  ';
-  assert.equal(geminiConfig()?.apiKey, 'test-key');
-  assert.deepEqual(geminiConfig()?.models, ['gemini-3.5-flash', 'gemini-3.5-flash-lite']);
-  if (saved === undefined) delete process.env.GEMINI_API_KEY;
-  else process.env.GEMINI_API_KEY = saved;
+// ---------------------------------------------------------------------------
+// Ollama client. fetch is mocked; no network, no real key.
 
-  assert.equal(classifyGeminiError(new ApiError({ message: 'quota', status: 429 })), 'rate_limited');
-  assert.equal(classifyGeminiError(new ApiError({ message: 'API key not valid', status: 400 })), 'auth');
-  assert.equal(classifyGeminiError(new ApiError({ message: 'boom', status: 500 })), 'upstream');
-  assert.equal(classifyGeminiError(new ApiError({ message: 'high demand', status: 503 })), 'busy');
-  assert.equal(classifyGeminiError(Object.assign(new Error('t'), { name: 'TimeoutError' })), 'timeout');
-  assert.equal(classifyGeminiError(new BpGeminiError('database', 'x')), 'database');
+const TEST_KEY = 'test-key-not-real';
+const PROJECT_ROW = {
+  source: 'dpwh_contracts', record_id: '21LJ0012', title: 'ROAD', contract_name: 'Construction of Road, Iligan City',
+  region: 'Region X', province: 'Lanao del Norte', category: 'roads_highways', status: 'ongoing', contract_amount: '1000000.50',
+  budget: null, amount_label: 'Contract amount', progress: 45, implementing_office: 'Lanao del Norte 1st DEO',
+  contractor: 'ACME', start_date: '2024-01-01', completion_date: null, infra_year: 2024,
+};
+
+type FetchCall = { url: string; headers: Record<string, string>; body: Record<string, any> };
+type Reply = { status?: number; json?: unknown } | ((call: FetchCall, signal: AbortSignal) => Promise<Response>);
+
+/** Replaces global fetch for one test; each request takes the next reply. */
+async function withFetch<T>(replies: Reply[], run: (calls: FetchCall[]) => Promise<T>): Promise<T> {
+  const original = globalThis.fetch;
+  const calls: FetchCall[] = [];
+  globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+    const call: FetchCall = { url: String(input), headers: { ...(init?.headers as Record<string, string>) }, body: JSON.parse(String(init?.body)) };
+    calls.push(call);
+    const reply = replies[calls.length - 1];
+    if (!reply) throw new Error(`unexpected request #${calls.length}`);
+    if (typeof reply === 'function') return reply(call, init!.signal!);
+    return new Response(JSON.stringify(reply.json ?? {}), { status: reply.status ?? 200, headers: { 'Content-Type': 'application/json' } });
+  }) as typeof fetch;
+  try {
+    return await run(calls);
+  } finally {
+    globalThis.fetch = original;
+  }
+}
+
+const toolCall = (name: string, args: unknown) => ({ json: { model: 'm', done: true, message: { role: 'assistant', content: '', tool_calls: [{ function: { name, arguments: args } }] } } });
+const finalAnswer = (content: string) => ({ json: { model: 'm', done: true, done_reason: 'stop', message: { role: 'assistant', content } } });
+/** Never answers; rejects when the request is aborted, like fetch does. */
+const hang = (_call: FetchCall, signal: AbortSignal) =>
+  new Promise<Response>((_, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true }));
+
+/** Each test uses its own model names: the busy cooldown is per model and per process. */
+const cfg = (...models: string[]): OllamaConfig => ({ baseUrl: 'https://ollama.example', apiKey: TEST_KEY, models });
+const ask = (config: OllamaConfig, supabase: BpSupabase, extra: { signal?: AbortSignal; attemptTimeoutMs?: number } = {}) =>
+  answerWithOllama({ config, supabase, overview: null, history: [], question: 'Projects in Iligan?', signal: extra.signal ?? AbortSignal.timeout(5_000), attemptTimeoutMs: extra.attemptTimeoutMs });
+
+function withEnv<T>(env: Record<string, string | undefined>, run: () => T): T {
+  const saved = Object.fromEntries(Object.keys(env).map((k) => [k, process.env[k]]));
+  for (const [k, v] of Object.entries(env)) v === undefined ? delete process.env[k] : (process.env[k] = v);
+  try {
+    return run();
+  } finally {
+    for (const [k, v] of Object.entries(saved)) v === undefined ? delete process.env[k] : (process.env[k] = v);
+  }
+}
+
+test('Ollama config is server-env only; no key on a remote base URL means preview / not configured', () => {
+  const none = { OLLAMA_API_KEY: undefined, OLLAMA_BASE_URL: undefined, OLLAMA_MODEL: undefined, OLLAMA_FALLBACK_MODEL: undefined };
+  withEnv(none, () => assert.equal(ollamaConfig(), null, 'the route serves the preview (dev) or "not configured" (prod)'));
+  withEnv({ ...none, OLLAMA_API_KEY: `  ${TEST_KEY}  ` }, () => {
+    assert.deepEqual(ollamaConfig(), { baseUrl: 'https://ollama.com', apiKey: TEST_KEY, models: ['gpt-oss:120b', 'gpt-oss:20b'] });
+  });
+  withEnv({ ...none, OLLAMA_API_KEY: TEST_KEY, OLLAMA_BASE_URL: 'https://ollama.com/', OLLAMA_MODEL: 'gemma4:31b', OLLAMA_FALLBACK_MODEL: 'gemma4:31b' }, () => {
+    assert.deepEqual(ollamaConfig(), { baseUrl: 'https://ollama.com', apiKey: TEST_KEY, models: ['gemma4:31b'] });
+  });
+  // Local Ollama needs no key, and a key set anyway is never sent to it.
+  withEnv({ ...none, OLLAMA_BASE_URL: 'http://localhost:11434' }, () => assert.equal(ollamaConfig()?.apiKey, null));
+  withEnv({ ...none, OLLAMA_API_KEY: TEST_KEY, OLLAMA_BASE_URL: 'http://127.0.0.1:11434' }, () => assert.equal(ollamaConfig()?.apiKey, null));
+  assert.ok(isLocalBaseUrl('http://[::1]:11434'));
+  assert.ok(!isLocalBaseUrl('https://ollama.com'));
+  assert.ok(!isLocalBaseUrl('not a url'));
   assert.match(systemInstruction('2026-10-26'), /untrusted data/);
+});
+
+test('tools are declared in Ollama function format with lowercase JSON Schema types', () => {
+  for (const t of toolDeclarations(null)) {
+    assert.equal(t.type, 'function');
+    assert.equal(t.function.parameters.type, 'object');
+    assert.ok(t.function.description.length > 20);
+  }
+  const props = toolDeclarations(null)[1].function.parameters.properties as Record<string, { type: string }>;
+  for (const p of Object.values(props)) assert.match(p.type, /^(string|integer)$/);
+});
+
+test('a tool round: the model calls search_projects, gets the rows, and answers', async () => {
+  const { client, calls: db } = fakeSupabase({ project_directory: { count: 1, data: [PROJECT_ROW] } });
+  await withFetch([toolCall('search_projects', { query: 'iligan', limit: 3 }), finalAnswer('One contract matches: 21LJ0012.')], async (calls) => {
+    const res = await ask(cfg('t1-a', 't1-b'), client);
+    assert.equal(res.answer, 'One contract matches: 21LJ0012.');
+    assert.deepEqual(res.records.map((r) => r.record_id), ['21LJ0012']);
+
+    assert.equal(calls.length, 2);
+    const [first, second] = calls;
+    assert.equal(first.url, 'https://ollama.example/api/chat');
+    assert.equal(first.headers.Authorization, `Bearer ${TEST_KEY}`);
+    assert.equal(first.body.model, 't1-a');
+    assert.equal(first.body.stream, false);
+    assert.equal(first.body.messages[0].role, 'system');
+    assert.deepEqual(first.body.tools.map((t: any) => t.function.name), ['get_directory_overview', 'search_projects']);
+
+    const msgs = second.body.messages;
+    const assistant = msgs[msgs.length - 2];
+    const tool = msgs[msgs.length - 1];
+    assert.equal(assistant.role, 'assistant');
+    assert.equal(assistant.tool_calls[0].function.name, 'search_projects');
+    assert.equal(tool.role, 'tool');
+    assert.equal(tool.tool_name, 'search_projects');
+    assert.equal(JSON.parse(tool.content).result.total_matches, 1);
+  });
+  assert.ok(db.some((c) => c.table === 'project_directory' && c.method === 'textSearch'));
+});
+
+test('tool arguments that fail validation run no query; the model is told and answers', async () => {
+  const { client, calls: db } = fakeSupabase({});
+  await withFetch([toolCall('search_projects', JSON.stringify({ status: "ongoing'; drop table dpwh_contracts; --" })), finalAnswer('That status does not exist.')], async (calls) => {
+    const res = await ask(cfg('t2-a'), client);
+    assert.equal(res.answer, 'That status does not exist.');
+    const tool = calls[1].body.messages.at(-1);
+    assert.equal(tool.role, 'tool');
+    assert.match(JSON.parse(tool.content).error, /^invalid_arguments/);
+  });
+  assert.equal(db.length, 0, 'no database call for rejected arguments');
+});
+
+test('unknown tools are refused and the per-round call limit applies', async () => {
+  const { client, calls: db } = fakeSupabase({ dpwh_directory_stats: { data: OVERVIEW_STATS }, infrastructure_projects: { count: 1 } });
+  const many = { json: { message: { role: 'assistant', content: '', tool_calls: [
+    { function: { name: 'execute_sql', arguments: { sql: 'delete from dpwh_contracts' } } },
+    ...Array.from({ length: 5 }, () => ({ function: { name: 'get_directory_overview', arguments: {} } })),
+  ] } } };
+  await withFetch([many, finalAnswer('Done.')], async (calls) => {
+    await ask(cfg('t3-a'), client);
+    const toolMsgs = calls[1].body.messages.filter((m: any) => m.role === 'tool');
+    assert.equal(toolMsgs.length, 4, 'MAX_CALLS_PER_ROUND');
+    assert.match(JSON.parse(toolMsgs[0].content).error, /Unknown tool/);
+  });
+  assert.ok(db.every((c) => c.method !== 'rpc'));
+});
+
+test('after MAX_TOOL_ROUNDS the last request carries no tools, so the model must answer', async () => {
+  const { client } = fakeSupabase({ dpwh_directory_stats: { data: OVERVIEW_STATS }, infrastructure_projects: { count: 1 } });
+  const loop = toolCall('get_directory_overview', {});
+  await withFetch([loop, loop, loop, finalAnswer('Final.')], async (calls) => {
+    assert.equal((await ask(cfg('t4-a'), client)).answer, 'Final.');
+    assert.equal(calls.length, 4);
+    assert.ok(calls.slice(0, 3).every((c) => Array.isArray(c.body.tools)));
+    assert.equal(calls[3].body.tools, undefined);
+  });
+});
+
+test('429 on the primary falls back to the second model, which then keeps the conversation', async () => {
+  const { client } = fakeSupabase({ dpwh_directory_stats: { data: OVERVIEW_STATS }, infrastructure_projects: { count: 1 } });
+  await withFetch([{ status: 429, json: { error: 'too many requests' } }, toolCall('get_directory_overview', {}), finalAnswer('Three contracts.')], async (calls) => {
+    assert.equal((await ask(cfg('t5-a', 't5-b'), client)).answer, 'Three contracts.');
+    assert.deepEqual(calls.map((c) => c.body.model), ['t5-a', 't5-b', 't5-b']);
+  });
+  // The busy model is skipped for a while: the next question goes straight to the fallback.
+  await withFetch([finalAnswer('Hi.')], async (calls) => {
+    await ask(cfg('t5-a', 't5-b'), client);
+    assert.equal(calls[0].body.model, 't5-b');
+  });
+});
+
+test('a slow primary times out per attempt and falls back; a slow last model is a timeout', async () => {
+  const { client } = fakeSupabase({});
+  await withFetch([hang, finalAnswer('From the fallback.')], async (calls) => {
+    assert.equal((await ask(cfg('t6-a', 't6-b'), client, { attemptTimeoutMs: 30 })).answer, 'From the fallback.');
+    assert.deepEqual(calls.map((c) => c.body.model), ['t6-a', 't6-b']);
+  });
+  await withFetch([hang], async () => {
+    const error = await ask(cfg('t6-c'), client, { signal: AbortSignal.timeout(50) }).catch((e) => e);
+    assert.equal(classifyAiError(error), 'timeout');
+  });
+});
+
+test('a rejected key (401) maps to "auth", is not retried on the fallback, and does not leak the key', async () => {
+  const { client } = fakeSupabase({});
+  await withFetch([{ status: 401, json: { error: 'unauthorized' } }], async (calls) => {
+    const error = await ask(cfg('t7-a', 't7-b'), client).catch((e) => e);
+    assert.equal(calls.length, 1, 'no retry on another model');
+    assert.ok(error instanceof OllamaHttpError);
+    assert.equal(classifyAiError(error), 'auth');
+    assert.doesNotMatch(`${error.message} ${JSON.stringify(error)}`, new RegExp(TEST_KEY));
+  });
+});
+
+test('Ollama errors are classified for the route', () => {
+  assert.equal(classifyAiError(new OllamaHttpError(429, 'x')), 'rate_limited');
+  assert.equal(classifyAiError(new OllamaHttpError(403, 'x')), 'auth');
+  assert.equal(classifyAiError(new OllamaHttpError(500, 'x')), 'upstream');
+  assert.equal(classifyAiError(new OllamaHttpError(503, 'x')), 'busy');
+  assert.equal(classifyAiError(new OllamaHttpError(504, 'x')), 'timeout');
+  assert.equal(classifyAiError(Object.assign(new Error('t'), { name: 'TimeoutError' })), 'timeout');
+  assert.equal(classifyAiError(new TypeError('fetch failed')), 'upstream');
+  assert.equal(classifyAiError(new BpAiError('database', 'x')), 'database');
+});
+
+test('an empty model reply is an "empty" failure, not a blank answer', async () => {
+  const { client } = fakeSupabase({});
+  await withFetch([finalAnswer('   ')], async () => {
+    assert.equal(classifyAiError(await ask(cfg('t8-a'), client).catch((e) => e)), 'empty');
+  });
 });
