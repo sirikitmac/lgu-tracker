@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { BP_MAX_RESULTS, searchProjects, toDirectoryParams, getDirectoryOverview, type BpSupabase } from '@/lib/bp/data';
-import { answerWithOllama, BpAiError, classifyAiError, isLocalBaseUrl, OllamaHttpError, ollamaConfig, systemInstruction, type OllamaConfig } from '@/lib/bp/ollama';
+import { aiConfig, AiHttpError, answerWithAi, BpAiError, classifyAiError, systemInstruction, type AiConfig } from '@/lib/bp/ai';
+import { isDailyLimit } from '@/lib/bp/groq';
 import { planPreview, previewSearchAnswer } from '@/lib/bp/preview';
 import { runTool, toolDeclarations } from '@/lib/bp/tools';
 import { createRateLimiter, validateChatRequest } from '@/lib/bp/validate';
@@ -179,7 +180,7 @@ test('preview planner routes the suggested questions to the right query', async 
 });
 
 // ---------------------------------------------------------------------------
-// Ollama client. fetch is mocked; no network, no real key.
+// AI client (Groq, OpenAI-compatible). fetch is mocked; no network, no real key.
 
 const TEST_KEY = 'test-key-not-real';
 const PROJECT_ROW = {
@@ -211,16 +212,19 @@ async function withFetch<T>(replies: Reply[], run: (calls: FetchCall[]) => Promi
   }
 }
 
-const toolCall = (name: string, args: unknown) => ({ json: { model: 'm', done: true, message: { role: 'assistant', content: '', tool_calls: [{ function: { name, arguments: args } }] } } });
-const finalAnswer = (content: string) => ({ json: { model: 'm', done: true, done_reason: 'stop', message: { role: 'assistant', content } } });
+const reply = (message: Record<string, unknown>) => ({ json: { choices: [{ message: { role: 'assistant', ...message } }] } });
+const fnCall = (id: string, name: string, args: unknown) => ({ id, type: 'function', function: { name, arguments: typeof args === 'string' ? args : JSON.stringify(args) } });
+const toolCall = (name: string, args: unknown, id = 'call_1') => reply({ content: null, tool_calls: [fnCall(id, name, args)] });
+const finalAnswer = (content: string) => reply({ content });
+const apiError = (status: number, message: string, code?: string) => ({ status, json: { error: { message, type: 'x', code } } });
 /** Never answers; rejects when the request is aborted, like fetch does. */
 const hang = (_call: FetchCall, signal: AbortSignal) =>
   new Promise<Response>((_, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true }));
 
 /** Each test uses its own model names: the busy cooldown is per model and per process. */
-const cfg = (...models: string[]): OllamaConfig => ({ baseUrl: 'https://ollama.example', apiKey: TEST_KEY, models });
-const ask = (config: OllamaConfig, supabase: BpSupabase, extra: { signal?: AbortSignal; attemptTimeoutMs?: number } = {}) =>
-  answerWithOllama({ config, supabase, overview: null, history: [], question: 'Projects in Iligan?', signal: extra.signal ?? AbortSignal.timeout(5_000), attemptTimeoutMs: extra.attemptTimeoutMs });
+const cfg = (...models: string[]): AiConfig => ({ baseUrl: 'https://groq.example/openai/v1', apiKey: TEST_KEY, models });
+const ask = (config: AiConfig, supabase: BpSupabase, extra: { signal?: AbortSignal; attemptTimeoutMs?: number } = {}) =>
+  answerWithAi({ config, supabase, overview: null, history: [], question: 'Projects in Iligan?', signal: extra.signal ?? AbortSignal.timeout(5_000), attemptTimeoutMs: extra.attemptTimeoutMs });
 
 function withEnv<T>(env: Record<string, string | undefined>, run: () => T): T {
   const saved = Object.fromEntries(Object.keys(env).map((k) => [k, process.env[k]]));
@@ -232,25 +236,19 @@ function withEnv<T>(env: Record<string, string | undefined>, run: () => T): T {
   }
 }
 
-test('Ollama config is server-env only; no key on a remote base URL means preview / not configured', () => {
-  const none = { OLLAMA_API_KEY: undefined, OLLAMA_BASE_URL: undefined, OLLAMA_MODEL: undefined, OLLAMA_FALLBACK_MODEL: undefined };
-  withEnv(none, () => assert.equal(ollamaConfig(), null, 'the route serves the preview (dev) or "not configured" (prod)'));
-  withEnv({ ...none, OLLAMA_API_KEY: `  ${TEST_KEY}  ` }, () => {
-    assert.deepEqual(ollamaConfig(), { baseUrl: 'https://ollama.com', apiKey: TEST_KEY, models: ['gpt-oss:120b', 'gpt-oss:20b'] });
+test('AI config is server-env only; no GROQ_API_KEY means preview / not configured', () => {
+  const none = { GROQ_API_KEY: undefined, GROQ_MODEL: undefined, GROQ_FALLBACK_MODEL: undefined };
+  withEnv(none, () => assert.equal(aiConfig(), null, 'the route serves the preview (dev) or "not configured" (prod)'));
+  withEnv({ ...none, GROQ_API_KEY: `  ${TEST_KEY}  ` }, () => {
+    assert.deepEqual(aiConfig(), { baseUrl: 'https://api.groq.com/openai/v1', apiKey: TEST_KEY, models: ['openai/gpt-oss-120b', 'openai/gpt-oss-20b'] });
   });
-  withEnv({ ...none, OLLAMA_API_KEY: TEST_KEY, OLLAMA_BASE_URL: 'https://ollama.com/', OLLAMA_MODEL: 'gemma4:31b', OLLAMA_FALLBACK_MODEL: 'gemma4:31b' }, () => {
-    assert.deepEqual(ollamaConfig(), { baseUrl: 'https://ollama.com', apiKey: TEST_KEY, models: ['gemma4:31b'] });
+  withEnv({ ...none, GROQ_API_KEY: TEST_KEY, GROQ_MODEL: 'qwen/qwen3-32b', GROQ_FALLBACK_MODEL: 'qwen/qwen3-32b' }, () => {
+    assert.deepEqual(aiConfig()?.models, ['qwen/qwen3-32b']);
   });
-  // Local Ollama needs no key, and a key set anyway is never sent to it.
-  withEnv({ ...none, OLLAMA_BASE_URL: 'http://localhost:11434' }, () => assert.equal(ollamaConfig()?.apiKey, null));
-  withEnv({ ...none, OLLAMA_API_KEY: TEST_KEY, OLLAMA_BASE_URL: 'http://127.0.0.1:11434' }, () => assert.equal(ollamaConfig()?.apiKey, null));
-  assert.ok(isLocalBaseUrl('http://[::1]:11434'));
-  assert.ok(!isLocalBaseUrl('https://ollama.com'));
-  assert.ok(!isLocalBaseUrl('not a url'));
   assert.match(systemInstruction('2026-10-26'), /untrusted data/);
 });
 
-test('tools are declared in Ollama function format with lowercase JSON Schema types', () => {
+test('tools are declared in OpenAI function format with lowercase JSON Schema types', () => {
   for (const t of toolDeclarations(null)) {
     assert.equal(t.type, 'function');
     assert.equal(t.function.parameters.type, 'object');
@@ -262,27 +260,31 @@ test('tools are declared in Ollama function format with lowercase JSON Schema ty
 
 test('a tool round: the model calls search_projects, gets the rows, and answers', async () => {
   const { client, calls: db } = fakeSupabase({ project_directory: { count: 1, data: [PROJECT_ROW] } });
-  await withFetch([toolCall('search_projects', { query: 'iligan', limit: 3 }), finalAnswer('One contract matches: 21LJ0012.')], async (calls) => {
+  await withFetch([toolCall('search_projects', { query: 'iligan', limit: 3 }, 'call_abc'), finalAnswer('One contract matches: 21LJ0012.')], async (calls) => {
     const res = await ask(cfg('t1-a', 't1-b'), client);
     assert.equal(res.answer, 'One contract matches: 21LJ0012.');
     assert.deepEqual(res.records.map((r) => r.record_id), ['21LJ0012']);
 
     assert.equal(calls.length, 2);
     const [first, second] = calls;
-    assert.equal(first.url, 'https://ollama.example/api/chat');
+    assert.equal(first.url, 'https://groq.example/openai/v1/chat/completions');
     assert.equal(first.headers.Authorization, `Bearer ${TEST_KEY}`);
     assert.equal(first.body.model, 't1-a');
     assert.equal(first.body.stream, false);
+    assert.equal(first.body.tool_choice, 'auto');
     assert.equal(first.body.messages[0].role, 'system');
     assert.deepEqual(first.body.tools.map((t: any) => t.function.name), ['get_directory_overview', 'search_projects']);
 
     const msgs = second.body.messages;
-    const assistant = msgs[msgs.length - 2];
-    const tool = msgs[msgs.length - 1];
+    const assistant = msgs.at(-2);
+    const tool = msgs.at(-1);
     assert.equal(assistant.role, 'assistant');
+    assert.equal(assistant.tool_calls[0].id, 'call_abc');
+    assert.equal(assistant.tool_calls[0].type, 'function');
     assert.equal(assistant.tool_calls[0].function.name, 'search_projects');
-    assert.equal(tool.role, 'tool');
-    assert.equal(tool.tool_name, 'search_projects');
+    assert.equal(typeof assistant.tool_calls[0].function.arguments, 'string');
+    assert.deepEqual(Object.keys(tool).sort(), ['content', 'role', 'tool_call_id']);
+    assert.equal(tool.tool_call_id, 'call_abc');
     assert.equal(JSON.parse(tool.content).result.total_matches, 1);
   });
   assert.ok(db.some((c) => c.table === 'project_directory' && c.method === 'textSearch'));
@@ -290,7 +292,7 @@ test('a tool round: the model calls search_projects, gets the rows, and answers'
 
 test('tool arguments that fail validation run no query; the model is told and answers', async () => {
   const { client, calls: db } = fakeSupabase({});
-  await withFetch([toolCall('search_projects', JSON.stringify({ status: "ongoing'; drop table dpwh_contracts; --" })), finalAnswer('That status does not exist.')], async (calls) => {
+  await withFetch([toolCall('search_projects', { status: "ongoing'; drop table dpwh_contracts; --" }), finalAnswer('That status does not exist.')], async (calls) => {
     const res = await ask(cfg('t2-a'), client);
     assert.equal(res.answer, 'That status does not exist.');
     const tool = calls[1].body.messages.at(-1);
@@ -302,10 +304,10 @@ test('tool arguments that fail validation run no query; the model is told and an
 
 test('unknown tools are refused and the per-round call limit applies', async () => {
   const { client, calls: db } = fakeSupabase({ dpwh_directory_stats: { data: OVERVIEW_STATS }, infrastructure_projects: { count: 1 } });
-  const many = { json: { message: { role: 'assistant', content: '', tool_calls: [
-    { function: { name: 'execute_sql', arguments: { sql: 'delete from dpwh_contracts' } } },
-    ...Array.from({ length: 5 }, () => ({ function: { name: 'get_directory_overview', arguments: {} } })),
-  ] } } };
+  const many = reply({ content: null, tool_calls: [
+    fnCall('c0', 'execute_sql', { sql: 'delete from dpwh_contracts' }),
+    ...Array.from({ length: 5 }, (_, i) => fnCall(`c${i + 1}`, 'get_directory_overview', {})),
+  ] });
   await withFetch([many, finalAnswer('Done.')], async (calls) => {
     await ask(cfg('t3-a'), client);
     const toolMsgs = calls[1].body.messages.filter((m: any) => m.role === 'tool');
@@ -313,6 +315,17 @@ test('unknown tools are refused and the per-round call limit applies', async () 
     assert.match(JSON.parse(toolMsgs[0].content).error, /Unknown tool/);
   });
   assert.ok(db.every((c) => c.method !== 'rpc'));
+});
+
+test('tool calls without an id get one, so every result is paired', async () => {
+  const { client } = fakeSupabase({ dpwh_directory_stats: { data: OVERVIEW_STATS }, infrastructure_projects: { count: 1 } });
+  const noId = reply({ content: null, tool_calls: [{ type: 'function', function: { name: 'get_directory_overview', arguments: '{}' } }] });
+  await withFetch([noId, finalAnswer('Ok.')], async (calls) => {
+    await ask(cfg('t10-a'), client);
+    const msgs = calls[1].body.messages;
+    assert.ok(msgs.at(-2).tool_calls[0].id);
+    assert.equal(msgs.at(-1).tool_call_id, msgs.at(-2).tool_calls[0].id);
+  });
 });
 
 test('after MAX_TOOL_ROUNDS the last request carries no tools, so the model must answer', async () => {
@@ -323,12 +336,13 @@ test('after MAX_TOOL_ROUNDS the last request carries no tools, so the model must
     assert.equal(calls.length, 4);
     assert.ok(calls.slice(0, 3).every((c) => Array.isArray(c.body.tools)));
     assert.equal(calls[3].body.tools, undefined);
+    assert.equal(calls[3].body.tool_choice, undefined);
   });
 });
 
 test('429 on the primary falls back to the second model, which then keeps the conversation', async () => {
   const { client } = fakeSupabase({ dpwh_directory_stats: { data: OVERVIEW_STATS }, infrastructure_projects: { count: 1 } });
-  await withFetch([{ status: 429, json: { error: 'too many requests' } }, toolCall('get_directory_overview', {}), finalAnswer('Three contracts.')], async (calls) => {
+  await withFetch([apiError(429, 'Rate limit reached on requests per minute (RPM)'), toolCall('get_directory_overview', {}), finalAnswer('Three contracts.')], async (calls) => {
     assert.equal((await ask(cfg('t5-a', 't5-b'), client)).answer, 'Three contracts.');
     assert.deepEqual(calls.map((c) => c.body.model), ['t5-a', 't5-b', 't5-b']);
   });
@@ -337,6 +351,20 @@ test('429 on the primary falls back to the second model, which then keeps the co
     await ask(cfg('t5-a', 't5-b'), client);
     assert.equal(calls[0].body.model, 't5-b');
   });
+});
+
+test('daily limit falls back to the second model; both exhausted maps to "daily_limit"', async () => {
+  const { client } = fakeSupabase({});
+  const daily = apiError(429, 'Rate limit reached for model `x` on tokens per day (TPD): Limit 200000, Used 199999', 'rate_limit_exceeded');
+  await withFetch([daily, finalAnswer('From the fallback.')], async (calls) => {
+    assert.equal((await ask(cfg('t11-a', 't11-b'), client)).answer, 'From the fallback.');
+    assert.deepEqual(calls.map((c) => c.body.model), ['t11-a', 't11-b']);
+  });
+  await withFetch([daily], async () => {
+    assert.equal(classifyAiError(await ask(cfg('t11-c'), client).catch((e) => e)), 'daily_limit');
+  });
+  assert.ok(isDailyLimit(429, 'on requests per day (RPD): Limit 1000'));
+  assert.ok(!isDailyLimit(429, 'on tokens per minute (TPM): Limit 8000'));
 });
 
 test('a slow primary times out per attempt and falls back; a slow last model is a timeout', async () => {
@@ -353,21 +381,23 @@ test('a slow primary times out per attempt and falls back; a slow last model is 
 
 test('a rejected key (401) maps to "auth", is not retried on the fallback, and does not leak the key', async () => {
   const { client } = fakeSupabase({});
-  await withFetch([{ status: 401, json: { error: 'unauthorized' } }], async (calls) => {
+  await withFetch([apiError(401, 'Invalid API Key', 'invalid_api_key')], async (calls) => {
     const error = await ask(cfg('t7-a', 't7-b'), client).catch((e) => e);
     assert.equal(calls.length, 1, 'no retry on another model');
-    assert.ok(error instanceof OllamaHttpError);
+    assert.ok(error instanceof AiHttpError);
     assert.equal(classifyAiError(error), 'auth');
     assert.doesNotMatch(`${error.message} ${JSON.stringify(error)}`, new RegExp(TEST_KEY));
   });
 });
 
-test('Ollama errors are classified for the route', () => {
-  assert.equal(classifyAiError(new OllamaHttpError(429, 'x')), 'rate_limited');
-  assert.equal(classifyAiError(new OllamaHttpError(403, 'x')), 'auth');
-  assert.equal(classifyAiError(new OllamaHttpError(500, 'x')), 'upstream');
-  assert.equal(classifyAiError(new OllamaHttpError(503, 'x')), 'busy');
-  assert.equal(classifyAiError(new OllamaHttpError(504, 'x')), 'timeout');
+test('AI errors are classified for the route', () => {
+  assert.equal(classifyAiError(new AiHttpError(429, 'x')), 'rate_limited');
+  assert.equal(classifyAiError(new AiHttpError(429, 'x', 'daily_limit')), 'daily_limit');
+  assert.equal(classifyAiError(new AiHttpError(413, 'Request too large')), 'too_large');
+  assert.equal(classifyAiError(new AiHttpError(403, 'x')), 'auth');
+  assert.equal(classifyAiError(new AiHttpError(500, 'x')), 'upstream');
+  assert.equal(classifyAiError(new AiHttpError(503, 'x')), 'busy');
+  assert.equal(classifyAiError(new AiHttpError(504, 'x')), 'timeout');
   assert.equal(classifyAiError(Object.assign(new Error('t'), { name: 'TimeoutError' })), 'timeout');
   assert.equal(classifyAiError(new TypeError('fetch failed')), 'upstream');
   assert.equal(classifyAiError(new BpAiError('database', 'x')), 'database');

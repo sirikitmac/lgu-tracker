@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getDirectoryOverview, searchProjects, type BpRecord } from '@/lib/bp/data';
-import { answerWithOllama, classifyAiError, ollamaConfig, type AiFailure } from '@/lib/bp/ollama';
+import { aiConfig, answerWithAi, classifyAiError, type AiFailure } from '@/lib/bp/ai';
 import { planPreview, previewOverviewAnswer, previewSearchAnswer } from '@/lib/bp/preview';
 import { createRateLimiter, validateChatRequest } from '@/lib/bp/validate';
 
@@ -10,9 +10,9 @@ import { createRateLimiter, validateChatRequest } from '@/lib/bp/validate';
  *
  * BP, the LGU Tracker assistant. Retrieves public directory data with the
  * caller's Supabase client (publishable key, RLS applies) through predefined
- * read-only queries, and asks an Ollama model to explain it. OLLAMA_API_KEY
- * is server-only. Without it (and with a non-local OLLAMA_BASE_URL),
- * development serves a labelled non-AI preview and production answers 503.
+ * read-only queries, and asks a Groq-hosted model to explain it.
+ * GROQ_API_KEY is server-only. Without it, development serves a labelled
+ * non-AI preview and production answers 503.
  *
  * 200 → { mode: 'ai' | 'preview', answer, references }
  * 4xx/5xx → { error, code } with a message safe to show to users.
@@ -30,6 +30,8 @@ const fail = (status: number, code: string, error: string, headers?: HeadersInit
 
 const AI_ERRORS: Record<AiFailure, [number, string]> = {
   rate_limited: [503, 'BP is receiving too many requests right now. Please try again in a minute.'],
+  daily_limit: [503, 'BP has used up its free AI allowance for today. Please try again tomorrow.'],
+  too_large: [503, 'This conversation is too long for BP right now. Start a new chat or ask a narrower question.'],
   busy: [503, 'The AI service is busy right now (high demand). Please try again in a minute.'],
   auth: [503, 'BP is not configured correctly on the server (the AI service rejected its API key).'],
   timeout: [504, 'BP took too long to answer. Please try again or ask a narrower question.'],
@@ -65,7 +67,7 @@ export async function POST(request: NextRequest) {
   const supabase = await createSupabaseServerClient();
   if (!supabase) return fail(503, 'database_not_configured', 'The project database is not configured on this server.');
 
-  const config = ollamaConfig();
+  const config = aiConfig();
   if (!config && process.env.NODE_ENV === 'production') {
     return fail(503, 'ai_not_configured', 'BP is not available yet: the AI service API key has not been configured on the server.');
   }
@@ -90,7 +92,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { answer, records } = await answerWithOllama({
+    const { answer, records } = await answerWithAi({
       config,
       supabase,
       overview: overview.ok ? overview.data : null,

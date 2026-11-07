@@ -2,112 +2,47 @@ import 'server-only';
 import type { BpRecord, BpSupabase, DirectoryOverview } from './data';
 import { runTool, toolDeclarations } from './tools';
 import type { ChatTurn } from './validate';
+import { groqConfig, postGroqChat } from './groq';
+import { AiHttpError, type AiConfig, type BpMessage, type ChatRequest } from './http';
+
+export { AiHttpError, type AiConfig } from './http';
 
 /**
- * Ollama side of BP (native /api/chat, plain fetch). Server-only:
- * OLLAMA_API_KEY is read here and never leaves the server. The model may only
- * call the read-only tools in tools.ts; their arguments are validated before
- * any query runs.
+ * BP's AI loop: tool rounds, model fallback, timeouts, error classification.
+ * Server-only. The transport is Groq (groq.ts); GROQ_API_KEY never leaves the
+ * server. The model may only call the read-only tools in tools.ts; their
+ * arguments are validated before any query runs.
  */
 
-/**
- * Default models, exactly as listed at https://ollama.com/api/tags (the direct
- * API does not use the CLI "name:cloud" form). Both support tool calling; when
- * the primary is busy (429/5xx/slow), BP falls back to the lighter model.
- * Override with OLLAMA_MODEL and OLLAMA_FALLBACK_MODEL.
- */
-export const DEFAULT_OLLAMA_BASE_URL = 'https://ollama.com';
-export const DEFAULT_OLLAMA_MODEL = 'gpt-oss:120b';
-export const DEFAULT_OLLAMA_FALLBACK_MODEL = 'gpt-oss:20b';
 const MAX_TOOL_ROUNDS = 3;
 const MAX_CALLS_PER_ROUND = 4;
 /** One attempt on a model that has a fallback after it; the last model gets the remaining time. */
 const ATTEMPT_TIMEOUT_MS = 8_000;
 /** How long a model that just failed as busy is skipped (per server instance). */
 const BUSY_COOLDOWN_MS = 120_000;
+/** A model that hit its free daily quota is skipped longer. */
+const DAILY_LIMIT_COOLDOWN_MS = 30 * 60_000;
 
-export interface OllamaConfig {
-  baseUrl: string;
-  /** null only for a local Ollama server, which needs no key. */
-  apiKey: string | null;
-  models: string[];
-}
-
-/** localhost, 127.x, ::1, 0.0.0.0: a local Ollama server that takes no Authorization header. */
-export function isLocalBaseUrl(baseUrl: string): boolean {
-  try {
-    const host = new URL(baseUrl).hostname.replace(/^\[|\]$/g, '');
-    return host === 'localhost' || host === '::1' || host === '0.0.0.0' || /^127\./.test(host);
-  } catch {
-    return false;
-  }
-}
-
-/** null = not configured (no key for a remote base URL). */
-export function ollamaConfig(): OllamaConfig | null {
-  const baseUrl = (process.env.OLLAMA_BASE_URL?.trim() || DEFAULT_OLLAMA_BASE_URL).replace(/\/+$/, '');
-  const local = isLocalBaseUrl(baseUrl);
-  const apiKey = process.env.OLLAMA_API_KEY?.trim() || null;
-  if (!apiKey && !local) return null;
-  const primary = process.env.OLLAMA_MODEL?.trim() || DEFAULT_OLLAMA_MODEL;
-  const fallback = process.env.OLLAMA_FALLBACK_MODEL?.trim() || DEFAULT_OLLAMA_FALLBACK_MODEL;
-  return { baseUrl, apiKey: local ? null : apiKey, models: [...new Set([primary, fallback])] };
-}
-
-/** Ollama /api/chat message (request and response). */
-interface OllamaMessage {
-  role: 'system' | 'user' | 'assistant' | 'tool';
-  content: string;
-  thinking?: string;
-  tool_calls?: { function: { name?: string; arguments?: unknown; index?: number } }[];
-  tool_name?: string;
-}
-
-interface OllamaChatResponse {
-  model?: string;
-  message?: OllamaMessage;
-  done?: boolean;
-  error?: string;
-}
-
-/** Non-2xx answer from Ollama ({ "error": "..." } body). The message never includes the key. */
-export class OllamaHttpError extends Error {
-  constructor(public readonly status: number, message: string) {
-    super(message);
-    this.name = 'OllamaHttpError';
-  }
+/** null = GROQ_API_KEY not set (dev serves the preview, production answers "not configured"). */
+export function aiConfig(): AiConfig | null {
+  return groqConfig();
 }
 
 const busyUntil = new Map<string, number>();
 
-/** Busy or slow model, worth trying the next one; anything else (bad key, bad request) is not. */
+/** Busy, slow, or over a per-model limit: worth trying the next model; anything else (bad key, bad request) is not. */
 function isRetriable(error: unknown, attemptTimedOut: boolean): boolean {
   if (attemptTimedOut) return true;
-  return error instanceof OllamaHttpError && [429, 500, 502, 503, 504].includes(error.status);
+  if (!(error instanceof AiHttpError)) return false;
+  // 413: request larger than the per-minute token budget; tool_use_failed: the model wrote a malformed tool call.
+  return [413, 429, 500, 502, 503, 504].includes(error.status) || error.code === 'tool_use_failed';
 }
 
-async function postChat(config: OllamaConfig, body: Record<string, unknown>, signal: AbortSignal): Promise<OllamaChatResponse> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (config.apiKey) headers.Authorization = `Bearer ${config.apiKey}`;
-  const res = await fetch(`${config.baseUrl}/api/chat`, { method: 'POST', headers, body: JSON.stringify(body), signal, cache: 'no-store' });
-  const text = await res.text();
-  let json: OllamaChatResponse | null = null;
-  try {
-    json = text ? (JSON.parse(text) as OllamaChatResponse) : null;
-  } catch {
-    // Not JSON (proxy error page): handled below.
-  }
-  if (!res.ok) throw new OllamaHttpError(res.status, (json?.error ?? res.statusText ?? '').slice(0, 200));
-  if (!json || typeof json !== 'object') throw new OllamaHttpError(502, 'Ollama returned a response that is not JSON.');
-  if (json.error) throw new OllamaHttpError(502, String(json.error).slice(0, 200));
-  return json;
-}
-
-/** Calls /api/chat on the first available model, moving down the list when one is busy or slow. */
+/** Calls the chat API on the first available model, moving down the list when one is busy or slow. */
 async function chatWithFallback(
-  config: OllamaConfig,
+  config: AiConfig,
   models: string[],
-  request: Record<string, unknown>,
+  request: Omit<ChatRequest, 'model'>,
   signal: AbortSignal,
   attemptTimeoutMs: number
 ) {
@@ -119,13 +54,14 @@ async function chatWithFallback(
     const isLast = i === order.length - 1;
     const attempt = isLast ? signal : AbortSignal.any([signal, AbortSignal.timeout(attemptTimeoutMs)]);
     try {
-      const response = await postChat(config, { ...request, model, stream: false }, attempt);
+      const response = await postGroqChat(config, { ...request, model }, attempt);
       return { response, model };
     } catch (error) {
       if (signal.aborted) throw error;
       const attemptTimedOut = attempt.aborted;
       if (isLast || !isRetriable(error, attemptTimedOut)) throw error;
-      busyUntil.set(model, Date.now() + BUSY_COOLDOWN_MS);
+      const daily = error instanceof AiHttpError && error.code === 'daily_limit';
+      busyUntil.set(model, Date.now() + (daily ? DAILY_LIMIT_COOLDOWN_MS : BUSY_COOLDOWN_MS));
       lastError = error;
     }
   }
@@ -162,7 +98,16 @@ Today's date is ${today}.
 Your goal is to make public infrastructure information easier to understand and access.`;
 }
 
-export type AiFailure = 'rate_limited' | 'busy' | 'auth' | 'timeout' | 'upstream' | 'empty' | 'database';
+export type AiFailure =
+  | 'rate_limited'
+  | 'daily_limit'
+  | 'too_large'
+  | 'busy'
+  | 'auth'
+  | 'timeout'
+  | 'upstream'
+  | 'empty'
+  | 'database';
 
 export class BpAiError extends Error {
   constructor(public readonly kind: AiFailure, message: string) {
@@ -173,8 +118,11 @@ export class BpAiError extends Error {
 export function classifyAiError(error: unknown): AiFailure {
   if (error instanceof BpAiError) return error.kind;
   if (error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError')) return 'timeout';
-  if (error instanceof OllamaHttpError) {
+  if (error instanceof AiHttpError) {
+    if (error.code === 'daily_limit') return 'daily_limit';
     if (error.status === 429) return 'rate_limited';
+    // The conversation is larger than the per-minute token budget.
+    if (error.status === 413) return 'too_large';
     if (error.status === 503) return 'busy';
     if (error.status === 401 || error.status === 403) return 'auth';
     if (error.status === 408 || error.status === 504) return 'timeout';
@@ -182,7 +130,7 @@ export function classifyAiError(error: unknown): AiFailure {
   return 'upstream';
 }
 
-/** Ollama documents arguments as an object; accept a JSON string too, and anything else as no arguments. */
+/** Arguments arrive as a JSON string; accept an object too, and anything else as no arguments. */
 function toolArguments(raw: unknown): Record<string, unknown> | undefined {
   let value = raw;
   if (typeof value === 'string') {
@@ -195,8 +143,8 @@ function toolArguments(raw: unknown): Record<string, unknown> | undefined {
   return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : undefined;
 }
 
-export async function answerWithOllama(options: {
-  config: OllamaConfig;
+export async function answerWithAi(options: {
+  config: AiConfig;
   supabase: BpSupabase;
   overview: DirectoryOverview | null;
   history: ChatTurn[];
@@ -208,9 +156,9 @@ export async function answerWithOllama(options: {
   const { config, supabase, overview, history, question, signal } = options;
   const attemptTimeoutMs = options.attemptTimeoutMs ?? ATTEMPT_TIMEOUT_MS;
   const today = new Date().toISOString().slice(0, 10);
-  const messages: OllamaMessage[] = [
+  const messages: BpMessage[] = [
     { role: 'system', content: systemInstruction(today) },
-    ...history.map((m): OllamaMessage => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })),
+    ...history.map((m): BpMessage => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })),
     { role: 'user', content: question },
   ];
   const tools = toolDeclarations(overview);
@@ -223,7 +171,7 @@ export async function answerWithOllama(options: {
       config,
       models,
       // The last round gets no tools, so it must answer with what it has.
-      { messages, ...(lastRound ? {} : { tools }), options: { temperature: 0.2 } },
+      { messages, ...(lastRound ? {} : { tools }), temperature: 0.2 },
       signal,
       attemptTimeoutMs
     );
@@ -238,11 +186,11 @@ export async function answerWithOllama(options: {
       return { answer, records: [...records.values()].slice(0, 8) };
     }
 
-    const kept = calls.slice(0, MAX_CALLS_PER_ROUND);
+    // Ids pair each tool result with its call.
+    const kept = calls.slice(0, MAX_CALLS_PER_ROUND).map((c, i) => ({ ...c, id: c.id || `call_${round}_${i}` }));
     messages.push({
       role: 'assistant',
       content: message?.content ?? '',
-      ...(message?.thinking ? { thinking: message.thinking } : {}),
       tool_calls: kept,
     });
     let failures = 0;
@@ -251,7 +199,7 @@ export async function answerWithOllama(options: {
       const run = await runTool(supabase, name, toolArguments(call?.function?.arguments));
       if (run.failed) failures++;
       for (const r of run.records) records.set(`${r.source}:${r.record_id}`, r);
-      messages.push({ role: 'tool', tool_name: name, content: JSON.stringify(run.response) });
+      messages.push({ role: 'tool', tool_call_id: call.id, content: JSON.stringify(run.response) });
     }
     if (failures === kept.length) throw new BpAiError('database', 'Every tool call failed.');
   }

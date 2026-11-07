@@ -19,7 +19,7 @@ export function toolDeclarations(overview: DirectoryOverview | null) {
   const enumOrString = (values: string[], description: string) =>
     values.length ? { type: 'string', enum: values, description } : { type: 'string', description };
 
-  // Ollama tool format: { type: "function", function: { name, description, parameters } } with lowercase JSON Schema types.
+  // OpenAI tool format: { type: "function", function: { name, description, parameters } } with lowercase JSON Schema types.
   const declarations = [
     {
       name: TOOL_OVERVIEW,
