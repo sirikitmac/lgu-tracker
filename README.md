@@ -74,6 +74,25 @@ It can only call two read-only tools, and the counts in its answers come from th
 
 <img src="docs/images/ask-bp.webp" width="1280" alt="Ask BP chat panel open over the landing page with a greeting and suggested questions">
 
+### Report a concern
+Signed-in members can report a problem with any DPWH, NEP or DILG project, from the project's page or from
+`/report?code=...`. Reports can carry photos from the camera or album; they are compressed in the browser and kept
+in a private storage bucket. Members follow their reports under **My reports**.
+
+### Staff report queue and inbox
+LGU staff work through reports in a queue (open, not opened, resolved, closed) and move each one through
+acknowledged → in review → resolved or dismissed. Reporters and staff get updates in an **Inbox**.
+
+### Accounts, roles and profiles
+Sign-in and sign-up (Supabase Auth) with four roles: **Super Admin, Admin, Government Employee and Citizen**.
+Administrators approve requested roles on the **Users and roles** page. Every page and server action checks the role
+again, behind Row Level Security. Members can edit their profile: name, job title, and a cropped photo or a free
+drawn avatar.
+
+### Bantay Community (preview)
+Discussion threads with voting, comments, sort tabs and a composer, plus a reviews section on the landing page.
+For now these are **sample discussions by fictional people**, and what you post is saved in your browser only.
+
 ### Dark mode and mobile
 Light, dark or system theme, with layouts down to 360 px wide.
 
@@ -173,9 +192,11 @@ npm run subaybayan:import -- --dry-run   # preview; then --limit 100; then no fl
 ```
 src/
   app/            routes: / (landing), /projects, /projects/map, /projects/dashboard,
-                  /projects/[contractId], /credits, /login, /register, /dashboard, api/
-  components/     landing/, dpwh/, subaybayan/, map/, bp/, layout/, dashboard/, ui/
-  lib/            supabase/, integrations/ (dpwh, bettergov), subaybayan/, bp/, auth/, actions/
+                  /projects/[contractId], /credits, /login, /register, /dashboard, /report,
+                  /community, (app)/ (profile, my-reports, reports, inbox, users), api/
+  components/     landing/, dpwh/, subaybayan/, map/, bp/, reports/, community/, layout/, dashboard/, ui/
+  lib/            supabase/, integrations/ (dpwh, bettergov), subaybayan/, bp/, auth/, reports/,
+                  community/, actions/
 scripts/          dpwh-sync, bettergov-sync, subaybayan/ (build, dedupe, import)
 supabase/         migrations/, seed.sql
 tests/            dpwh/, bettergov/, bp/, subaybayan/, db/
@@ -184,20 +205,35 @@ docs/             BP_ASSISTANT.md, DPWH_DEPLOYMENT.md, subaybayan/, images/
 
 ---
 
-## 🛣️ Coming soon
+## ✅ What works today
+
+- Landing page with live stats, coverage map and intro animation
+- Project directory of ~145,000 records (DPWH contracts, FY 2027 NEP, DILG SubayBAYAN) with search, filters and sort
+- Project map with DPWH and LGU layers, clustering, approximate-location toggle, `?code=` jump and Street View cat
+- Project detail pages linked to their sources
+- Public dashboard of DPWH contracts by region, status, category and year
+- Ask BP chat assistant on Groq, answering from the database through two read-only tools
+- Reporting a concern with photos, My reports, staff report queue and Inbox notifications
+- Accounts with four roles, role approval by administrators, and a profile editor with photo or avatar
+- Bantay Community and landing reviews (sample content only)
+- Light/dark theme and mobile layouts down to 360 px
+
+## 🛣️ Still to be added
 
 Planned, or partly built but not working end to end yet:
 
 - 🔄 **Automated weekly DPWH sync.** The cron route and schedule are written, but it has not run in production yet,
-  and the first import is still incomplete.
+  and the first import is still incomplete (92,581 rows; Visayas and Mindanao only).
+- 🗣️ **Real Bantay Community.** Posts, comments and votes still live in the browser; they need database tables and
+  moderation before real people can use them.
+- 👥 **Staff monitoring workspace with live data.** `/dashboard` is staff-only, but still falls back to sample
+  project data.
 - 💬 **Public feedback on projects.** The database table and server action exist; there is no form yet.
-- 📝 **Project reporting by registered members.**
-- 👥 **Role-based member dashboards.** Sign-in, sign-up and roles exist, but the `/dashboard` workspace has no
-  live project data yet.
 - 🔍 **Review tool for possible DPWH–DILG duplicates.** The flags are stored; there is no review screen.
 - 📍 **Exact barangay-level locations** from geotagged photos, with the owners' permission.
 - ⚡ **Faster directory sorts.** Some non-default sorts time out on the full dataset.
 - 🗓️ **Scheduled SubayBAYAN refresh.**
+- 🤖 **Ask BP live check.** Needs `GROQ_API_KEY` set on the deployment.
 
 ---
 
