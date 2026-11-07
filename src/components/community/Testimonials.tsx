@@ -1,14 +1,20 @@
 import React from 'react';
-import { Quote } from 'lucide-react';
-import { Avatar } from '@/components/community/Avatar';
+import { ReviewsBoard, type SampleCard } from '@/components/reviews/ReviewsBoard';
 import { TESTIMONIALS } from '@/lib/community/mock';
 import { profileById } from '@/lib/community/profiles';
 
 const delay = (ms: number) => ({ '--reveal-delay': `${ms}ms` }) as React.CSSProperties;
 
+/** The sample reviews, by the same made-up people who appear in the community. */
+const SAMPLES: SampleCard[] = TESTIMONIALS.flatMap((t) => {
+  const person = profileById(t.profileId);
+  return person ? [{ id: t.profileId, rating: t.rating, body: t.quote, lang: t.lang, person }] : [];
+});
+
 /**
  * What people say about Bantay Proyekto, near the foot of the landing page.
- * Sample reviews by the same made-up people who appear in the community.
+ * Real reviews by signed-in people come first and update live; sample reviews
+ * fill the rest of the grid (see ReviewsBoard).
  */
 export function Testimonials({ frameClass }: { frameClass: string }) {
   return (
@@ -23,44 +29,7 @@ export function Testimonials({ frameClass }: { frameClass: string }) {
           </p>
         </div>
 
-        <ul className="mt-10 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {TESTIMONIALS.map((t, i) => {
-            const person = profileById(t.profileId);
-            if (!person) return null;
-            // The first and the last card are filled with the brand colour; the rest are quiet surfaces.
-            const featured = i === 0;
-            return (
-              <li
-                key={t.profileId}
-                data-reveal
-                style={delay((i % 3) * 70)}
-                className={`rounded-[24px] p-6 ${
-                  featured ? 'bg-night text-white dark:ring-1 dark:ring-white/12' : 'bg-surface border border-line text-ink'
-                }`}
-              >
-                <figure className="flex h-full flex-col">
-                <Quote className={`h-6 w-6 ${featured ? 'text-signal' : 'text-accent-ink'}`} aria-hidden="true" />
-                <blockquote lang={t.lang === 'tl' ? 'fil' : 'en'} className="mt-4 flex-1 text-[16px] leading-relaxed">
-                  {t.quote}
-                </blockquote>
-                <figcaption className="mt-6 flex items-center gap-3">
-                  <Avatar profile={person} size={44} />
-                  <span className="min-w-0">
-                    <span className="block text-[15px] font-semibold">{person.name}</span>
-                    <span className={`block text-[13px] leading-snug ${featured ? 'text-white/75' : 'text-subtle'}`}>
-                      {person.tag} · {person.place}
-                    </span>
-                  </span>
-                </figcaption>
-                </figure>
-              </li>
-            );
-          })}
-        </ul>
-
-        <p data-reveal className="mt-6 text-[13px] text-subtle">
-          Sample reviews by fictional people, shown for preview.
-        </p>
+        <ReviewsBoard samples={SAMPLES} />
       </div>
     </section>
   );

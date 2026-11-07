@@ -244,6 +244,22 @@
   transition-delay: var(--reveal-delay, 0ms);
 }
 
+/* A review card that arrives while the page is open (src/components/reviews/ReviewsBoard.tsx). */
+@keyframes review-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+}
+.review-in {
+  animation: review-in 0.5s var(--ease-out) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .review-in {
+    animation: none;
+  }
+}
+
 /* ---- Photographs (src/components/landing/Photo.tsx) ----------------------
    The blur placeholder is the box's background; the picture fades in over it
    once loaded. Only with scripts (html[data-js], set inline in page.tsx):
