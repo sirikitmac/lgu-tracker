@@ -76,8 +76,11 @@ export function ReviewsBoard({ samples }: { samples: SampleCard[] }) {
   const busy = hovering || focusInside || dialogOpen;
 
   // Keep what is on screen in step with the live list, without moving cards under a reader.
+  // Set when I save or delete my own review: that change shows at once, reading or not.
+  const syncNow = useRef(false);
   useEffect(() => {
-    if (!busy) {
+    if (!busy || syncNow.current) {
+      syncNow.current = false;
       setShown(latest);
       return;
     }
@@ -122,12 +125,7 @@ export function ReviewsBoard({ samples }: { samples: SampleCard[] }) {
     });
 
   return (
-    <div
-      onFocus={() => setFocusInside(true)}
-      onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocusInside(false);
-      }}
-    >
+    <div>
       <div data-reveal className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         {average !== null ? (
           <p className="flex items-center gap-2.5 text-ink">
@@ -181,6 +179,10 @@ export function ReviewsBoard({ samples }: { samples: SampleCard[] }) {
         data-reveal
         onPointerEnter={(e) => e.pointerType === 'mouse' && setHovering(true)}
         onPointerLeave={() => setHovering(false)}
+        onFocus={() => setFocusInside(true)}
+        onBlur={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocusInside(false);
+        }}
         className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3"
       >
         {cards.map((card, i) => (
@@ -208,12 +210,14 @@ export function ReviewsBoard({ samples }: { samples: SampleCard[] }) {
           onClose={closeWriter}
           onSaved={(review) => {
             setMine(review);
+            syncNow.current = true;
             applyLocalChange({ type: 'upsert', review });
             setDialogOpen(false);
             setNotice({ text: review.status === 'hidden' ? 'Saved. Your review is still hidden by an administrator.' : 'Thank you! Your review is on the page.' });
           }}
           onDeleted={(id) => {
             setMine(null);
+            syncNow.current = true;
             if (id) applyLocalChange({ type: 'remove', id });
             setDialogOpen(false);
             setNotice({ text: 'Your review was deleted.' });

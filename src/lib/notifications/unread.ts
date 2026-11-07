@@ -20,6 +20,7 @@ let subscribers = 0;
 let userId: string | null = null;
 const listeners = new Set<() => void>();
 let teardown: (() => void) | null = null;
+let channelSeq = 0;
 
 function emit(next: number) {
   if (next === count) return;
@@ -55,7 +56,10 @@ function start() {
     userId = id;
     if (!id) return emit(0);
     channel = client
-      .channel(`inbox-${id}`)
+      // A fresh topic each time: supabase-js hands back an existing channel with the same
+      // topic (already subscribed while the old one is still being removed), and adding
+      // callbacks to it throws "cannot add postgres_changes callbacks after subscribe()".
+      .channel(`inbox-${id}-${++channelSeq}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `recipient_id=eq.${id}` }, () => void refresh())
       .subscribe();
     void refresh();
