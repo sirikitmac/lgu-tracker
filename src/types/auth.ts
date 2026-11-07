@@ -66,6 +66,11 @@ export interface CurrentProfile {
   role: AppRole;
   accountType: AccountType;
   organizationId: string | null;
+  /** A job title the person gave themselves. A label only; it grants nothing. */
+  positionTitle: string | null;
+  /** An uploaded profile photo (a path in the avatars bucket), or a free avatar id. At most one is set. */
+  avatarPath: string | null;
+  avatarPreset: string | null;
 }
 
 /**

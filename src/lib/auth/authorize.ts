@@ -43,7 +43,7 @@ export const getCurrentProfile = cache(async (): Promise<CurrentProfile | null> 
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, full_name, role, account_type, organization_id, is_active')
+    .select('id, full_name, role, account_type, organization_id, is_active, position_title, avatar_path, avatar_preset')
     .eq('id', user.id)
     .maybeSingle();
 
@@ -58,6 +58,9 @@ export const getCurrentProfile = cache(async (): Promise<CurrentProfile | null> 
     role: profile.role as AppRole,
     accountType: isAccountType(profile.account_type) ? profile.account_type : DEFAULT_ACCOUNT_TYPE,
     organizationId: profile.organization_id,
+    positionTitle: profile.position_title ?? null,
+    avatarPath: profile.avatar_path ?? null,
+    avatarPreset: profile.avatar_preset ?? null,
   };
 });
 
