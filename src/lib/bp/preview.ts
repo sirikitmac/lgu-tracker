@@ -2,9 +2,9 @@ import type { DpwhCategory, DpwhStatus } from '@/types/dpwh';
 import type { BpRecord, DirectoryOverview, SearchArgs, SearchResult } from './data';
 
 /**
- * Preview mode: used in development when GEMINI_API_KEY is not set, so the
+ * Preview mode: used in development when GROQ_API_KEY is not set, so the
  * chat UI and the real database queries can be tested without AI. A fixed
- * keyword planner picks one of the same read-only queries Gemini would use,
+ * keyword planner picks one of the same read-only queries the AI model would use,
  * and the answer is a template filled with the query result. Every preview
  * answer is labelled as not AI-generated.
  */

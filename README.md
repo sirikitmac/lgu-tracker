@@ -68,7 +68,7 @@ separately.
 <img src="docs/images/dashboard.webp" width="1280" alt="Dashboard: contract totals, reported contract value, completed and on-going counts, contracts by region and a status donut">
 
 ### Ask BP assistant
-A chat assistant for questions about the directory, built on Gemini function calling. Gemini never writes SQL.
+A chat assistant for questions about the directory, built on Groq tool calling (free tier). The model never writes SQL.
 It can only call two read-only tools, and the counts in its answers come from the database. See
 [`docs/BP_ASSISTANT.md`](docs/BP_ASSISTANT.md).
 
@@ -106,7 +106,7 @@ are on the app's `/credits` page ([source](src/app/credits/page.tsx)).
 | Supabase (Postgres + Row Level Security) | Database, auth, public read access |
 | Leaflet + supercluster | Maps and marker clustering |
 | motion | Landing page animation |
-| Google Gemini (`@google/genai`) | Ask BP assistant |
+| Groq API (plain `fetch`, no SDK) | Ask BP assistant |
 | Vercel | Hosting |
 
 ---
@@ -131,7 +131,7 @@ npm run dev                  # http://localhost:3000
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (or `..._ANON_KEY`) | Reading data |
 | `SUPABASE_SECRET_KEY` | Server-only: data sync and import scripts |
 | `CRON_SECRET` | Server-only: the scheduled sync route |
-| `GEMINI_API_KEY` | Ask BP (without it, dev shows a labelled non-AI preview) |
+| `GROQ_API_KEY` (optional `GROQ_MODEL`, `GROQ_FALLBACK_MODEL`) | Server-only: Ask BP (without it, dev shows a labelled non-AI preview) |
 | `GOOGLE_MAPS_API_KEY`, `NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY` | Optional: in-map Street View |
 
 Never commit `.env.local` or put a secret key in a `NEXT_PUBLIC_` variable.

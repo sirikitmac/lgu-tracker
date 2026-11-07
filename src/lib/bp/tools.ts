@@ -19,14 +19,15 @@ export function toolDeclarations(overview: DirectoryOverview | null) {
   const enumOrString = (values: string[], description: string) =>
     values.length ? { type: 'string', enum: values, description } : { type: 'string', description };
 
-  return [
+  // OpenAI tool format: { type: "function", function: { name, description, parameters } } with lowercase JSON Schema types.
+  const declarations = [
     {
       name: TOOL_OVERVIEW,
       description:
         'Exact, precomputed statistics of the DPWH contracts in the directory: total contracts, sum of reported contract amounts, ' +
         'and contract counts by region, category, status, infrastructure year, and province; plus record counts of the other sources ' +
         '(DPWH FY 2027 NEP budget proposals; DILG SubayBAYAN Locally Funded and LIME 20% DF LGU projects). Use for any count, total, or ranking question that has no search text or contractor filter.',
-      parametersJsonSchema: { type: 'object', properties: {} },
+      parameters: { type: 'object', properties: {} },
     },
     {
       name: TOOL_SEARCH,
@@ -36,7 +37,7 @@ export function toolDeclarations(overview: DirectoryOverview | null) {
         'DILG records report a total project cost (amount_not_verified marks totals that may be data-entry errors) and the physical accomplishment (OWPA) as progress. ' +
         'Cities and municipalities are NOT a filter (the DPWH source does not report them): to find projects in a city, town, or barangay, ' +
         'put its distinctive name in `query` (for example "iligan"), which matches words in project titles, IDs, contractors, and implementing offices.',
-      parametersJsonSchema: {
+      parameters: {
         type: 'object',
         properties: {
           query: { type: 'string', description: 'Words that must appear (prefix match) in the title, ID, contractor, or implementing office. Keep it to 1-3 distinctive words.' },
@@ -62,6 +63,7 @@ export function toolDeclarations(overview: DirectoryOverview | null) {
       },
     },
   ];
+  return declarations.map((fn) => ({ type: 'function' as const, function: fn }));
 }
 
 export interface ToolRun {

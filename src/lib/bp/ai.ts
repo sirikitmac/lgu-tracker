@@ -1,52 +1,50 @@
 import 'server-only';
-import { ApiError, FunctionCallingConfigMode, GoogleGenAI, type Content, type Part } from '@google/genai';
 import type { BpRecord, BpSupabase, DirectoryOverview } from './data';
 import { runTool, toolDeclarations } from './tools';
 import type { ChatTurn } from './validate';
+import { groqConfig, postGroqChat } from './groq';
+import { AiHttpError, type AiConfig, type BpMessage, type ChatRequest } from './http';
+
+export { AiHttpError, type AiConfig } from './http';
 
 /**
- * Gemini side of BP. Server-only: GEMINI_API_KEY is read here and never
- * leaves the server. The model may only call the read-only tools in
- * tools.ts; their arguments are validated before any query runs.
+ * BP's AI loop: tool rounds, model fallback, timeouts, error classification.
+ * Server-only. The transport is Groq (groq.ts); GROQ_API_KEY never leaves the
+ * server. The model may only call the read-only tools in tools.ts; their
+ * arguments are validated before any query runs.
  */
 
-/**
- * Pinned model ids (the `-latest` aliases and older ids were overloaded or
- * retired for new keys when tested). When the primary is busy (503/429/slow),
- * BP falls back to the lighter model. Override with GEMINI_MODEL and
- * GEMINI_FALLBACK_MODEL.
- */
-export const DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash';
-export const DEFAULT_GEMINI_FALLBACK_MODEL = 'gemini-3.5-flash-lite';
 const MAX_TOOL_ROUNDS = 3;
 const MAX_CALLS_PER_ROUND = 4;
 /** One attempt on a model that has a fallback after it; the last model gets the remaining time. */
 const ATTEMPT_TIMEOUT_MS = 8_000;
 /** How long a model that just failed as busy is skipped (per server instance). */
 const BUSY_COOLDOWN_MS = 120_000;
+/** A model that hit its free daily quota is skipped longer. */
+const DAILY_LIMIT_COOLDOWN_MS = 30 * 60_000;
 
-export function geminiConfig(): { apiKey: string; models: string[] } | null {
-  const apiKey = process.env.GEMINI_API_KEY?.trim();
-  if (!apiKey) return null;
-  const primary = process.env.GEMINI_MODEL?.trim() || DEFAULT_GEMINI_MODEL;
-  const fallback = process.env.GEMINI_FALLBACK_MODEL?.trim() || DEFAULT_GEMINI_FALLBACK_MODEL;
-  return { apiKey, models: [...new Set([primary, fallback])] };
+/** null = GROQ_API_KEY not set (dev serves the preview, production answers "not configured"). */
+export function aiConfig(): AiConfig | null {
+  return groqConfig();
 }
 
 const busyUntil = new Map<string, number>();
 
-/** Busy or slow model, worth trying the next one; anything else (bad key, bad request) is not. */
+/** Busy, slow, or over a per-model limit: worth trying the next model; anything else (bad key, bad request) is not. */
 function isRetriable(error: unknown, attemptTimedOut: boolean): boolean {
   if (attemptTimedOut) return true;
-  return error instanceof ApiError && (error.status === 429 || error.status === 500 || error.status === 503 || error.status === 504);
+  if (!(error instanceof AiHttpError)) return false;
+  // 413: request larger than the per-minute token budget; tool_use_failed: the model wrote a malformed tool call.
+  return [413, 429, 500, 502, 503, 504].includes(error.status) || error.code === 'tool_use_failed';
 }
 
-/** Calls generateContent on the first available model, moving down the list when one is busy. */
-async function generateWithFallback(
-  ai: GoogleGenAI,
+/** Calls the chat API on the first available model, moving down the list when one is busy or slow. */
+async function chatWithFallback(
+  config: AiConfig,
   models: string[],
-  request: Omit<Parameters<GoogleGenAI['models']['generateContent']>[0], 'model'>,
-  signal: AbortSignal
+  request: Omit<ChatRequest, 'model'>,
+  signal: AbortSignal,
+  attemptTimeoutMs: number
 ) {
   const now = Date.now();
   const available = models.filter((m) => (busyUntil.get(m) ?? 0) <= now);
@@ -54,15 +52,16 @@ async function generateWithFallback(
   let lastError: unknown;
   for (const [i, model] of order.entries()) {
     const isLast = i === order.length - 1;
-    const attempt = isLast ? signal : AbortSignal.any([signal, AbortSignal.timeout(ATTEMPT_TIMEOUT_MS)]);
+    const attempt = isLast ? signal : AbortSignal.any([signal, AbortSignal.timeout(attemptTimeoutMs)]);
     try {
-      const response = await ai.models.generateContent({ ...request, model, config: { ...request.config, abortSignal: attempt } });
+      const response = await postGroqChat(config, { ...request, model }, attempt);
       return { response, model };
     } catch (error) {
       if (signal.aborted) throw error;
       const attemptTimedOut = attempt.aborted;
       if (isLast || !isRetriable(error, attemptTimedOut)) throw error;
-      busyUntil.set(model, Date.now() + BUSY_COOLDOWN_MS);
+      const daily = error instanceof AiHttpError && error.code === 'daily_limit';
+      busyUntil.set(model, Date.now() + (daily ? DAILY_LIMIT_COOLDOWN_MS : BUSY_COOLDOWN_MS));
       lastError = error;
     }
   }
@@ -99,81 +98,110 @@ Today's date is ${today}.
 Your goal is to make public infrastructure information easier to understand and access.`;
 }
 
-export type GeminiFailure = 'rate_limited' | 'busy' | 'auth' | 'timeout' | 'upstream' | 'empty' | 'database';
+export type AiFailure =
+  | 'rate_limited'
+  | 'daily_limit'
+  | 'too_large'
+  | 'busy'
+  | 'auth'
+  | 'timeout'
+  | 'upstream'
+  | 'empty'
+  | 'database';
 
-export class BpGeminiError extends Error {
-  constructor(public readonly kind: GeminiFailure, message: string) {
+export class BpAiError extends Error {
+  constructor(public readonly kind: AiFailure, message: string) {
     super(message);
   }
 }
 
-export function classifyGeminiError(error: unknown): GeminiFailure {
-  if (error instanceof BpGeminiError) return error.kind;
+export function classifyAiError(error: unknown): AiFailure {
+  if (error instanceof BpAiError) return error.kind;
   if (error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError')) return 'timeout';
-  if (error instanceof ApiError) {
+  if (error instanceof AiHttpError) {
+    if (error.code === 'daily_limit') return 'daily_limit';
     if (error.status === 429) return 'rate_limited';
+    // The conversation is larger than the per-minute token budget.
+    if (error.status === 413) return 'too_large';
     if (error.status === 503) return 'busy';
     if (error.status === 401 || error.status === 403) return 'auth';
-    if (error.status === 400 && /api[ _-]?key/i.test(error.message)) return 'auth';
     if (error.status === 408 || error.status === 504) return 'timeout';
   }
   return 'upstream';
 }
 
-export async function answerWithGemini(options: {
-  config: { apiKey: string; models: string[] };
+/** Arguments arrive as a JSON string; accept an object too, and anything else as no arguments. */
+function toolArguments(raw: unknown): Record<string, unknown> | undefined {
+  let value = raw;
+  if (typeof value === 'string') {
+    try {
+      value = JSON.parse(value);
+    } catch {
+      return undefined;
+    }
+  }
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : undefined;
+}
+
+export async function answerWithAi(options: {
+  config: AiConfig;
   supabase: BpSupabase;
   overview: DirectoryOverview | null;
   history: ChatTurn[];
   question: string;
   signal: AbortSignal;
+  /** Per-attempt timeout before falling back (tests shorten it). */
+  attemptTimeoutMs?: number;
 }): Promise<{ answer: string; records: BpRecord[] }> {
   const { config, supabase, overview, history, question, signal } = options;
-  const ai = new GoogleGenAI({ apiKey: config.apiKey });
-  const contents: Content[] = [
-    ...history.map((m): Content => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
-    { role: 'user', parts: [{ text: question }] },
-  ];
-  const tools = [{ functionDeclarations: toolDeclarations(overview) }];
-  const records = new Map<string, BpRecord>();
+  const attemptTimeoutMs = options.attemptTimeoutMs ?? ATTEMPT_TIMEOUT_MS;
   const today = new Date().toISOString().slice(0, 10);
+  const messages: BpMessage[] = [
+    { role: 'system', content: systemInstruction(today) },
+    ...history.map((m): BpMessage => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })),
+    { role: 'user', content: question },
+  ];
+  const tools = toolDeclarations(overview);
+  const records = new Map<string, BpRecord>();
   let models = config.models;
 
   for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
     const lastRound = round === MAX_TOOL_ROUNDS;
-    const { response, model } = await generateWithFallback(ai, models, {
-      contents,
-      config: {
-        systemInstruction: systemInstruction(today),
-        tools,
-        // The last round must answer with what it has.
-        toolConfig: { functionCallingConfig: { mode: lastRound ? FunctionCallingConfigMode.NONE : FunctionCallingConfigMode.AUTO } },
-        temperature: 0.2,
-      },
-    }, signal);
-    // Stay on the model that answered: its turns may carry thought signatures only it accepts.
+    const { response, model } = await chatWithFallback(
+      config,
+      models,
+      // The last round gets no tools, so it must answer with what it has.
+      { messages, ...(lastRound ? {} : { tools }), temperature: 0.2 },
+      signal,
+      attemptTimeoutMs
+    );
+    // Stay on the model that answered, so one conversation is not split across models.
     models = models.slice(models.indexOf(model));
 
-    const calls = response.functionCalls ?? [];
+    const message = response.message;
+    const calls = Array.isArray(message?.tool_calls) ? message.tool_calls : [];
     if (calls.length === 0 || lastRound) {
-      const answer = response.text?.trim();
-      if (!answer) throw new BpGeminiError('empty', 'Gemini returned no text.');
+      const answer = message?.content?.trim();
+      if (!answer) throw new BpAiError('empty', 'The model returned no text.');
       return { answer, records: [...records.values()].slice(0, 8) };
     }
 
-    // Keep the model's turn verbatim (it may carry thought signatures).
-    const modelTurn = response.candidates?.[0]?.content;
-    if (modelTurn) contents.push(modelTurn);
-    const parts: Part[] = [];
+    // Ids pair each tool result with its call.
+    const kept = calls.slice(0, MAX_CALLS_PER_ROUND).map((c, i) => ({ ...c, id: c.id || `call_${round}_${i}` }));
+    messages.push({
+      role: 'assistant',
+      content: message?.content ?? '',
+      tool_calls: kept,
+    });
     let failures = 0;
-    for (const call of calls.slice(0, MAX_CALLS_PER_ROUND)) {
-      const run = await runTool(supabase, call.name ?? '', call.args);
+    for (const call of kept) {
+      const name = typeof call?.function?.name === 'string' ? call.function.name : '';
+      const run = await runTool(supabase, name, toolArguments(call?.function?.arguments));
       if (run.failed) failures++;
       for (const r of run.records) records.set(`${r.source}:${r.record_id}`, r);
-      parts.push({ functionResponse: { id: call.id, name: call.name, response: run.response } });
+      messages.push({ role: 'tool', tool_call_id: call.id, content: JSON.stringify(run.response) });
     }
-    if (failures === parts.length) throw new BpGeminiError('database', 'Every tool call failed.');
-    contents.push({ role: 'user', parts });
+    if (failures === kept.length) throw new BpAiError('database', 'Every tool call failed.');
   }
-  throw new BpGeminiError('empty', 'No answer.');
+  throw new BpAiError('empty', 'No answer.');
 }

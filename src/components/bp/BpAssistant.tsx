@@ -35,7 +35,7 @@ interface Message {
   id: number;
   role: 'user' | 'assistant';
   content: string;
-  mode?: 'gemini' | 'preview';
+  mode?: 'ai' | 'preview';
   references?: Reference[];
 }
 
@@ -402,7 +402,7 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
             </button>
           </form>
           <p className="px-4 pb-3 -mt-1 text-[11.5px] leading-snug text-muted">
-            Values are as published, not verified by the LGU. Questions go to Google Gemini, so leave out personal details. Kept only in this tab.
+            Values are as published, not verified by the LGU. Questions are sent to an outside AI service, so leave out personal details. Kept only in this tab.
           </p>
         </section>,
         document.body
