@@ -15,7 +15,7 @@ test('everyone signed in gets an inbox and their own reports', () => {
 
 test('citizens and contractors see no LGU or admin tabs', () => {
   for (const role of ['citizen', 'contractor'] as AppRole[]) {
-    assert.deepEqual(ids(role), ['inbox', 'my-reports', 'projects', 'map', 'insights']);
+    assert.deepEqual(ids(role), ['inbox', 'my-reports', 'profile', 'projects', 'map', 'insights']);
   }
 });
 
@@ -57,4 +57,12 @@ test('the current tab is the one whose path you are on', () => {
   assert.deepEqual(active('/projects/map'), ['map']);
   assert.deepEqual(active('/projects/dashboard'), ['insights']);
   assert.deepEqual(active('/dashboard'), ['workspace']);
+});
+
+test('everyone signed in gets a Profile tab, and it lights up on its own page', () => {
+  for (const role of ['citizen', 'contractor', 'planning_officer', 'lgu_admin', 'super_admin'] as const) {
+    assert.ok(ids(role).includes('profile'), role);
+  }
+  const all = workspaceNav('citizen').flatMap((g) => g.items);
+  assert.deepEqual(all.filter((i) => isActiveNavItem(i, '/profile')).map((i) => i.id), ['profile']);
 });

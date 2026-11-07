@@ -21,7 +21,15 @@ export function ProjectsFrame({ children }: { children: React.ReactNode }) {
         showSidebar ? 'lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)] lg:gap-10' : ''
       }`}
     >
-      {showSidebar && session.state === 'in' && <WorkspaceSidebar role={session.role} name={session.name} />}
+      {showSidebar && session.state === 'in' && (
+        <WorkspaceSidebar
+          role={session.role}
+          name={session.name}
+          title={session.title}
+          avatarPath={session.avatarPath}
+          avatarPreset={session.avatarPreset}
+        />
+      )}
       {/* A page that needs the room (the map) opts into a wider frame with data-frame="wide" (see .site-frame). */}
       <main className={`min-w-0 space-y-6 ${showSidebar ? 'mt-5 lg:mt-0' : ''}`}>{children}</main>
     </div>

@@ -1,7 +1,7 @@
 import { canManageUsers, canReviewReports, isStaffRole } from '@/lib/auth/roles';
 import type { AppRole } from '@/types/auth';
 
-export type NavIcon = 'inbox' | 'reports' | 'projects' | 'map' | 'insights' | 'workspace' | 'queue' | 'users';
+export type NavIcon = 'inbox' | 'reports' | 'projects' | 'map' | 'insights' | 'workspace' | 'queue' | 'users' | 'profile';
 
 export interface WorkspaceNavItem {
   id: string;
@@ -20,6 +20,7 @@ const INBOX: WorkspaceNavItem = { id: 'inbox', label: 'Inbox', href: '/inbox', i
 const MY_REPORTS: WorkspaceNavItem = { id: 'my-reports', label: 'My reports', href: '/my-reports', icon: 'reports' };
 const WORKSPACE: WorkspaceNavItem = { id: 'workspace', label: 'Monitoring workspace', href: '/dashboard', icon: 'workspace' };
 const QUEUE: WorkspaceNavItem = { id: 'queue', label: 'Report queue', href: '/reports', icon: 'queue' };
+const PROFILE: WorkspaceNavItem = { id: 'profile', label: 'Profile', href: '/profile', icon: 'profile' };
 const USERS: WorkspaceNavItem = { id: 'users', label: 'Users and roles', href: '/users', icon: 'users' };
 
 /**
@@ -28,7 +29,7 @@ const USERS: WorkspaceNavItem = { id: 'users', label: 'Users and roles', href: '
  * database enforces it with row-level security.
  */
 export function workspaceNav(role: AppRole): WorkspaceNavGroup[] {
-  const groups: WorkspaceNavGroup[] = [{ id: 'you', label: 'Your space', items: [INBOX, MY_REPORTS] }];
+  const groups: WorkspaceNavGroup[] = [{ id: 'you', label: 'Your space', items: [INBOX, MY_REPORTS, PROFILE] }];
 
   const lguWork: WorkspaceNavItem[] = [];
   if (isStaffRole(role)) lguWork.push(WORKSPACE);

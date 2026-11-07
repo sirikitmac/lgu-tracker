@@ -25,7 +25,7 @@ function CommentItem({ node, ctx }: { node: CommentNode; ctx: ThreadContext }) {
   return (
     <li>
       <div className="rounded-2xl border border-line bg-surface p-4">
-        <AuthorLine authorId={comment.authorId} name={comment.authorName} iso={comment.createdAt} size={28} />
+        <AuthorLine authorId={comment.authorId} name={comment.authorName} iso={comment.createdAt} size={28} self={ctx.member} />
         <p className="mt-2 whitespace-pre-line text-[15px] leading-relaxed text-ink">{comment.body}</p>
         <div className="mt-2 flex items-center gap-3">
           <VoteBox
@@ -103,7 +103,7 @@ export function PostThread({ postId }: { postId: string }) {
     <>
       {back}
       <article className="rounded-3xl border border-line bg-surface p-5 sm:p-6" aria-labelledby="thread-title">
-        <AuthorLine authorId={post.authorId} name={post.authorName} iso={post.createdAt} size={36} />
+        <AuthorLine authorId={post.authorId} name={post.authorName} iso={post.createdAt} size={36} self={member} />
         <h1 id="thread-title" className="mt-3 text-xl font-bold leading-snug tracking-tight text-ink sm:text-2xl">{post.title}</h1>
         <p className="mt-3 whitespace-pre-line text-[16px] leading-relaxed text-ink">{post.body}</p>
         {post.project && <div className="mt-4"><ProjectChip project={post.project} /></div>}

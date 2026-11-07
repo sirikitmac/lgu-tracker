@@ -28,7 +28,7 @@ function PostCard({
     <li className="flex gap-3 rounded-3xl border border-line bg-surface p-4 sm:gap-4 sm:p-5">
       <VoteBox targetId={post.id} baseScore={post.score} mine={mine} member={member} onNeedSignIn={onNeedSignIn} label={post.title} />
       <article className="min-w-0 flex-1" aria-label={post.title}>
-        <AuthorLine authorId={post.authorId} name={post.authorName} iso={post.createdAt} />
+        <AuthorLine authorId={post.authorId} name={post.authorName} iso={post.createdAt} self={member} />
         <h2 className="mt-2 text-[17px] font-semibold leading-snug tracking-[-0.01em] text-ink">
           <Link href={`/community/${post.id}`} className={`rounded-sm hover:text-accent-ink ${focusRing}`}>
             {post.title}
