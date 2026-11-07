@@ -56,12 +56,22 @@ export function Ago({ iso }: { iso: string }) {
 }
 
 /** Shown when someone who is not signed in tries to write or vote. */
-export function SignInBanner({ what }: { what: string }) {
-  const pathname = usePathname() ?? '/community';
+export function SignInBanner({
+  what,
+  note = 'Anyone can read the discussions; an account is needed to take part.',
+  next,
+}: {
+  what: string;
+  note?: string;
+  /** Where to come back to after signing in; defaults to this page. */
+  next?: string;
+}) {
+  const current = usePathname();
+  const pathname = next ?? current ?? '/community';
   return (
     <div role="alert" className="flex flex-col gap-3 rounded-2xl border border-line bg-accent-soft p-4 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm text-ink">
-        <span className="font-semibold">Sign in to {what}.</span> Anyone can read the discussions; an account is needed to take part.
+        <span className="font-semibold">Sign in to {what}.</span> {note}
       </p>
       <div className="flex gap-2">
         <Link href={`/login?next=${encodeURIComponent(pathname)}`} className={primaryButtonClass}>

@@ -131,37 +131,45 @@ export const MOCK_COMMENTS: Comment[] = [
 export interface Testimonial {
   profileId: string;
   lang: 'tl' | 'en';
+  /** Stars, 1 to 5. A believable mix, not all fives. */
+  rating: number;
   quote: string;
 }
 
 export const TESTIMONIALS: Testimonial[] = [
   {
     profileId: 'maricel',
+    rating: 5,
     lang: 'tl',
     quote: 'Dati kailangan pa naming pumunta sa munisipyo para malaman kung ano ang nangyari sa isang proyekto. Ngayon, nahahanap ko na sa telepono ko ang code, ang halaga at ang status. Malaking tulong ito sa mga tanong ng mga kabarangay.',
   },
   {
     profileId: 'angelica',
+    rating: 4,
     lang: 'en',
     quote: 'As a reporter, the thing I trust most is that each figure shows where it came from. I can trace a project back to its source in a couple of clicks, and the page is honest about what has not been verified.',
   },
   {
     profileId: 'carlo',
+    rating: 5,
     lang: 'tl',
     quote: 'Simple lang gamitin kahit hindi ako techie. Nag-report ako tungkol sa tulay na matagal nang hindi gumagalaw, at nakita ko sa inbox ko kung ano na ang nangyari sa report ko.',
   },
   {
     profileId: 'junjun',
+    rating: 3,
     lang: 'en',
-    quote: 'The map and the directory saved our thesis team weeks of digging through spreadsheets. Filtering by region and project type is quick, and the numbers line up with the sources.',
+    quote: 'Useful for our thesis: filtering by region and project type is quick, and the numbers line up with the sources. Three stars for now because the map gets slow on my old phone, and many older projects still have no photos. Looking forward to improvements!',
   },
   {
     profileId: 'lorna',
+    rating: 4,
     lang: 'tl',
     quote: 'Retirado na ako pero gusto ko pa ring may silbi. Dito, kahit ordinaryong mamamayan ay may boses. Natutuwa ako na may sumasagot at nag-aayos.',
   },
   {
     profileId: 'ramon',
+    rating: 4,
     lang: 'en',
     quote: 'From the government side, complete reports with the project code and a clear location make my review much faster. It is a tidy way for residents and staff to talk about the same project.',
   },
