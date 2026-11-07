@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { buildThread, displayScore, sortItems, toggleVote, validateComment, validatePost } from '@/lib/community/logic';
 import { MOCK_COMMENTS, MOCK_POSTS, TESTIMONIALS } from '@/lib/community/mock';
-import { PROFILES, profileById, resolveAuthor } from '@/lib/community/profiles';
+import { PROFILES, lookFromSeed, profileById, resolveAuthor } from '@/lib/community/profiles';
 
 test('voting toggles and switches', () => {
   assert.equal(toggleVote(undefined, 1), 1);
@@ -80,4 +80,12 @@ test('sample data is consistent', () => {
 test('an unknown author still gets a card', () => {
   assert.equal(resolveAuthor('u-123', 'Ana Reyes').name, 'Ana Reyes');
   assert.equal(resolveAuthor('maricel').place, 'Iligan City');
+});
+
+test('every sample person has a drawn face and made-up ones are stable', () => {
+  for (const p of PROFILES) assert.ok(p.look, `${p.id} has a look`);
+  assert.deepEqual(lookFromSeed('abc-123'), lookFromSeed('abc-123'));
+  assert.ok(resolveAuthor('some-new-user').look);
+  const skins = new Set(PROFILES.map((p) => p.look!.skin));
+  assert.ok(skins.size >= 3, 'a spread of skin tones');
 });

@@ -11,9 +11,11 @@ import {
   Inbox,
   LayoutDashboard,
   Map as MapIcon,
+  UserRound,
   UsersRound,
   type LucideIcon,
 } from 'lucide-react';
+import { UserAvatar } from '@/components/profile/UserAvatar';
 import { ROLE_BLURB, ROLE_LABEL } from '@/lib/auth/roles';
 import { isActiveNavItem, workspaceNav, type NavIcon, type WorkspaceNavItem } from '@/lib/nav/workspaceNav';
 import { useUnreadCount } from '@/lib/notifications/unread';
@@ -28,6 +30,7 @@ const ICONS: Record<NavIcon, LucideIcon> = {
   workspace: LayoutDashboard,
   queue: ClipboardCheck,
   users: UsersRound,
+  profile: UserRound,
 };
 
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink';
@@ -46,11 +49,23 @@ function Badge({ count }: { count: number }) {
  * the left; on a phone the same tabs become one row that scrolls sideways
  * under the top bar.
  */
-export function WorkspaceSidebar({ role, name }: { role: AppRole; name: string }) {
+export function WorkspaceSidebar({
+  role,
+  name,
+  title,
+  avatarPath,
+  avatarPreset,
+}: {
+  role: AppRole;
+  name: string;
+  /** The job title the person gave themselves. */
+  title?: string | null;
+  avatarPath?: string | null;
+  avatarPreset?: string | null;
+}) {
   const pathname = usePathname() ?? '/';
   const unread = useUnreadCount();
   const groups = workspaceNav(role);
-  const initial = (name.trim()[0] ?? '?').toUpperCase();
 
   const label = (item: WorkspaceNavItem) =>
     item.id === 'inbox' && unread > 0 ? `${item.label}, ${unread} unread` : item.label;
@@ -122,16 +137,20 @@ export function WorkspaceSidebar({ role, name }: { role: AppRole; name: string }
           ))}
         </nav>
 
-        <div className="mt-6 flex items-start gap-3 rounded-2xl border border-line bg-surface p-3.5">
-          <span aria-hidden="true" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent text-sm font-bold text-night">
-            {initial}
-          </span>
+        <Link
+          href="/profile"
+          aria-label={`${name || 'Your account'}, ${ROLE_LABEL[role]}. Edit your profile`}
+          className={`group mt-6 flex items-start gap-3 rounded-2xl border border-line bg-surface p-3.5 transition-colors hover:border-line-strong hover:bg-sunken ${focusRing}`}
+        >
+          <UserAvatar name={name} avatarPath={avatarPath} avatarPreset={avatarPreset} size={40} />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-ink">{name || 'Your account'}</p>
+            {title && <p className="truncate text-[13px] text-subtle">{title}</p>}
             <p className="text-[13px] font-medium text-accent-ink">{ROLE_LABEL[role]}</p>
             <p className="mt-1 text-xs leading-relaxed text-muted">{ROLE_BLURB[role]}</p>
+            <p className="mt-2 text-xs font-semibold text-ink underline-offset-2 group-hover:underline">Edit profile</p>
           </div>
-        </div>
+        </Link>
       </div>
     </aside>
   );

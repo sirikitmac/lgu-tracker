@@ -7,7 +7,16 @@ import type { AppRole } from '@/types/auth';
 export type SessionRole =
   | { state: 'loading' }
   | { state: 'out' }
-  | { state: 'in'; id: string; role: AppRole; name: string };
+  | {
+      state: 'in';
+      id: string;
+      role: AppRole;
+      name: string;
+      /** The job title the person gave themselves, if any. */
+      title: string | null;
+      avatarPath: string | null;
+      avatarPreset: string | null;
+    };
 
 /**
  * Who is signed in and what role they hold, for parts of public pages that
@@ -18,7 +27,7 @@ export type SessionRole =
  */
 export function useSessionRole(): SessionRole {
   const [userId, setUserId] = useState<string | null | undefined>(undefined);
-  const [profile, setProfile] = useState<{ role: AppRole; name: string } | null>(null);
+  const [profile, setProfile] = useState<{ role: AppRole; name: string; title: string | null; avatarPath: string | null; avatarPreset: string | null } | null>(null);
 
   useEffect(() => {
     const client = getSupabaseBrowserClient();
@@ -44,12 +53,22 @@ export function useSessionRole(): SessionRole {
     let active = true;
     void client
       .from('profiles')
-      .select('role, full_name, is_active')
+      .select('role, full_name, is_active, position_title, avatar_path, avatar_preset')
       .eq('id', userId)
       .maybeSingle()
       .then(({ data }) => {
         if (!active) return;
-        setProfile(data && data.is_active ? { role: data.role as AppRole, name: (data.full_name as string) ?? '' } : null);
+        setProfile(
+          data && data.is_active
+            ? {
+                role: data.role as AppRole,
+                name: (data.full_name as string) ?? '',
+                title: (data.position_title as string | null) ?? null,
+                avatarPath: (data.avatar_path as string | null) ?? null,
+                avatarPreset: (data.avatar_preset as string | null) ?? null,
+              }
+            : null,
+        );
       });
     return () => {
       active = false;

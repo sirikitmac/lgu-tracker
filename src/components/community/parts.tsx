@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ArrowBigDown, ArrowBigUp, Building2, LogIn } from 'lucide-react';
 import { Avatar } from '@/components/community/Avatar';
+import { UserAvatar } from '@/components/profile/UserAvatar';
 import { primaryButtonClass, secondaryButtonClass } from '@/components/dpwh/ui';
 import { useSessionRole } from '@/lib/auth/useSessionRole';
 import { displayScore, toggleVote } from '@/lib/community/logic';
@@ -18,6 +19,10 @@ export const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2
 export interface Member {
   id: string;
   name: string;
+  /** The job title and picture the person chose on their profile. */
+  title?: string | null;
+  avatarPath?: string | null;
+  avatarPreset?: string | null;
 }
 
 /** The signed-in person, or null. Reading is open to everyone; every write needs this. */
@@ -25,7 +30,16 @@ export function useMember(): { loading: boolean; member: Member | null } {
   const session = useSessionRole();
   if (session.state === 'loading') return { loading: true, member: null };
   if (session.state === 'out') return { loading: false, member: null };
-  return { loading: false, member: { id: session.id, name: session.name || 'Community member' } };
+  return {
+    loading: false,
+    member: {
+      id: session.id,
+      name: session.name || 'Community member',
+      title: session.title,
+      avatarPath: session.avatarPath,
+      avatarPreset: session.avatarPreset,
+    },
+  };
 }
 
 /** "5 min ago" once the page is in the browser; the same fixed date text on the server, so nothing mismatches. */
@@ -61,14 +75,37 @@ export function SignInBanner({ what }: { what: string }) {
   );
 }
 
-export function AuthorLine({ authorId, name, iso, size = 32 }: { authorId: string; name?: string; iso: string; size?: number }) {
+/**
+ * Who wrote something. Your own posts and comments show your current name, job
+ * and picture from your profile (`self`); the sample people keep theirs.
+ */
+export function AuthorLine({
+  authorId,
+  name,
+  iso,
+  size = 32,
+  self,
+}: {
+  authorId: string;
+  name?: string;
+  iso: string;
+  size?: number;
+  self?: Member | null;
+}) {
+  const mine = self && self.id === authorId ? self : null;
   const person = resolveAuthor(authorId, name);
+  const shownName = mine ? mine.name : person.name;
+  const shownTag = mine ? mine.title?.trim() || 'Member' : person.tag;
   return (
     <div className="flex min-w-0 items-center gap-2.5">
-      <Avatar profile={person} size={size} />
+      {mine && (mine.avatarPath || mine.avatarPreset) ? (
+        <UserAvatar name={shownName} avatarPath={mine.avatarPath} avatarPreset={mine.avatarPreset} size={size} />
+      ) : (
+        <Avatar profile={person} size={size} />
+      )}
       <p className="min-w-0 text-[13px] leading-tight text-subtle">
-        <span className="font-semibold text-ink">{person.name}</span>
-        {person.tag !== 'Member' && <span className="hidden sm:inline"> · {person.tag}</span>}
+        <span className="font-semibold text-ink">{shownName}</span>
+        {shownTag !== 'Member' && <span className="hidden sm:inline"> · {shownTag}</span>}
         <span className="block sm:inline">
           <span className="hidden sm:inline"> · </span>
           <Ago iso={iso} />
