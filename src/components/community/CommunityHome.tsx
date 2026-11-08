@@ -5,30 +5,32 @@ import Link from 'next/link';
 import { MessageSquare, Plus } from 'lucide-react';
 import { NewPostForm } from '@/components/community/NewPostForm';
 import { SortTabs } from '@/components/community/SortTabs';
-import { AuthorLine, ProjectChip, SignInBanner, VoteBox, focusRing, useMember, type Member } from '@/components/community/parts';
+import { AuthorLine, DeleteButton, ProjectChip, SignInBanner, VoteBox, focusRing, useMember, type Member } from '@/components/community/parts';
 import { accentButtonClass } from '@/components/dpwh/ui';
-import { commentCount, sortItems } from '@/lib/community/logic';
-import { useCommunity } from '@/lib/community/store';
+import { useCommunity } from '@/lib/community/live';
+import { sortItems } from '@/lib/community/logic';
 import type { Post, Sort, Vote } from '@/lib/community/types';
 
 function PostCard({
   post,
-  comments,
   mine,
   member,
   onNeedSignIn,
+  onError,
 }: {
   post: Post;
-  comments: number;
   mine: Vote | undefined;
   member: Member | null;
   onNeedSignIn: () => void;
+  onError: (message: string) => void;
 }) {
+  const comments = post.commentCount ?? 0;
+  const canDelete = !!member && (member.isAdmin || (!post.sample && post.authorId === member.id));
   return (
     <li className="flex gap-3 rounded-3xl border border-line bg-surface p-4 sm:gap-4 sm:p-5">
-      <VoteBox targetId={post.id} baseScore={post.score} mine={mine} member={member} onNeedSignIn={onNeedSignIn} label={post.title} />
+      <VoteBox kind="post" targetId={post.id} score={post.score} mine={mine} member={member} onNeedSignIn={onNeedSignIn} onError={onError} label={post.title} />
       <article className="min-w-0 flex-1" aria-label={post.title}>
-        <AuthorLine authorId={post.authorId} name={post.authorName} iso={post.createdAt} self={member} />
+        <AuthorLine authorId={post.authorId} name={post.authorName} iso={post.createdAt} self={member} snapshot={post} />
         <h2 className="mt-2 text-[17px] font-semibold leading-snug tracking-[-0.01em] text-ink">
           <Link href={`/community/${post.id}`} className={`rounded-sm hover:text-accent-ink ${focusRing}`}>
             {post.title}
@@ -41,6 +43,8 @@ function PostCard({
             <MessageSquare className="h-4 w-4" aria-hidden="true" />
             {comments} {comments === 1 ? 'comment' : 'comments'}
           </Link>
+          {post.sample && <span className="rounded-full bg-sunken px-2.5 py-0.5 text-[12px] font-medium text-subtle">Sample</span>}
+          {canDelete && <DeleteButton kind="post" id={post.id} label={post.title} />}
         </div>
       </article>
     </li>
@@ -49,14 +53,16 @@ function PostCard({
 
 /** The list of discussions. Reading needs no account; writing and voting do. */
 export function CommunityHome() {
-  const { allPosts, allComments, votes } = useCommunity();
+  const { posts: allPosts, myVotes, loaded, failed } = useCommunity();
   const { member } = useMember();
   const [sort, setSort] = useState<Sort>('latest');
   const [composing, setComposing] = useState(false);
   const [gate, setGate] = useState<string | null>(null);
 
-  const mineVotes = useMemo(() => (member ? votes[member.id] ?? {} : {}), [member, votes]);
-  const posts = useMemo(() => sortItems(allPosts, sort, mineVotes), [allPosts, sort, mineVotes]);
+  const [problem, setProblem] = useState<string | null>(null);
+
+  const mineVotes = member ? myVotes : {};
+  const posts = useMemo(() => sortItems(allPosts, sort), [allPosts, sort]);
 
   const start = () => {
     if (!member) return setGate('start a discussion');
@@ -82,6 +88,8 @@ export function CommunityHome() {
 
       {gate && !member && <div className="mb-4"><SignInBanner what={gate} /></div>}
 
+      {problem && <p role="alert" className="mb-4 text-[13px] text-danger-ink">{problem}</p>}
+
       {composing && member && (
         <div className="mb-6">
           <NewPostForm
@@ -101,21 +109,31 @@ export function CommunityHome() {
         </p>
       </div>
 
-      <ul className="space-y-3">
-        {posts.map((post) => (
-          <PostCard
-            key={post.id}
-            post={post}
-            comments={commentCount(allComments, post.id)}
-            mine={mineVotes[post.id]}
-            member={member}
-            onNeedSignIn={() => setGate('vote')}
-          />
-        ))}
-      </ul>
+      {!loaded ? (
+        <p role="status" className="rounded-2xl border border-line bg-surface p-6 text-center text-sm text-subtle">Loading discussions…</p>
+      ) : failed ? (
+        <p role="alert" className="rounded-2xl border border-line bg-surface p-6 text-center text-sm text-danger-ink">
+          The discussions could not be loaded. Check your connection and reload the page.
+        </p>
+      ) : posts.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-line-strong p-6 text-center text-sm text-subtle">No discussions yet. Start the first one.</p>
+      ) : (
+        <ul className="space-y-3">
+          {posts.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              mine={mineVotes[post.id]}
+              member={member}
+              onNeedSignIn={() => setGate('vote')}
+              onError={setProblem}
+            />
+          ))}
+        </ul>
+      )}
 
       <p className="mt-6 text-[13px] text-subtle">
-        These are sample discussions by fictional people, shown for preview. What you post, comment and vote is saved in this browser only.
+        Discussions marked Sample are made-up examples. Everything else is written by people using Bantay Proyekto, and everyone sees it as it happens.
       </p>
     </>
   );

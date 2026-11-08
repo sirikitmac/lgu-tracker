@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { buildThread, displayScore, sortItems, toggleVote, validateComment, validatePost } from '@/lib/community/logic';
+import { buildThread, scoreAfterVote, sortItems, toggleVote, validateComment, validatePost } from '@/lib/community/logic';
 import { MOCK_COMMENTS, MOCK_POSTS, TESTIMONIALS } from '@/lib/community/mock';
 import { PROFILES, lookFromSeed, profileById, resolveAuthor } from '@/lib/community/profiles';
 
@@ -8,12 +8,13 @@ test('voting toggles and switches', () => {
   assert.equal(toggleVote(undefined, 1), 1);
   assert.equal(toggleVote(1, 1), undefined);
   assert.equal(toggleVote(1, -1), -1);
-  assert.equal(displayScore(10, 1), 11);
-  assert.equal(displayScore(10, -1), 9);
-  assert.equal(displayScore(10, undefined), 10);
+  assert.equal(scoreAfterVote(10, undefined, 1), 11);
+  assert.equal(scoreAfterVote(10, 1, undefined), 9);
+  assert.equal(scoreAfterVote(10, 1, -1), 8);
+  assert.equal(scoreAfterVote(10, -1, 1), 12);
 });
 
-test('latest sorts by time, top by score with your vote counted', () => {
+test('latest sorts by time, top by score', () => {
   const items = [
     { id: 'a', createdAt: '2026-11-01T00:00:00Z', score: 5 },
     { id: 'b', createdAt: '2026-11-03T00:00:00Z', score: 1 },
@@ -21,7 +22,6 @@ test('latest sorts by time, top by score with your vote counted', () => {
   ];
   assert.deepEqual(sortItems(items, 'latest').map((x) => x.id), ['b', 'c', 'a']);
   assert.deepEqual(sortItems(items, 'top').map((x) => x.id), ['a', 'c', 'b']);
-  assert.deepEqual(sortItems(items, 'top', { c: 1, a: -1 }).map((x) => x.id), ['c', 'a', 'b']);
 });
 
 test('comments nest, replies read oldest first, orphans surface', () => {
@@ -88,4 +88,23 @@ test('every sample person has a drawn face and made-up ones are stable', () => {
   assert.ok(resolveAuthor('some-new-user').look);
   const skins = new Set(PROFILES.map((p) => p.look!.skin));
   assert.ok(skins.size >= 3, 'a spread of skin tones');
+});
+
+test('database rows become posts and comments; broken rows are skipped', async () => {
+  const { commentFromRow, postFromRow, upsertById, writeErrorMessage } = await import('@/lib/community/rows');
+  const row = { id: 'a', author_id: 'u1', sample_author: null, title: 'T', body: 'B', author_name: 'Maria', author_title: 'Teacher', author_avatar_path: null, author_avatar_preset: 'p3', score: 4, comment_count: 2, is_sample: false, created_at: '2026-11-01T00:00:00Z', project_href: '/projects?q=x', project_title: 'Road' };
+  const post = postFromRow(row);
+  assert.equal(post?.authorId, 'u1');
+  assert.equal(post?.authorTitle, 'Teacher');
+  assert.equal(post?.commentCount, 2);
+  assert.equal(post?.project?.href, '/projects?q=x');
+  assert.equal(postFromRow({ ...row, is_sample: true, author_id: null, sample_author: 'ramon' })?.authorId, 'ramon', 'a sample post points at its made-up person');
+  assert.equal(postFromRow({ ...row, id: null }), null);
+  assert.equal(postFromRow(null), null);
+  assert.equal(commentFromRow({ id: 'c', post_id: 'a', parent_id: null, author_id: 'u1', body: 'hi', created_at: '2026-11-01T00:00:00Z', score: 1 })?.postId, 'a');
+  assert.equal(commentFromRow({ id: 'c', body: 'hi' }), null);
+  assert.deepEqual(upsertById([{ id: 'x', n: 1 }, { id: 'y', n: 2 }], { id: 'y', n: 3 }), [{ id: 'x', n: 1 }, { id: 'y', n: 3 }]);
+  assert.equal(upsertById([{ id: 'x' }], { id: 'z' })[0].id, 'z', 'new items go first');
+  assert.match(writeErrorMessage({ code: 'P0001', message: 'You are posting too fast.' }), /too fast/);
+  assert.match(writeErrorMessage({ code: '42501' }), /sign in/);
 });

@@ -40,13 +40,20 @@ export interface ProjectLink {
 export interface Post {
   id: string;
   authorId: string;
-  /** Needed for posts made in this browser, whose author is not a sample profile. */
+  /** How the author appeared when they wrote it (kept current by the database). */
   authorName?: string;
+  authorTitle?: string | null;
+  authorAvatarPath?: string | null;
+  authorAvatarPreset?: string | null;
+  /** True for the made-up preview discussions; their `authorId` is a sample profile key. */
+  sample?: boolean;
   title: string;
   body: string;
   createdAt: string;
-  /** Votes the post had before you. Your own vote adds or removes one. */
+  /** Everyone's votes added up, yours included. */
   score: number;
+  /** Comments and replies on it. */
+  commentCount?: number;
   project?: ProjectLink;
 }
 
@@ -57,6 +64,10 @@ export interface Comment {
   parentId: string | null;
   authorId: string;
   authorName?: string;
+  authorTitle?: string | null;
+  authorAvatarPath?: string | null;
+  authorAvatarPreset?: string | null;
+  sample?: boolean;
   body: string;
   createdAt: string;
   score: number;
