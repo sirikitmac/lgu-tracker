@@ -5,16 +5,15 @@ export function toggleVote(current: Vote | undefined, pressed: Vote): Vote | und
   return current === pressed ? undefined : pressed;
 }
 
-/** What to show: the votes it had before you, plus yours. */
-export const displayScore = (base: number, mine: Vote | undefined) => base + (mine ?? 0);
+/** The score after you change your vote from `before` to `after` (either may be none). */
+export const scoreAfterVote = (score: number, before: Vote | undefined, after: Vote | undefined) => score - (before ?? 0) + (after ?? 0);
 
 type Scored = { id: string; createdAt: string; score: number };
 
 /** Latest first, or highest score first (newest breaks ties). */
-export function sortItems<T extends Scored>(items: readonly T[], sort: Sort, votes: Record<string, Vote | undefined> = {}): T[] {
+export function sortItems<T extends Scored>(items: readonly T[], sort: Sort): T[] {
   const time = (x: T) => new Date(x.createdAt).getTime();
-  const score = (x: T) => displayScore(x.score, votes[x.id]);
-  return [...items].sort((a, b) => (sort === 'top' ? score(b) - score(a) || time(b) - time(a) : time(b) - time(a)));
+  return [...items].sort((a, b) => (sort === 'top' ? b.score - a.score || time(b) - time(a) : time(b) - time(a)));
 }
 
 export interface CommentNode {
@@ -31,7 +30,7 @@ export const MAX_INDENT = 4;
  * `sort`; replies read oldest first, like a conversation. A reply whose parent
  * is missing is shown at the top level instead of being lost.
  */
-export function buildThread(comments: readonly Comment[], sort: Sort, votes: Record<string, Vote | undefined> = {}): CommentNode[] {
+export function buildThread(comments: readonly Comment[], sort: Sort): CommentNode[] {
   const ids = new Set(comments.map((c) => c.id));
   const children = new Map<string | null, Comment[]>();
   for (const c of comments) {
@@ -40,13 +39,12 @@ export function buildThread(comments: readonly Comment[], sort: Sort, votes: Rec
   }
   const make = (parent: string | null, depth: number): CommentNode[] => {
     const level = children.get(parent) ?? [];
-    const ordered = parent === null ? sortItems(level, sort, votes) : sortItems(level, 'latest', votes).reverse();
+    const ordered = parent === null ? sortItems(level, sort) : sortItems(level, 'latest').reverse();
     return ordered.map((comment) => ({ comment, depth: Math.min(depth, MAX_INDENT), replies: make(comment.id, depth + 1) }));
   };
   return make(null, 0);
 }
 
-export const commentCount = (comments: readonly Comment[], postId: string) => comments.filter((c) => c.postId === postId).length;
 
 export type CheckResult = { ok: true } | { ok: false; field: 'title' | 'body'; error: string };
 
@@ -67,5 +65,3 @@ export function validateComment(text: string): { ok: true } | { ok: false; error
   return { ok: true };
 }
 
-/** A short random id for something made in this browser. */
-export const newId = (prefix: string) => `${prefix}-${crypto.randomUUID().slice(0, 8)}`;

@@ -3,14 +3,14 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ArrowBigDown, ArrowBigUp, Building2, LogIn } from 'lucide-react';
+import { ArrowBigDown, ArrowBigUp, Building2, LogIn, Trash2 } from 'lucide-react';
 import { Avatar } from '@/components/community/Avatar';
 import { UserAvatar } from '@/components/profile/UserAvatar';
 import { primaryButtonClass, secondaryButtonClass } from '@/components/dpwh/ui';
 import { useSessionRole } from '@/lib/auth/useSessionRole';
-import { displayScore, toggleVote } from '@/lib/community/logic';
-import { resolveAuthor } from '@/lib/community/profiles';
-import { setVote } from '@/lib/community/store';
+import { castVote, removeItem } from '@/lib/community/live';
+import { toggleVote } from '@/lib/community/logic';
+import { profileById, resolveAuthor } from '@/lib/community/profiles';
 import type { ProjectLink, Vote } from '@/lib/community/types';
 import { agoLabel, stampLabel } from '@/lib/notifications/time';
 
@@ -23,6 +23,8 @@ export interface Member {
   title?: string | null;
   avatarPath?: string | null;
   avatarPreset?: string | null;
+  /** Administrators can remove any discussion or comment. */
+  isAdmin?: boolean;
 }
 
 /** The signed-in person, or null. Reading is open to everyone; every write needs this. */
@@ -38,6 +40,7 @@ export function useMember(): { loading: boolean; member: Member | null } {
       title: session.title,
       avatarPath: session.avatarPath,
       avatarPreset: session.avatarPreset,
+      isAdmin: session.role === 'lgu_admin' || session.role === 'super_admin',
     },
   };
 }
@@ -85,9 +88,19 @@ export function SignInBanner({
   );
 }
 
+/** How an author appears: the copy saved with their post or comment. */
+export interface AuthorSnapshot {
+  authorTitle?: string | null;
+  authorAvatarPath?: string | null;
+  authorAvatarPreset?: string | null;
+  sample?: boolean;
+}
+
 /**
  * Who wrote something. Your own posts and comments show your current name, job
- * and picture from your profile (`self`); the sample people keep theirs.
+ * and picture from your profile (`self`); other people show the name, job and
+ * picture saved with what they wrote (the database refreshes them when the
+ * person edits their profile); the sample people keep theirs.
  */
 export function AuthorLine({
   authorId,
@@ -95,21 +108,26 @@ export function AuthorLine({
   iso,
   size = 32,
   self,
+  snapshot,
 }: {
   authorId: string;
   name?: string;
   iso: string;
   size?: number;
   self?: Member | null;
+  snapshot?: AuthorSnapshot;
 }) {
   const mine = self && self.id === authorId ? self : null;
-  const person = resolveAuthor(authorId, name);
+  const sample = snapshot?.sample ? profileById(authorId) : undefined;
+  const person = sample ?? resolveAuthor(authorId, name);
   const shownName = mine ? mine.name : person.name;
-  const shownTag = mine ? mine.title?.trim() || 'Member' : person.tag;
+  const shownTag = mine ? mine.title?.trim() || 'Member' : sample ? sample.tag : snapshot?.authorTitle?.trim() || 'Member';
+  const avatarPath = mine ? mine.avatarPath : snapshot?.authorAvatarPath;
+  const avatarPreset = mine ? mine.avatarPreset : snapshot?.authorAvatarPreset;
   return (
     <div className="flex min-w-0 items-center gap-2.5">
-      {mine && (mine.avatarPath || mine.avatarPreset) ? (
-        <UserAvatar name={shownName} avatarPath={mine.avatarPath} avatarPreset={mine.avatarPreset} size={size} />
+      {avatarPath || avatarPreset ? (
+        <UserAvatar name={shownName} avatarPath={avatarPath} avatarPreset={avatarPreset} size={size} />
       ) : (
         <Avatar profile={person} size={size} />
       )}
@@ -122,6 +140,52 @@ export function AuthorLine({
         </span>
       </p>
     </div>
+  );
+}
+
+/** "Delete" for your own post or comment (or any, for an administrator), with a second step so it is not by accident. */
+export function DeleteButton({ kind, id, onDeleted, label }: { kind: 'post' | 'comment'; id: string; onDeleted?: () => void; label: string }) {
+  const [asking, setAsking] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const run = async () => {
+    setBusy(true);
+    const res = await removeItem(kind, id);
+    setBusy(false);
+    if (res.ok) onDeleted?.();
+    else {
+      setError(res.error);
+      setAsking(false);
+    }
+  };
+  if (!asking) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => {
+            setError(null);
+            setAsking(true);
+          }}
+          aria-label={`Delete ${label}`}
+          className={`inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-subtle hover:bg-sunken hover:text-danger-ink ${focusRing}`}
+        >
+          <Trash2 className="h-4 w-4" aria-hidden="true" /> Delete
+        </button>
+        {error && <span role="alert" className="text-[13px] text-danger-ink">{error}</span>}
+      </>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-[13px]" role="group" aria-label={`Confirm delete ${label}`}>
+      <span className="text-subtle">Delete this{kind === 'post' ? ' discussion and its comments' : ' comment and its replies'}?</span>
+      <button type="button" onClick={run} disabled={busy} className={`h-9 rounded-full px-3 font-semibold text-danger-ink hover:bg-sunken disabled:opacity-60 ${focusRing}`}>
+        {busy ? 'Deleting…' : 'Yes, delete'}
+      </button>
+      <button type="button" onClick={() => setAsking(false)} disabled={busy} className={`h-9 rounded-full px-3 font-semibold text-subtle hover:bg-sunken ${focusRing}`}>
+        Keep
+      </button>
+    </span>
   );
 }
 
@@ -143,25 +207,32 @@ export function ProjectChip({ project }: { project: ProjectLink }) {
  * needs an account, so a visitor pressing an arrow is told to sign in instead.
  */
 export function VoteBox({
+  kind,
   targetId,
-  baseScore,
+  score,
   mine,
   member,
   onNeedSignIn,
+  onError,
   direction = 'column',
   label,
 }: {
+  kind: 'post' | 'comment';
   targetId: string;
-  baseScore: number;
+  /** Everyone's votes added up, yours included. */
+  score: number;
   mine: Vote | undefined;
   member: Member | null;
   onNeedSignIn: () => void;
+  onError?: (message: string) => void;
   direction?: 'column' | 'row';
   label: string;
 }) {
   const press = (vote: Vote) => {
     if (!member) return onNeedSignIn();
-    setVote(member.id, targetId, toggleVote(mine, vote));
+    void castVote(kind, targetId, toggleVote(mine, vote)).then((res) => {
+      if (!res.ok) onError?.(res.error);
+    });
   };
   const btn = (vote: Vote, Icon: typeof ArrowBigUp, text: string) => {
     const on = mine === vote;
@@ -182,8 +253,8 @@ export function VoteBox({
   return (
     <div className={`flex items-center ${direction === 'column' ? 'flex-col' : 'flex-row gap-1'}`}>
       {btn(1, ArrowBigUp, 'Upvote')}
-      <span className="min-w-8 text-center text-[13.5px] font-bold tabular-nums text-ink" aria-label={`Score ${displayScore(baseScore, mine)}`}>
-        {displayScore(baseScore, mine)}
+      <span className="min-w-8 text-center text-[13.5px] font-bold tabular-nums text-ink" aria-label={`Score ${score}`}>
+        {score}
       </span>
       {btn(-1, ArrowBigDown, 'Downvote')}
     </div>

@@ -3,8 +3,8 @@
 import React, { useId, useRef, useState } from 'react';
 import { controlClass, primaryButtonClass, secondaryButtonClass } from '@/components/dpwh/ui';
 import { ProjectCodeFinder } from '@/components/reports/ProjectCodeFinder';
-import { newId, validatePost } from '@/lib/community/logic';
-import { addPost } from '@/lib/community/store';
+import { createPost } from '@/lib/community/live';
+import { validatePost } from '@/lib/community/logic';
 import { POST_LIMITS, type Post } from '@/lib/community/types';
 import { recordHref } from '@/lib/reports/workflow';
 import type { ReportTarget } from '@/types/report';
@@ -19,8 +19,10 @@ export function NewPostForm({ member, onDone }: { member: Member; onDone: (post:
   const [body, setBody] = useState('');
   const [target, setTarget] = useState<ReportTarget | null>(null);
   const [error, setError] = useState<{ field: 'title' | 'body'; message: string } | null>(null);
+  const [failure, setFailure] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  const submit = (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     const check = validatePost({ title, body });
     if (!check.ok) {
@@ -29,18 +31,16 @@ export function NewPostForm({ member, onDone }: { member: Member; onDone: (post:
       return;
     }
     const href = target ? recordHref(target.source, target.recordId) : null;
-    const post: Post = {
-      id: newId('p'),
-      authorId: member.id,
-      authorName: member.name,
-      title: title.trim(),
-      body: body.trim(),
-      createdAt: new Date().toISOString(),
-      score: 0,
+    setFailure(null);
+    setSaving(true);
+    const res = await createPost({
+      title,
+      body,
       project: target && href ? { title: target.title, code: target.code, href } : undefined,
-    };
-    addPost(post);
-    onDone(post);
+    });
+    setSaving(false);
+    if (!res.ok) return setFailure(res.error);
+    onDone(res.data);
   };
 
   return (
@@ -99,9 +99,10 @@ export function NewPostForm({ member, onDone }: { member: Member; onDone: (post:
         </div>
       </div>
 
+      {failure && <p role="alert" className="text-[13px] text-danger-ink">{failure}</p>}
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <button type="button" onClick={() => onDone(null)} className={secondaryButtonClass}>Cancel</button>
-        <button type="submit" className={primaryButtonClass}>Post discussion</button>
+        <button type="submit" disabled={saving} className={`${primaryButtonClass} disabled:opacity-60`}>{saving ? 'Posting…' : 'Post discussion'}</button>
       </div>
     </form>
   );

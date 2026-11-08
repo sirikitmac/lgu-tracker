@@ -2,23 +2,20 @@
 
 import React, { useEffect, useId, useRef, useState } from 'react';
 import { primaryButtonClass, secondaryButtonClass } from '@/components/dpwh/ui';
-import { newId, validateComment } from '@/lib/community/logic';
-import { addComment } from '@/lib/community/store';
+import { createComment } from '@/lib/community/live';
+import { validateComment } from '@/lib/community/logic';
 import { POST_LIMITS } from '@/lib/community/types';
-import type { Member } from './parts';
 
 /** Write a comment on the post (parentId null) or a reply to another comment. */
 export function CommentForm({
   postId,
   parentId,
-  member,
   onDone,
   autoFocus = false,
   label,
 }: {
   postId: string;
   parentId: string | null;
-  member: Member;
   onDone?: () => void;
   autoFocus?: boolean;
   label: string;
@@ -27,12 +24,13 @@ export function CommentForm({
   const ref = useRef<HTMLTextAreaElement>(null);
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (autoFocus) ref.current?.focus();
   }, [autoFocus]);
 
-  const submit = (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     const check = validateComment(text);
     if (!check.ok) {
@@ -40,16 +38,13 @@ export function CommentForm({
       ref.current?.focus();
       return;
     }
-    addComment({
-      id: newId('c'),
-      postId,
-      parentId,
-      authorId: member.id,
-      authorName: member.name,
-      body: text.trim(),
-      createdAt: new Date().toISOString(),
-      score: 0,
-    });
+    setSaving(true);
+    const res = await createComment({ postId, parentId, body: text });
+    setSaving(false);
+    if (!res.ok) {
+      setError(res.error);
+      return;
+    }
     setText('');
     setError(null);
     onDone?.();
@@ -77,7 +72,7 @@ export function CommentForm({
         <p id={`${id}-error`} role="alert" className="text-[13px] text-danger-ink">{error}</p>
         <div className="flex gap-2">
           {onDone && <button type="button" onClick={onDone} className={secondaryButtonClass}>Cancel</button>}
-          <button type="submit" className={primaryButtonClass}>{parentId ? 'Reply' : 'Comment'}</button>
+          <button type="submit" disabled={saving} className={`${primaryButtonClass} disabled:opacity-60`}>{saving ? 'Sending…' : parentId ? 'Reply' : 'Comment'}</button>
         </div>
       </div>
     </form>
