@@ -90,9 +90,9 @@ export function SignInBanner({
 
 /** How an author appears: the copy saved with their post or comment. */
 export interface AuthorSnapshot {
-  title?: string | null;
-  avatarPath?: string | null;
-  avatarPreset?: string | null;
+  authorTitle?: string | null;
+  authorAvatarPath?: string | null;
+  authorAvatarPreset?: string | null;
   sample?: boolean;
 }
 
@@ -120,11 +120,10 @@ export function AuthorLine({
   const mine = self && self.id === authorId ? self : null;
   const sample = snapshot?.sample ? profileById(authorId) : undefined;
   const person = sample ?? resolveAuthor(authorId, name);
-  const shown = mine ?? (sample ? null : snapshot);
   const shownName = mine ? mine.name : person.name;
-  const shownTag = mine ? mine.title?.trim() || 'Member' : sample ? sample.tag : snapshot?.title?.trim() || 'Member';
-  const avatarPath = shown?.avatarPath;
-  const avatarPreset = shown?.avatarPreset;
+  const shownTag = mine ? mine.title?.trim() || 'Member' : sample ? sample.tag : snapshot?.authorTitle?.trim() || 'Member';
+  const avatarPath = mine ? mine.avatarPath : snapshot?.authorAvatarPath;
+  const avatarPreset = mine ? mine.avatarPreset : snapshot?.authorAvatarPreset;
   return (
     <div className="flex min-w-0 items-center gap-2.5">
       {avatarPath || avatarPreset ? (
