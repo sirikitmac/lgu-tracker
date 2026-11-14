@@ -43,8 +43,7 @@ export function workspaceNav(role: AppRole): WorkspaceNavGroup[] {
     label: 'Explore',
     items: [
       { id: 'projects', label: 'Projects', href: '/projects', icon: 'projects' },
-      { id: 'map', label: 'Map', href: '/projects/map', icon: 'map' },
-      { id: 'insights', label: 'Public dashboard', href: '/projects/dashboard', icon: 'insights' },
+      { id: 'map', label: 'Dashboard and map', href: '/projects/map', icon: 'map' },
     ],
   });
 

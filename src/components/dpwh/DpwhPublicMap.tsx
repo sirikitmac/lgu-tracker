@@ -12,8 +12,6 @@ import { DPWH_STATUS_LABELS, type DpwhMapPoint, type DpwhSummary } from '@/types
 import type { MapBounds } from '@/lib/integrations/dpwh/nationwide/query';
 import { textLinkClass } from './ui';
 import { MAP_STATUSES, STATUS_COLORS, formatCount } from './format';
-import { DataScopeNote } from './DataScopeNote';
-import { DataFreshness } from './DataFreshness';
 import { DpwhMapFilters, EMPTY_MAP_FILTERS, type MapFilters } from './DpwhMapFilters';
 import { DpwhMapProjectPanel, LIST_PAGE } from './DpwhMapProjectPanel';
 import { regionColor, regionDisplayName } from '@/lib/regionPalette';
@@ -355,8 +353,6 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
             <Link href="/projects" className={textLinkClass}>directory</Link>.
           </p>
         </div>
-        <DataFreshness summary={summary} className="px-1" />
-        <DataScopeNote />
       </div>
     </div>
   );

@@ -15,7 +15,7 @@ test('everyone signed in gets an inbox and their own reports', () => {
 
 test('citizens and contractors see no LGU or admin tabs', () => {
   for (const role of ['citizen', 'contractor'] as AppRole[]) {
-    assert.deepEqual(ids(role), ['inbox', 'my-reports', 'profile', 'projects', 'map', 'insights']);
+    assert.deepEqual(ids(role), ['inbox', 'my-reports', 'profile', 'projects', 'map']);
   }
 });
 
@@ -55,7 +55,7 @@ test('the current tab is the one whose path you are on', () => {
   assert.deepEqual(active('/projects'), ['projects']);
   assert.deepEqual(active('/projects/23AB0001'), ['projects']);
   assert.deepEqual(active('/projects/map'), ['map']);
-  assert.deepEqual(active('/projects/dashboard'), ['insights']);
+  assert.deepEqual(active('/projects/dashboard'), []);
   assert.deepEqual(active('/dashboard'), ['workspace']);
 });
 

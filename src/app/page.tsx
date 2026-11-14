@@ -293,7 +293,7 @@ function SixWaysIn({ data }: { data: LandingData }) {
     {
       title: 'Open the dashboard',
       text: 'Totals by region, status, category and year.',
-      href: '/projects/dashboard',
+      href: '/projects/map',
       photo: WAY_PHOTOS.dashboard,
       ui: <RegionBars data={data} />,
     },

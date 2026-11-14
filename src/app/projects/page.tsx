@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { BarChart3, MapPin } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 import { DpwhDirectory } from '@/components/dpwh/DpwhDirectory';
 import { secondaryButtonClass } from '@/components/dpwh/ui';
 import { agencyOf, isProjectAgency, isProjectSource } from '@/lib/integrations/bettergov/sources';
@@ -40,11 +40,8 @@ export default async function PublicProjectsPage({ searchParams }: PageProps<'/p
           </p>
         </div>
         <nav aria-label="Other views" className="flex flex-wrap items-center gap-2 sm:shrink-0">
-          <Link href="/projects/dashboard" className={secondaryButtonClass}>
-            <BarChart3 className="w-4 h-4" aria-hidden="true" /> Dashboard
-          </Link>
           <Link href="/projects/map" className={secondaryButtonClass}>
-            <MapPin className="w-4 h-4" aria-hidden="true" /> Map
+            <BarChart3 className="w-4 h-4" aria-hidden="true" /> Dashboard and map
           </Link>
         </nav>
       </header>

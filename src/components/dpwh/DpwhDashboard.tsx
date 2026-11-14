@@ -283,11 +283,14 @@ export function DpwhDashboard({
   nepCount,
   error,
   initialRegion,
+  regionParam = 'region',
 }: {
   summary: DpwhSummary | null;
   nepCount: number | null;
   error: string | null;
   initialRegion: string;
+  /** The query parameter that holds the selected region, so it cannot clash with another view on the same page. */
+  regionParam?: string;
 }) {
   const stats = summary?.stats;
   const regions = useMemo(() => stats?.by_region ?? [], [stats]);
@@ -298,10 +301,10 @@ export function DpwhDashboard({
   // Mirror the region into the address bar so the view can be shared.
   useEffect(() => {
     const url = new URL(window.location.href);
-    if (region) url.searchParams.set('region', region);
-    else url.searchParams.delete('region');
+    if (region) url.searchParams.set(regionParam, region);
+    else url.searchParams.delete(regionParam);
     if (url.href !== window.location.href) window.history.replaceState(window.history.state, '', url);
-  }, [region]);
+  }, [region, regionParam]);
 
   // A failed query and a database with nothing imported look different: only the first offers a retry.
   if (!stats || !summary) {
