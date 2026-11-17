@@ -16,7 +16,8 @@ import { DPWH_MAP_COLUMNS, type DpwhMapPoint } from '@/types/dpwh';
  * Contracts with DPWH-reported coordinates inside the viewport, largest
  * contract amount first, at most MAP_POINT_LIMIT per request. `total` is the
  * number of matching mapped contracts in the viewport so the UI can say when
- * markers were capped. Public data: RLS allows reads for everyone, and only
+ * markers were capped. count=only returns just the total. Responses are cached
+ * (see Cache-Control). Public data: RLS allows reads for everyone, and only
  * public source columns are selected.
  */
 export async function GET(request: NextRequest) {
@@ -39,8 +40,10 @@ export async function GET(request: NextRequest) {
   const countBuilder = supabase
     .from('dpwh_contracts_directory')
     .select('contract_id', { count: 'exact', head: true }) as unknown as PointBuilder;
+  // ?count=only skips the marker page (the heavy, ordered query) when the caller only needs the total.
+  const countOnly = params.get('count') === 'only';
   const [{ data, error }, { count, error: countError }] = await Promise.all([
-    applyMapQuery(builder, parsed.query, bounds.bounds),
+    countOnly ? Promise.resolve({ data: [] as unknown[], error: null }) : applyMapQuery(builder, parsed.query, bounds.bounds),
     applyMapFilters(countBuilder, parsed.query, bounds.bounds),
   ]);
   if (error || countError) {
@@ -48,9 +51,13 @@ export async function GET(request: NextRequest) {
     return Response.json({ error: 'Could not load DPWH map markers.' }, { status: 502 });
   }
   const points = (data ?? []) as unknown as DpwhMapPoint[];
-  return Response.json({
-    points,
-    total: count ?? points.length,
-    limit: MAP_POINT_LIMIT,
-  });
+  return Response.json(
+    {
+      points,
+      total: count ?? points.length,
+      limit: MAP_POINT_LIMIT,
+    },
+    // Public data that changes with the weekly sync: let the CDN and browsers reuse an answer for a while.
+    { headers: { 'Cache-Control': 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400' } }
+  );
 }
