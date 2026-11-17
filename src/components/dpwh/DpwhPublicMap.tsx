@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { AlertTriangle, ChevronDown, List, Loader2, Map as MapIcon, MapPin, ZoomIn } from 'lucide-react';
 import { errorMessage, fetchJson } from '@/lib/http';
+import { ResponseCache } from '@/lib/dpwh/responseCache';
 import { useToast } from '@/components/ui/Toast';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { Notice } from '@/components/ui/StateViews';
@@ -71,6 +72,17 @@ export interface MapFocus {
  * centers its marker; clicking a marker selects (and if needed pins) its
  * card; hovering a card rings its marker.
  */
+// Answers for the markers and totals already asked for in this tab, reused for ten minutes.
+const mapCache = new ResponseCache<{ points: DpwhMapPoint[]; total: number; limit: number }>();
+
+async function fetchMapCached(url: string, signal: AbortSignal) {
+  const hit = mapCache.get(url);
+  if (hit) return hit;
+  const body = await fetchJson<{ points: DpwhMapPoint[]; total: number; limit: number }>(url, { signal });
+  mapCache.set(url, body);
+  return body;
+}
+
 export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
   // Region, status and category are shared with the dashboard (a click on either reaches the other); the text search stays here.
   const view = useDpwhView();
@@ -134,7 +146,7 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
 
     const controller = new AbortController();
     setState('loading');
-    fetchJson<{ points: DpwhMapPoint[]; total: number; limit: number }>(`/api/dpwh/map?${params}`, { signal: controller.signal })
+    fetchMapCached(`/api/dpwh/map?${params}`, controller.signal)
       .then((body) => {
         setPoints(body.points);
         setTotal(body.total);
@@ -186,9 +198,11 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
     if (filters.status) params.set('status', filters.status);
     const wantsFit = fitRequest !== lastFit.current;
     lastFit.current = fitRequest;
+    // Only the total is needed unless the map has to frame the result: skip the heavy marker query.
+    if (!wantsFit) params.set('count', 'only');
     const controller = new AbortController();
     setMatching({ total: null, state: 'loading' });
-    fetchJson<{ points: DpwhMapPoint[]; total: number }>(`/api/dpwh/map?${params}`, { signal: controller.signal })
+    fetchMapCached(`/api/dpwh/map?${params}`, controller.signal)
       .then((body) => {
         setMatching({ total: body.total, state: 'ready' });
         if (!wantsFit || !leafletMap || body.points.length === 0) return;
