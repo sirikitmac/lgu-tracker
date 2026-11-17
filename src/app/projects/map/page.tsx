@@ -113,7 +113,7 @@ async function DashboardView({ part }: { part: 'main' | 'details' }) {
  * Map & Dashboard: the public map and the public DPWH dashboard on one page,
  * both visible. Region, status and category are shared: a click on the map
  * reaches the dashboard and a click on the dashboard reaches the map.
- * On wide screens the dashboard and the map sit side by side, with the category and year charts under both; narrower screens stack them.
+ * Top to bottom: the main dashboard (regions, status), the map, then the category and year charts.
  * ?view=map and ?focus= links scroll to the map.
  */
 export default async function MapAndDashboardPage({ searchParams }: PageProps<'/projects/map'>) {
@@ -135,7 +135,7 @@ export default async function MapAndDashboardPage({ searchParams }: PageProps<'/
           <h1 className="mt-2 page-title text-[30px] sm:text-[40px] text-ink">Map &amp; Dashboard</h1>
           <p className="mt-2 max-w-[60ch] text-[15px] leading-relaxed text-subtle">
             {dpwh
-              ? 'The dashboard sits beside the map and drives it: click a region to show only its contracts, or a status to colour the map by status. Filters you set on the map show on the dashboard too.'
+              ? 'The dashboard drives the map below it: click a region to show only its contracts, or a status to colour the map by status. Filters you set on the map show on the dashboard too.'
               : 'Locally funded and 20% Development Fund projects from DILG SubayBAYAN, placed at the centre of their barangay, town or province, not the project site.'}
           </p>
         </div>
@@ -165,16 +165,14 @@ export default async function MapAndDashboardPage({ searchParams }: PageProps<'/
       <DpwhViewProvider initial={initial} mirror={dpwh}>
         {dpwh ? (
           <>
-            <div className="grid gap-6 xl:grid-cols-2 xl:items-start">
-              <section id="dashboard" aria-label="DPWH dashboard" className="min-w-0 scroll-mt-20">
-                <Suspense fallback={<DashboardSkeleton />}>
-                  <DashboardView part="main" />
-                </Suspense>
-              </section>
-              <section id="map" aria-label="DPWH map" className="min-w-0 scroll-mt-20">
-                <DpwhPublicMap focus={parseFocus(params)} compact />
-              </section>
-            </div>
+            <section id="dashboard" aria-label="DPWH dashboard" className="scroll-mt-20">
+              <Suspense fallback={<DashboardSkeleton />}>
+                <DashboardView part="main" />
+              </Suspense>
+            </section>
+            <section id="map" aria-label="DPWH map" className="scroll-mt-20 border-t border-line pt-6">
+              <DpwhPublicMap focus={parseFocus(params)} />
+            </section>
             <section id="dashboard-details" aria-label="DPWH dashboard details" className="scroll-mt-20 border-t border-line pt-6">
               <Suspense fallback={<div className="h-64 rounded-card bg-sunken" aria-hidden="true" />}>
                 <DashboardView part="details" />
