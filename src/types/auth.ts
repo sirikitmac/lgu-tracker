@@ -71,6 +71,9 @@ export interface CurrentProfile {
   /** An uploaded profile photo (a path in the avatars bucket), or a free avatar id. At most one is set. */
   avatarPath: string | null;
   avatarPreset: string | null;
+  /** An administrator's own pill (label and colour), or null. */
+  badgeLabel: string | null;
+  badgeColor: string | null;
 }
 
 /**

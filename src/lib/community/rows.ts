@@ -1,10 +1,11 @@
+import { isBadgeTier } from '@/lib/badges/badges';
 import type { Comment, Post } from './types';
 
 /** The columns read from public.community_posts and public.community_comments. */
 export const POST_COLUMNS =
-  'id, author_id, sample_author, title, body, project_title, project_code, project_href, author_name, author_title, author_avatar_path, author_avatar_preset, score, comment_count, is_sample, is_anonymous, created_at';
+  'id, author_id, sample_author, title, body, project_title, project_code, project_href, author_name, author_title, author_avatar_path, author_avatar_preset, author_badge_tier, author_badge_label, author_badge_color, score, comment_count, is_sample, is_anonymous, created_at';
 export const COMMENT_COLUMNS =
-  'id, post_id, parent_id, author_id, sample_author, body, author_name, author_title, author_avatar_path, author_avatar_preset, score, is_sample, is_anonymous, created_at';
+  'id, post_id, parent_id, author_id, sample_author, body, author_name, author_title, author_avatar_path, author_avatar_preset, author_badge_tier, author_badge_label, author_badge_color, score, is_sample, is_anonymous, created_at';
 
 const str = (v: unknown) => (typeof v === 'string' ? v : null);
 
@@ -13,7 +14,7 @@ function author(r: Record<string, unknown>) {
   const anonymous = !sample && r.is_anonymous === true;
   if (anonymous) {
     // Nothing about the author is in the row; show nothing either.
-    return { id: '', ok: true, sample, anonymous, authorName: 'Anonymous', authorTitle: null, authorAvatarPath: null, authorAvatarPreset: null };
+    return { id: '', ok: true, sample, anonymous, authorName: 'Anonymous', authorTitle: null, authorAvatarPath: null, authorAvatarPreset: null, authorBadgeTier: null, authorBadgeLabel: null, authorBadgeColor: null };
   }
   const id = sample ? str(r.sample_author) : str(r.author_id);
   return {
@@ -25,6 +26,9 @@ function author(r: Record<string, unknown>) {
     authorTitle: str(r.author_title),
     authorAvatarPath: str(r.author_avatar_path),
     authorAvatarPreset: str(r.author_avatar_preset),
+    authorBadgeTier: isBadgeTier(r.author_badge_tier) ? r.author_badge_tier : null,
+    authorBadgeLabel: str(r.author_badge_label),
+    authorBadgeColor: str(r.author_badge_color),
   };
 }
 
@@ -47,6 +51,9 @@ export function postFromRow(row: unknown): Post | null {
     authorTitle: a.authorTitle,
     authorAvatarPath: a.authorAvatarPath,
     authorAvatarPreset: a.authorAvatarPreset,
+    authorBadgeTier: a.authorBadgeTier,
+    authorBadgeLabel: a.authorBadgeLabel,
+    authorBadgeColor: a.authorBadgeColor,
     sample: a.sample,
     ...(a.anonymous ? { anonymous: true } : {}),
     title,
@@ -76,6 +83,9 @@ export function commentFromRow(row: unknown): Comment | null {
     authorTitle: a.authorTitle,
     authorAvatarPath: a.authorAvatarPath,
     authorAvatarPreset: a.authorAvatarPreset,
+    authorBadgeTier: a.authorBadgeTier,
+    authorBadgeLabel: a.authorBadgeLabel,
+    authorBadgeColor: a.authorBadgeColor,
     sample: a.sample,
     ...(a.anonymous ? { anonymous: true } : {}),
     body,

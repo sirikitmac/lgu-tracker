@@ -43,7 +43,7 @@ export const getCurrentProfile = cache(async (): Promise<CurrentProfile | null> 
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, full_name, role, account_type, organization_id, is_active, position_title, avatar_path, avatar_preset')
+    .select('id, full_name, role, account_type, organization_id, is_active, position_title, avatar_path, avatar_preset, badge_label, badge_color')
     .eq('id', user.id)
     .maybeSingle();
 
@@ -61,6 +61,8 @@ export const getCurrentProfile = cache(async (): Promise<CurrentProfile | null> 
     positionTitle: profile.position_title ?? null,
     avatarPath: profile.avatar_path ?? null,
     avatarPreset: profile.avatar_preset ?? null,
+    badgeLabel: profile.badge_label ?? null,
+    badgeColor: profile.badge_color ?? null,
   };
 });
 
