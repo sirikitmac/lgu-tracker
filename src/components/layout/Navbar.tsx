@@ -30,10 +30,10 @@ const NAV_ITEMS: NavItem[] = [
   {
     href: '/projects',
     label: 'Projects',
-    match: (p) => p === '/projects' || (p.startsWith('/projects/') && !p.startsWith('/projects/map') && !p.startsWith('/projects/dashboard')),
+    match: (p) => p === '/projects' || (p.startsWith('/projects/') && !p.startsWith('/projects/map')),
   },
-  { href: '/projects/map', label: 'Map', match: (p) => p.startsWith('/projects/map') },
-  { href: '/projects/dashboard', label: 'Dashboard', match: (p) => p.startsWith('/projects/dashboard') },
+  // Both views (?view=map and ?view=dashboard) live under /projects/map.
+  { href: '/projects/map', label: 'Map & Dashboard', match: (p) => p === '/projects/map' || p.startsWith('/projects/map/') },
   { href: '/community', label: 'Community', match: (p) => p === '/community' || p.startsWith('/community/') },
   { href: '/#coverage', label: 'Coverage' },
   { href: '/#about', label: 'About' },
