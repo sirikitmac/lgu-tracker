@@ -5,17 +5,21 @@ import { primaryButtonClass, secondaryButtonClass } from '@/components/dpwh/ui';
 import { createComment } from '@/lib/community/live';
 import { validateComment } from '@/lib/community/logic';
 import { POST_LIMITS } from '@/lib/community/types';
+import { IdentityChoice, type Member } from './parts';
 
 /** Write a comment on the post (parentId null) or a reply to another comment. */
 export function CommentForm({
   postId,
   parentId,
+  member,
   onDone,
   autoFocus = false,
   label,
 }: {
   postId: string;
   parentId: string | null;
+  /** The signed-in person; offers "as me" or "anonymously" when given. */
+  member?: Member | null;
   onDone?: () => void;
   autoFocus?: boolean;
   label: string;
@@ -25,6 +29,7 @@ export function CommentForm({
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [anonymous, setAnonymous] = useState(false);
 
   useEffect(() => {
     if (autoFocus) ref.current?.focus();
@@ -39,7 +44,7 @@ export function CommentForm({
       return;
     }
     setSaving(true);
-    const res = await createComment({ postId, parentId, body: text });
+    const res = await createComment({ postId, parentId, body: text, anonymous });
     setSaving(false);
     if (!res.ok) {
       setError(res.error);
@@ -47,6 +52,7 @@ export function CommentForm({
     }
     setText('');
     setError(null);
+    setAnonymous(false);
     onDone?.();
   };
 
@@ -68,6 +74,7 @@ export function CommentForm({
         placeholder={label}
         className="w-full rounded-control border border-line-strong bg-surface p-3 text-sm text-ink placeholder:text-muted focus:outline-2 focus:outline-accent-ink"
       />
+      {member && <IdentityChoice member={member} anonymous={anonymous} onChange={setAnonymous} verb={parentId ? 'Reply' : 'Comment'} />}
       <div className="flex items-center justify-between gap-3">
         <p id={`${id}-error`} role="alert" className="text-[13px] text-danger-ink">{error}</p>
         <div className="flex gap-2">

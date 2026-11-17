@@ -8,6 +8,7 @@ import { SortTabs } from '@/components/community/SortTabs';
 import { AuthorLine, DeleteButton, ProjectChip, SignInBanner, VoteBox, focusRing, useMember, type Member } from '@/components/community/parts';
 import { accentButtonClass } from '@/components/dpwh/ui';
 import { useCommunity } from '@/lib/community/live';
+import { isOwnItem } from '@/lib/community/rows';
 import { sortItems } from '@/lib/community/logic';
 import type { Post, Sort, Vote } from '@/lib/community/types';
 
@@ -25,7 +26,7 @@ function PostCard({
   onError: (message: string) => void;
 }) {
   const comments = post.commentCount ?? 0;
-  const canDelete = !!member && (member.isAdmin || (!post.sample && post.authorId === member.id));
+  const canDelete = !!member && (member.isAdmin || isOwnItem(post, member.id));
   return (
     <li className="flex gap-3 rounded-3xl border border-line bg-surface p-4 sm:gap-4 sm:p-5">
       <VoteBox kind="post" targetId={post.id} score={post.score} mine={mine} member={member} onNeedSignIn={onNeedSignIn} onError={onError} label={post.title} />

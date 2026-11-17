@@ -8,6 +8,7 @@ import { CommentForm } from '@/components/community/CommentForm';
 import { SortTabs } from '@/components/community/SortTabs';
 import { AuthorLine, DeleteButton, ProjectChip, SignInBanner, VoteBox, focusRing, useMember, type Member } from '@/components/community/parts';
 import { useCommunity } from '@/lib/community/live';
+import { isOwnItem } from '@/lib/community/rows';
 import { buildThread, type CommentNode } from '@/lib/community/logic';
 import type { Sort, Vote } from '@/lib/community/types';
 
@@ -50,13 +51,13 @@ function CommentItem({ node, ctx }: { node: CommentNode; ctx: ThreadContext }) {
             <CornerDownRight className="h-4 w-4" aria-hidden="true" /> Reply
           </button>
           {comment.sample && <span className="rounded-full bg-sunken px-2.5 py-0.5 text-[12px] font-medium text-subtle">Sample</span>}
-          {ctx.member && (ctx.member.isAdmin || (!comment.sample && comment.authorId === ctx.member.id)) && (
+          {ctx.member && (ctx.member.isAdmin || isOwnItem(comment, ctx.member.id)) && (
             <DeleteButton kind="comment" id={comment.id} label="this comment" />
           )}
         </div>
         {replying && ctx.member && (
           <div className="mt-3">
-            <CommentForm postId={ctx.postId} parentId={comment.id} autoFocus onDone={() => ctx.setReplyingTo(null)} label="Write a reply" />
+            <CommentForm postId={ctx.postId} parentId={comment.id} member={ctx.member} autoFocus onDone={() => ctx.setReplyingTo(null)} label="Write a reply" />
           </div>
         )}
       </div>
@@ -144,7 +145,7 @@ export function PostThread({ postId }: { postId: string }) {
             {comments.length} {comments.length === 1 ? 'comment' : 'comments'}
           </span>
           {post.sample && <span className="rounded-full bg-sunken px-2.5 py-0.5 text-[12px] font-medium text-subtle">Sample</span>}
-          {member && (member.isAdmin || (!post.sample && post.authorId === member.id)) && (
+          {member && (member.isAdmin || isOwnItem(post, member.id)) && (
             <DeleteButton kind="post" id={post.id} label={post.title} onDeleted={() => router.push('/community')} />
           )}
         </div>
@@ -156,7 +157,7 @@ export function PostThread({ postId }: { postId: string }) {
       <section aria-labelledby="comments-title" className="mt-6">
         <h2 id="comments-title" className="mb-3 text-base font-bold tracking-tight text-ink">Add to the discussion</h2>
         {member ? (
-          <CommentForm postId={postId} parentId={null} label="Write a comment" />
+          <CommentForm postId={postId} parentId={null} member={member} label="Write a comment" />
         ) : (
           <button
             type="button"

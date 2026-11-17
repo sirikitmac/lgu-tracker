@@ -7,7 +7,8 @@ import { validatePost } from '@/lib/community/logic';
 import { POST_LIMITS, type Post } from '@/lib/community/types';
 import { recordHref } from '@/lib/reports/workflow';
 import type { ReportTarget } from '@/types/report';
-import type { Member } from './parts';
+
+import { IdentityChoice, type Member } from './parts';
 import { ProjectSuggestField } from './ProjectSuggestField';
 
 /** Start a discussion: a title, what you want to say, and optionally the project it is about. */
@@ -21,6 +22,7 @@ export function NewPostForm({ member, onDone }: { member: Member; onDone: (post:
   const [error, setError] = useState<{ field: 'title' | 'body'; message: string } | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [anonymous, setAnonymous] = useState(false);
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -37,6 +39,7 @@ export function NewPostForm({ member, onDone }: { member: Member; onDone: (post:
       title,
       body,
       project: target && href ? { title: target.title, code: target.code, href } : undefined,
+      anonymous,
     });
     setSaving(false);
     if (!res.ok) return setFailure(res.error);
@@ -98,6 +101,8 @@ export function NewPostForm({ member, onDone }: { member: Member; onDone: (post:
           <ProjectSuggestField selected={target} onSelect={setTarget} onClear={() => setTarget(null)} inputClassName={`${controlClass} h-11`} />
         </div>
       </div>
+
+      <IdentityChoice member={member} anonymous={anonymous} onChange={setAnonymous} />
 
       {failure && <p role="alert" className="text-[13px] text-danger-ink">{failure}</p>}
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
