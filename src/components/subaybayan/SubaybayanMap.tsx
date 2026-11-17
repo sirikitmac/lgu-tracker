@@ -28,6 +28,7 @@ import { SUBAYBAYAN_DATASET_INFO, SUBAYBAYAN_RETRIEVED_LABEL } from '@/lib/subay
 import { SubaybayanFilterBar } from './SubaybayanFilters';
 import { SubaybayanPanel, type ListMode, type PanelMode } from './SubaybayanPanel';
 import type { MapBounds } from './SubaybayanLeafletMap';
+import { subaybayanAddress } from '@/lib/nav/exploreView';
 
 const SubaybayanLeafletMap = dynamic(() => import('./SubaybayanLeafletMap'), {
   ssr: false,
@@ -103,9 +104,8 @@ export function SubaybayanMap({ initialFilters, focusId = null }: { initialFilte
 
   // Keep the address bar in step (shareable links), without a server round trip.
   useEffect(() => {
-    const params = new URLSearchParams(query);
-    params.set('layer', 'subaybayan');
-    window.history.replaceState(null, '', `/projects/map?${params.toString()}`);
+    // Keeps ?view= (Map & Dashboard) so the rewrite never drops the current view.
+    window.history.replaceState(null, '', subaybayanAddress(query, window.location.search));
   }, [query]);
 
   useEffect(() => {
