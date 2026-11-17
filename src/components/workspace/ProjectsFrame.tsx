@@ -18,7 +18,7 @@ function ProjectsSidebar({ session }: { session: SignedIn }) {
   const view = useSearchParams()?.get('view');
   if (!showsProjectsSidebar(pathname, view)) return null;
   return (
-    <div className="mb-5 lg:mb-0 lg:mr-8">
+    <div className="mb-5 lg:mb-0">
       <WorkspaceSidebar
         role={session.role}
         name={session.name}
@@ -42,8 +42,10 @@ export function ProjectsFrame({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className={`site-frame mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 sm:py-8 ${
-        signedIn ? 'lg:grid lg:grid-cols-[auto_minmax(0,1fr)]' : ''
+      className={`flex-1 w-full px-4 py-6 sm:px-6 sm:py-8 ${
+        signedIn
+          ? 'lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-8'
+          : 'site-frame mx-auto max-w-7xl'
       }`}
     >
       {signedIn && (
@@ -52,7 +54,7 @@ export function ProjectsFrame({ children }: { children: React.ReactNode }) {
         </Suspense>
       )}
       {/* A page that needs the room (the map) opts into a wider frame with data-frame="wide" (see .site-frame). */}
-      <main className={`min-w-0 space-y-6 ${signedIn ? 'lg:col-start-2' : ''}`}>{children}</main>
+      <main className={`min-w-0 space-y-6 ${signedIn ? 'content-frame mx-auto w-full lg:col-start-2' : ''}`}>{children}</main>
     </div>
   );
 }
