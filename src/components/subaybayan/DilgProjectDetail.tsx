@@ -5,6 +5,8 @@ import { projectMapLink } from '@/lib/subaybayan/code';
 import { SUBAYBAYAN_CATEGORY_COLORS, SUBAYBAYAN_CATEGORY_LABELS, SUBAYBAYAN_STATUS_LABELS } from '@/lib/subaybayan/categories';
 import type { SubaybayanDetail } from '@/lib/subaybayan/query';
 import { SUBAYBAYAN_DATASET_INFO, SUBAYBAYAN_RETRIEVED_LABEL } from '@/lib/subaybayan/source';
+import { SourceCitation } from '@/components/sources/SourceCitation';
+import { subaybayanCitation } from '@/lib/sources/citation';
 import {
   directoryProvinceLabel,
   directoryRegionLabel,
@@ -50,6 +52,7 @@ export function DilgProjectDetail({ p }: { p: SubaybayanDetail }) {
   return (
     <>
       <header className="space-y-4">
+        <SourceCitation citation={subaybayanCitation(p, info?.label ?? null)} className="max-w-4xl" />
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="font-semibold tabular-nums text-subtle">{p.project_code ?? 'No project code (not yet enrolled)'}</span>
           <span className={`inline-flex items-center gap-1.5 h-6 px-2 rounded-full border font-medium ${subaybayanStatusBadge(p.status)}`}>

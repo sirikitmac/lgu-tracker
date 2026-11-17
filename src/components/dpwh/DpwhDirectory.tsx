@@ -6,7 +6,6 @@ import type { ColumnVisibilityState as VisibilityState, PaginationState } from '
 import {
   DPWH_CATEGORIES,
   DPWH_CATEGORY_LABELS,
-  DPWH_STATUSES,
   DPWH_STATUS_LABELS,
   type DpwhSummary,
   type ProjectListItem,
@@ -37,7 +36,7 @@ import { DpwhContractDrawer } from './DpwhContractDrawer';
 import { ColumnToggle, DEFAULT_COLUMN_VISIBILITY, DirectoryPager, DpwhProjectTable, PAGE_SIZE_OPTIONS, useDirectoryTable } from './DpwhProjectTable';
 import { DpwhProjectCard, DpwhProjectCardSkeleton } from './DpwhProjectCard';
 import { assignCardImages, creditsFor, photoSubjects, recordKey } from './categoryImages';
-import { categoryLabel, formatCount, statusLabel } from './format';
+import { FILTER_STATUSES, categoryLabel, formatCount, statusLabel } from './format';
 import { controlBaseClass, controlClass, panelClass, secondaryButtonLgClass, secondaryButtonSmClass } from './ui';
 
 /** Every sort the API accepts, labelled for DPWH records (the labels before DILG rows joined the directory). */
@@ -559,7 +558,7 @@ export function DpwhDirectory({ initial, showSummary = false }: { initial?: Dire
             <Field label="Status">
               <select className={controlClass} value={filters.status} onChange={(e) => update({ status: e.target.value })}>
                 <option value="">All statuses</option>
-                {DPWH_STATUSES.map((s) => <option key={s} value={s}>{DPWH_STATUS_LABELS[s]}</option>)}
+                {FILTER_STATUSES.map((s) => <option key={s} value={s}>{DPWH_STATUS_LABELS[s]}</option>)}
               </select>
             </Field>
             <Field label="Source">
