@@ -4,7 +4,18 @@ import { useSyncExternalStore } from 'react';
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { getSupabaseBrowserClient } from '@/lib/supabase/browser';
 import { scoreAfterVote } from './logic';
-import { COMMENT_COLUMNS, POST_COLUMNS, commentFromRow, postFromRow, upsertById, writeErrorMessage } from './rows';
+import {
+  ANONYMOUS_AUTHOR_COLUMNS,
+  COMMENT_COLUMNS,
+  POST_COLUMNS,
+  anonymousAuthorFromRow,
+  commentFromRow,
+  postFromRow,
+  upsertById,
+  withKnownAuthors,
+  writeErrorMessage,
+  type AnonymousAuthorRecord,
+} from './rows';
 import type { Comment, Post, Vote } from './types';
 
 /**
@@ -71,10 +82,14 @@ export function refreshCommunity(): Promise<void> {
     try {
       const { data: session } = await client.auth.getSession();
       const userId = session.session?.user.id ?? null;
-      const [posts, comments, votes] = await Promise.all([
+      const [posts, comments, votes, anonymous] = await Promise.all([
         client.from('community_posts').select(POST_COLUMNS).order('created_at', { ascending: false }).limit(POST_LIMIT),
         client.from('community_comments').select(COMMENT_COLUMNS).order('created_at', { ascending: true }).limit(COMMENT_LIMIT),
         userId ? client.from('community_votes').select('post_id, comment_id, value') : Promise.resolve({ data: [], error: null }),
+        // Who wrote the anonymous items: the database returns your own, or all of them to an administrator.
+        userId
+          ? client.from('community_anonymous_authors').select(ANONYMOUS_AUTHOR_COLUMNS).order('created_at', { ascending: false }).limit(POST_LIMIT + COMMENT_LIMIT)
+          : Promise.resolve({ data: [], error: null }),
       ]);
       if (posts.error || comments.error || !posts.data || !comments.data) {
         set({ loaded: true, failed: state.posts.length === 0 });
@@ -85,9 +100,10 @@ export function refreshCommunity(): Promise<void> {
         const id = v.post_id ?? v.comment_id;
         if (id && (v.value === 1 || v.value === -1)) myVotes[id] = v.value;
       }
+      const known = ((anonymous.data ?? []) as unknown[]).map(anonymousAuthorFromRow).filter((r): r is AnonymousAuthorRecord => r !== null);
       set({
-        posts: posts.data.map(postFromRow).filter((p): p is Post => p !== null),
-        comments: comments.data.map(commentFromRow).filter((c): c is Comment => c !== null),
+        posts: withKnownAuthors(posts.data.map(postFromRow).filter((p): p is Post => p !== null), known, 'post'),
+        comments: withKnownAuthors(comments.data.map(commentFromRow).filter((c): c is Comment => c !== null), known, 'comment'),
         // Keep what the database could not tell us about (the votes query is skipped signed out).
         myVotes: votes.error ? state.myVotes : myVotes,
         userId,
@@ -115,7 +131,8 @@ function onPost(payload: RealtimePostgresChangesPayload<Record<string, unknown>>
   }
   const post = postFromRow(payload.new);
   if (post) set({ posts: upsertById(state.posts, post) });
-  else void refreshCommunity();
+  // A new anonymous post: reload, so its author (or an administrator) learns whose it is.
+  if (!post || (payload.eventType === 'INSERT' && post.anonymous && state.userId)) void refreshCommunity();
 }
 
 function onComment(payload: RealtimePostgresChangesPayload<Record<string, unknown>>) {
@@ -128,7 +145,7 @@ function onComment(payload: RealtimePostgresChangesPayload<Record<string, unknow
   }
   const comment = commentFromRow(payload.new);
   if (comment) set({ comments: upsertById(state.comments, comment) });
-  else void refreshCommunity();
+  if (!comment || (payload.eventType === 'INSERT' && comment.anonymous && state.userId)) void refreshCommunity();
 }
 
 function start() {
@@ -225,13 +242,21 @@ async function me() {
 
 const SIGN_IN = 'Please sign in first.';
 
-export async function createPost(input: { title: string; body: string; project?: { title: string; code?: string; href: string } }): Promise<WriteResult<Post>> {
+export async function createPost(input: {
+  title: string;
+  body: string;
+  project?: { title: string; code?: string; href: string };
+  /** Shown as "Anonymous"; the database keeps who wrote it privately. */
+  anonymous?: boolean;
+}): Promise<WriteResult<Post>> {
   const who = await me();
   if (!who) return { ok: false, error: SIGN_IN };
+  const anonymous = input.anonymous === true;
   const { data, error } = await who.client
     .from('community_posts')
     .insert({
-      author_id: who.userId,
+      author_id: anonymous ? null : who.userId,
+      is_anonymous: anonymous,
       title: input.title.trim(),
       body: input.body.trim(),
       project_title: input.project?.title ?? null,
@@ -240,22 +265,31 @@ export async function createPost(input: { title: string; body: string; project?:
     })
     .select(POST_COLUMNS)
     .single();
-  const post = error ? null : postFromRow(data);
-  if (!post) return { ok: false, error: writeErrorMessage(error) };
+  const row = error ? null : postFromRow(data);
+  if (!row) return { ok: false, error: writeErrorMessage(error) };
+  const post: Post = row.anonymous ? { ...row, knownAuthorId: who.userId } : row;
   set({ posts: upsertById(state.posts, post) });
   return { ok: true, data: post };
 }
 
-export async function createComment(input: { postId: string; parentId: string | null; body: string }): Promise<WriteResult<Comment>> {
+export async function createComment(input: { postId: string; parentId: string | null; body: string; anonymous?: boolean }): Promise<WriteResult<Comment>> {
   const who = await me();
   if (!who) return { ok: false, error: SIGN_IN };
+  const anonymous = input.anonymous === true;
   const { data, error } = await who.client
     .from('community_comments')
-    .insert({ post_id: input.postId, parent_id: input.parentId, author_id: who.userId, body: input.body.trim() })
+    .insert({
+      post_id: input.postId,
+      parent_id: input.parentId,
+      author_id: anonymous ? null : who.userId,
+      is_anonymous: anonymous,
+      body: input.body.trim(),
+    })
     .select(COMMENT_COLUMNS)
     .single();
-  const comment = error ? null : commentFromRow(data);
-  if (!comment) return { ok: false, error: writeErrorMessage(error) };
+  const row = error ? null : commentFromRow(data);
+  if (!row) return { ok: false, error: writeErrorMessage(error) };
+  const comment: Comment = row.anonymous ? { ...row, knownAuthorId: who.userId } : row;
   set({
     comments: upsertById(state.comments, comment),
     posts: state.posts.map((p) => (p.id === comment.postId ? { ...p, commentCount: (p.commentCount ?? 0) + 1 } : p)),

@@ -39,6 +39,7 @@ export interface ProjectLink {
 
 export interface Post {
   id: string;
+  /** '' for an anonymous item: the public row has no author. */
   authorId: string;
   /** How the author appeared when they wrote it (kept current by the database). */
   authorName?: string;
@@ -47,6 +48,15 @@ export interface Post {
   authorAvatarPreset?: string | null;
   /** True for the made-up preview discussions; their `authorId` is a sample profile key. */
   sample?: boolean;
+  /** Written anonymously: shown to everyone as "Anonymous", with no job or picture. */
+  anonymous?: boolean;
+  /**
+   * The real author of an anonymous item, only when this viewer may know it:
+   * the author themselves, or an administrator (from community_anonymous_authors).
+   */
+  knownAuthorId?: string;
+  /** The real author's name (shown to administrators only). */
+  knownAuthorName?: string;
   title: string;
   body: string;
   createdAt: string;
@@ -68,6 +78,15 @@ export interface Comment {
   authorAvatarPath?: string | null;
   authorAvatarPreset?: string | null;
   sample?: boolean;
+  /** Written anonymously: shown to everyone as "Anonymous", with no job or picture. */
+  anonymous?: boolean;
+  /**
+   * The real author of an anonymous item, only when this viewer may know it:
+   * the author themselves, or an administrator (from community_anonymous_authors).
+   */
+  knownAuthorId?: string;
+  /** The real author's name; filled in for administrators only. */
+  knownAuthorName?: string;
   body: string;
   createdAt: string;
   score: number;

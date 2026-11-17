@@ -2,18 +2,25 @@ import type { Comment, Post } from './types';
 
 /** The columns read from public.community_posts and public.community_comments. */
 export const POST_COLUMNS =
-  'id, author_id, sample_author, title, body, project_title, project_code, project_href, author_name, author_title, author_avatar_path, author_avatar_preset, score, comment_count, is_sample, created_at';
+  'id, author_id, sample_author, title, body, project_title, project_code, project_href, author_name, author_title, author_avatar_path, author_avatar_preset, score, comment_count, is_sample, is_anonymous, created_at';
 export const COMMENT_COLUMNS =
-  'id, post_id, parent_id, author_id, sample_author, body, author_name, author_title, author_avatar_path, author_avatar_preset, score, is_sample, created_at';
+  'id, post_id, parent_id, author_id, sample_author, body, author_name, author_title, author_avatar_path, author_avatar_preset, score, is_sample, is_anonymous, created_at';
 
 const str = (v: unknown) => (typeof v === 'string' ? v : null);
 
 function author(r: Record<string, unknown>) {
   const sample = r.is_sample === true;
+  const anonymous = !sample && r.is_anonymous === true;
+  if (anonymous) {
+    // Nothing about the author is in the row; show nothing either.
+    return { id: '', ok: true, sample, anonymous, authorName: 'Anonymous', authorTitle: null, authorAvatarPath: null, authorAvatarPreset: null };
+  }
   const id = sample ? str(r.sample_author) : str(r.author_id);
   return {
-    id,
+    id: id ?? '',
+    ok: Boolean(id),
     sample,
+    anonymous,
     authorName: str(r.author_name) ?? undefined,
     authorTitle: str(r.author_title),
     authorAvatarPath: str(r.author_avatar_path),
@@ -30,7 +37,7 @@ export function postFromRow(row: unknown): Post | null {
   const body = str(r.body);
   const createdAt = str(r.created_at);
   const a = author(r);
-  if (!id || !a.id || title === null || body === null || !createdAt) return null;
+  if (!id || !a.ok || title === null || body === null || !createdAt) return null;
   const href = str(r.project_href);
   const projectTitle = str(r.project_title);
   return {
@@ -41,6 +48,7 @@ export function postFromRow(row: unknown): Post | null {
     authorAvatarPath: a.authorAvatarPath,
     authorAvatarPreset: a.authorAvatarPreset,
     sample: a.sample,
+    ...(a.anonymous ? { anonymous: true } : {}),
     title,
     body,
     createdAt,
@@ -58,7 +66,7 @@ export function commentFromRow(row: unknown): Comment | null {
   const body = str(r.body);
   const createdAt = str(r.created_at);
   const a = author(r);
-  if (!id || !postId || !a.id || body === null || !createdAt) return null;
+  if (!id || !postId || !a.ok || body === null || !createdAt) return null;
   return {
     id,
     postId,
@@ -69,18 +77,72 @@ export function commentFromRow(row: unknown): Comment | null {
     authorAvatarPath: a.authorAvatarPath,
     authorAvatarPreset: a.authorAvatarPreset,
     sample: a.sample,
+    ...(a.anonymous ? { anonymous: true } : {}),
     body,
     createdAt,
     score: Number(r.score) || 0,
   };
 }
 
+/** A row of community_anonymous_authors, as this viewer may read it. */
+export interface AnonymousAuthorRecord {
+  postId: string | null;
+  commentId: string | null;
+  authorId: string;
+  authorName: string | null;
+}
+
+export const ANONYMOUS_AUTHOR_COLUMNS = 'post_id, comment_id, author_id, author_name';
+
+export function anonymousAuthorFromRow(row: unknown): AnonymousAuthorRecord | null {
+  if (typeof row !== 'object' || row === null) return null;
+  const r = row as Record<string, unknown>;
+  const authorId = str(r.author_id);
+  const postId = str(r.post_id);
+  const commentId = str(r.comment_id);
+  if (!authorId || (!postId && !commentId)) return null;
+  return { postId, commentId, authorId, authorName: str(r.author_name) };
+}
+
+/**
+ * Marks anonymous items with their real author where this viewer may know it.
+ * The database only returns these records to the author (their own) and to
+ * administrators (all), so nobody else ever has them to merge.
+ */
+export function withKnownAuthors<T extends { id: string; anonymous?: boolean; knownAuthorId?: string; knownAuthorName?: string }>(
+  items: readonly T[],
+  records: readonly AnonymousAuthorRecord[],
+  kind: 'post' | 'comment',
+): T[] {
+  const byId = new Map<string, AnonymousAuthorRecord>();
+  for (const r of records) {
+    const id = kind === 'post' ? r.postId : r.commentId;
+    if (id) byId.set(id, r);
+  }
+  return items.map((item) => {
+    const rec = item.anonymous ? byId.get(item.id) : undefined;
+    if (!rec) return item;
+    return { ...item, knownAuthorId: rec.authorId, knownAuthorName: rec.authorName ?? undefined };
+  });
+}
+
+/** Whether the signed-in person wrote this (named or anonymous). */
+export function isOwnItem(item: { authorId: string; sample?: boolean; knownAuthorId?: string }, userId: string | null | undefined): boolean {
+  if (!userId || item.sample) return false;
+  return item.authorId === userId || item.knownAuthorId === userId;
+}
+
 /** Puts `item` in the list by id (replacing it, or adding it), keeping the order of the rest. */
-export function upsertById<T extends { id: string }>(list: readonly T[], item: T): T[] {
+export function upsertById<T extends { id: string; knownAuthorId?: string; knownAuthorName?: string }>(list: readonly T[], item: T): T[] {
   const i = list.findIndex((x) => x.id === item.id);
   if (i < 0) return [item, ...list];
   const next = [...list];
-  next[i] = item;
+  // A live update carries no private author; keep what this viewer already knew.
+  const before = list[i];
+  next[i] =
+    before.knownAuthorId && !item.knownAuthorId
+      ? { ...item, knownAuthorId: before.knownAuthorId, knownAuthorName: before.knownAuthorName }
+      : item;
   return next;
 }
 
