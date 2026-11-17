@@ -9,10 +9,7 @@ import { recordHref } from '@/lib/reports/workflow';
 import type { ReportTarget } from '@/types/report';
 
 import { IdentityChoice, type Member } from './parts';
-
-import type { Member } from './parts';
 import { ProjectSuggestField } from './ProjectSuggestField';
-
 
 /** Start a discussion: a title, what you want to say, and optionally the project it is about. */
 export function NewPostForm({ member, onDone }: { member: Member; onDone: (post: Post | null) => void }) {
