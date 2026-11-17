@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { AlertTriangle, ChevronDown, List, Loader2, Map as MapIcon, MapPin, ZoomIn } from 'lucide-react';
@@ -15,6 +15,8 @@ import { MAP_STATUSES, STATUS_COLORS, formatCount } from './format';
 import { DataScopeNote } from './DataScopeNote';
 import { DataFreshness } from './DataFreshness';
 import { DpwhMapFilters, EMPTY_MAP_FILTERS, type MapFilters } from './DpwhMapFilters';
+import { useDpwhView } from './DpwhViewContext';
+import { PH_BBOX } from '@/lib/dpwh/viewFilters';
 import { DpwhMapProjectPanel, LIST_PAGE } from './DpwhMapProjectPanel';
 import { regionColor, regionDisplayName } from '@/lib/regionPalette';
 import type { MapSelection, MarkerColorMode } from './DpwhLeafletMap';
@@ -70,7 +72,13 @@ export interface MapFocus {
  * card; hovering a card rings its marker.
  */
 export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
-  const [filters, setFilters] = useState<MapFilters>(EMPTY_MAP_FILTERS);
+  // Region, status and category are shared with the dashboard (a click on either reaches the other); the text search stays here.
+  const view = useDpwhView();
+  const [search, setSearch] = useState('');
+  const filters: MapFilters = useMemo(
+    () => ({ q: search, region: view.filters.region, category: view.filters.category, status: view.filters.status }),
+    [search, view.filters.region, view.filters.category, view.filters.status]
+  );
   const [bounds, setBounds] = useState<MapBounds | null>(null);
   const [points, setPoints] = useState<DpwhMapPoint[]>([]);
   const [total, setTotal] = useState(0);
@@ -154,20 +162,62 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
     return present.has(null) ? [...ordered, null] : ordered;
   }, [points, summary]);
 
+  const { setSelected, setMatching, fitRequest } = view;
+  // The selected contract is shown on the dashboard too.
+  useEffect(() => {
+    if (!selection) return setSelected(null);
+    const point = points.find((p) => p.contract_id === selection.id);
+    if (point) setSelected(point);
+  }, [selection, points, setSelected]);
   const selectFromList = useCallback((id: string) => {
     setSelection({ id, pan: true });
     setSmallView('map');
   }, []);
   const selectFromMarker = useCallback((id: string) => setSelection({ id, pan: false }), []);
+
+  // How many contracts match the filters across the whole map (not just this view), for the dashboard; and,
+  // after a click on the dashboard, frame the map on them.
+  const lastFit = useRef(fitRequest);
+  useEffect(() => {
+    const params = new URLSearchParams({ bbox: PH_BBOX });
+    if (q.trim()) params.set('q', q.trim());
+    if (filters.region) params.set('region', filters.region);
+    if (filters.category) params.set('category', filters.category);
+    if (filters.status) params.set('status', filters.status);
+    const wantsFit = fitRequest !== lastFit.current;
+    lastFit.current = fitRequest;
+    const controller = new AbortController();
+    setMatching({ total: null, state: 'loading' });
+    fetchJson<{ points: DpwhMapPoint[]; total: number }>(`/api/dpwh/map?${params}`, { signal: controller.signal })
+      .then((body) => {
+        setMatching({ total: body.total, state: 'ready' });
+        if (!wantsFit || !leafletMap || body.points.length === 0) return;
+        const lats = body.points.map((p) => p.latitude);
+        const lngs = body.points.map((p) => p.longitude);
+        leafletMap.fitBounds(
+          [
+            [Math.min(...lats), Math.min(...lngs)],
+            [Math.max(...lats), Math.max(...lngs)],
+          ],
+          { padding: [24, 24], maxZoom: 12 }
+        );
+      })
+      .catch((e: unknown) => {
+        if ((e as Error)?.name !== 'AbortError') setMatching({ total: null, state: 'error' });
+      });
+    return () => controller.abort();
+    // The frame only follows a click on the dashboard (fitRequest), never the map's own filters or panning.
+  }, [q, filters.region, filters.category, filters.status, fitRequest, leafletMap, setMatching]);
   const retry = useCallback(() => setReload((n) => n + 1), []);
   const isFiltered = filters.q.trim() !== '' || !!(filters.region || filters.category || filters.status);
   const changeFilters = useCallback(
     (next: MapFilters) => {
-      setFilters(next);
+      setSearch(next.q);
+      view.setFilters({ region: next.region, status: next.status, category: next.category }, 'map');
       const cleared = !next.q && !next.region && !next.category && !next.status;
       if (cleared && isFiltered) toast({ id: 'map-filters', tone: 'info', title: 'Search and filters cleared', description: 'Showing all mapped contracts in this area.' });
     },
-    [isFiltered, toast]
+    [isFiltered, toast, view]
   );
   const clearFilters = useCallback(() => changeFilters(EMPTY_MAP_FILTERS), [changeFilters]);
 
