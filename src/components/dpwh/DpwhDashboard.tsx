@@ -286,14 +286,22 @@ function YearColumns({ rows }: { rows: DpwhCount<number | null>[] }) {
   );
 }
 
+/**
+ * The dashboard is drawn in two parts so the page can put the map beside the
+ * first one: 'main' (filters, headline figures, regions, status) and 'details'
+ * (category, year or provinces, and the link to the directory), which sits
+ * under the map. 'all' draws both, one after the other.
+ */
 export function DpwhDashboard({
   summary,
   nepCount,
   error,
+  part = 'all',
 }: {
   summary: DpwhSummary | null;
   nepCount: number | null;
   error: string | null;
+  part?: 'all' | 'main' | 'details';
 }) {
   const stats = summary?.stats;
   const regions = useMemo(() => stats?.by_region ?? [], [stats]);
@@ -306,6 +314,7 @@ export function DpwhDashboard({
 
   // A failed query and a database with nothing imported look different: only the first offers a retry.
   if (!stats || !summary) {
+    if (part === 'details') return null;
     return (
       <div className="space-y-6">
         <DashboardHeader />
@@ -350,8 +359,13 @@ export function DpwhDashboard({
     : [];
   const projectsHref = `/projects${region ? `?region=${encodeURIComponent(region)}` : ''}`;
 
+  const showMain = part !== 'details';
+  const showDetails = part !== 'main';
+
   return (
     <div className="space-y-6">
+      {showMain && (
+        <>
       <DashboardHeader>
         <label className="flex items-center gap-2 text-[13px] font-medium text-subtle">
           <span>Region</span>
@@ -425,7 +439,7 @@ export function DpwhDashboard({
       </div>
 
       <section aria-label={`Summary: ${scopeWord}`} className={`${panelClass} overflow-hidden`}>
-        <dl className="grid grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_minmax(0,1.2fr)] gap-px bg-line [&>*]:bg-surface">
+        <dl className="grid grid-cols-2 gap-px bg-line [&>*]:bg-surface">
           <Figure label="Contracts" value={formatCount(regionCount)} detail={region ? `${formatShare(regionCount, total)} of ${formatCount(total)} contracts` : 'Unique DPWH contract IDs'} />
           <Figure
             label="Reported contract value"
@@ -452,7 +466,7 @@ export function DpwhDashboard({
             value={formatCount(ongoing)}
             detail={scoped ? `${formatShare(ongoing, breakdownTotal)} of contracts` : `All regions (${formatShare(ongoing, breakdownTotal)})`}
           />
-          <div className="col-span-2 lg:col-span-1 !bg-sunken">
+          <div className="col-span-2 !bg-sunken">
             <Figure
               label="FY 2027 budget proposals"
               value={nepCount === null ? '—' : formatCount(nepCount)}
@@ -462,11 +476,10 @@ export function DpwhDashboard({
         </dl>
       </section>
 
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid gap-5">
         <Panel
           title="Contracts by region"
           note={`By component location; select one to focus the dashboard and the map. ${formatCount(regions.length)} regions, ${formatCount(total)} contracts.`}
-          className="lg:col-span-2"
         >
           <RankedBars
             rows={regions}
@@ -483,6 +496,11 @@ export function DpwhDashboard({
         </Panel>
       </div>
 
+        </>
+      )}
+
+      {showDetails && (
+        <>
       <div className="grid gap-5 lg:grid-cols-2">
         <Panel title="Contracts by category" note={allRegionsNote ?? `${scopeWord}. Category assigned from the DPWH record.`}>
           <RankedBars
@@ -517,23 +535,25 @@ export function DpwhDashboard({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-        <p className="text-xs text-muted">Select a region above to see its provinces.</p>
+        <p className="text-xs text-muted">Select a region in the chart to see its provinces.</p>
         <Link href={projectsHref} className={secondaryButtonClass}>
           {region ? `Browse ${formatCount(regionCount)} contracts in ${region}` : 'Browse all projects'} <ArrowRight className="w-4 h-4" aria-hidden="true" />
         </Link>
       </div>
+        </>
+      )}
     </div>
   );
 }
 
 function DashboardHeader({ children }: { children?: React.ReactNode }) {
   return (
-    <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <header className="flex flex-col gap-4">
       <div className="min-w-0">
         <h2 className="page-title text-[22px] sm:text-[26px] text-ink">DPWH contracts summary</h2>
         <p className="mt-1.5 text-[15px] text-subtle">What the published DPWH contracts show, by region, status and category.</p>
       </div>
-      {children && <div className="flex flex-wrap items-center gap-2 sm:shrink-0">{children}</div>}
+      {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
     </header>
   );
 }
