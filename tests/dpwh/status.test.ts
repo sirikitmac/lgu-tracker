@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
+  FILTER_STATUSES,
   MAP_STATUSES,
   STATUS_COLORS,
   STATUS_STYLES,
@@ -60,7 +61,17 @@ test('unrecognized values display as Unknown, never as another status', () => {
 });
 
 test('the contract map does not offer the proposal status it can never show', () => {
-  assert.deepEqual(MAP_STATUSES, DPWH_STATUSES.filter((s) => s !== 'proposed'));
+  assert.ok(!(MAP_STATUSES as readonly string[]).includes('proposed'));
+});
+
+test('legends and filters list only known statuses; Unknown is not a choice', () => {
+  assert.ok(!(FILTER_STATUSES as readonly string[]).includes('unknown'));
+  assert.ok(!(MAP_STATUSES as readonly string[]).includes('unknown'));
+  assert.deepEqual(MAP_STATUSES, ['completed', 'ongoing', 'for_procurement', 'not_yet_started', 'terminated']);
+  assert.deepEqual(FILTER_STATUSES, DPWH_STATUSES.filter((s) => s !== 'unknown'));
+  // Unknown contracts are still drawn and labelled: the gray marker stays.
+  assert.equal(statusLabel(null), 'Unknown');
+  assert.equal(statusColor(null), STATUS_COLORS.unknown);
 });
 
 test('contract status comes only from the source status column, kept verbatim', () => {
