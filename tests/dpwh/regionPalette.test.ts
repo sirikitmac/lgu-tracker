@@ -3,10 +3,11 @@ import { test } from 'node:test';
 import { COLORED_REGIONS, REGION_NEUTRAL, regionColor, regionDisplayName, regionInfo } from '@/lib/regionPalette';
 import { STATUS_TONES } from '@/lib/statusPalette';
 
-// The ten regions in the DPWH contracts dataset, as the data spells them.
+// The regions with a colour: ten in the Visayas and Mindanao plus three in Luzon, as the data spells them.
 const DATA_REGIONS = [
   'Region VIII', 'Region X', 'Region VII', 'Region XI', 'Region VI', 'Negros Island Region',
   'Region XII', 'Region XIII', 'Region IX', 'Bangsamoro Autonomous Region in Muslim Mindanao',
+  'National Capital Region', 'Region III', 'Region IV-A',
 ];
 
 test('every region in the contract data has its own colour', () => {
@@ -33,8 +34,11 @@ test('missing, Luzon and unknown regions are neutral rather than borrowing a col
   assert.equal(regionColor(null), REGION_NEUTRAL);
   assert.equal(regionColor(''), REGION_NEUTRAL);
   assert.equal(regionInfo(null).name, 'Region not reported');
-  assert.equal(regionColor('Region IV-A'), REGION_NEUTRAL);
+  assert.equal(regionColor('Region V'), REGION_NEUTRAL);
+  assert.equal(regionInfo('Region V').islandGroup, 'Luzon');
   assert.equal(regionInfo('Region IV-A').islandGroup, 'Luzon');
+  assert.equal(regionColor('NCR'), regionColor('National Capital Region'));
+  assert.equal(regionDisplayName('Region III'), 'Region III · Central Luzon');
   assert.equal(regionColor('Atlantis'), REGION_NEUTRAL);
   assert.equal(regionDisplayName('Atlantis'), 'Atlantis');
 });

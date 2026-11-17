@@ -29,8 +29,8 @@ function markerRing(state: 'rest' | 'hover' | 'selected'): L.CircleMarkerOptions
 /** Whole Philippines, the fallback view. */
 const PH_CENTER: L.LatLngExpression = [12.3, 122.5];
 const PH_ZOOM = 6;
-/** The Visayas and Mindanao, which the contract data covers: the opening view. */
-const DATA_BOUNDS = L.latLngBounds([4.6, 117.4], [12.6, 126.6]);
+/** Where the contract data is (Visayas, Mindanao and the Luzon slice): the opening view. */
+const DATA_BOUNDS = L.latLngBounds([4.6, 117.4], [16.9, 126.6]);
 const FOCUS_ZOOM = 15;
 
 /** Where the Street View cat was dropped: an accent pin with a cat face, unlike any contract marker. */

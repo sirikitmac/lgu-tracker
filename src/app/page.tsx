@@ -177,7 +177,7 @@ function Stats({ data }: { data: LandingData }) {
   const items = [
     data.totalContracts !== null && {
       value: data.totalContracts,
-      label: `${plural(data.totalContracts, 'DPWH contract', 'DPWH contracts')} in the Visayas and Mindanao`,
+      label: `${plural(data.totalContracts, 'DPWH contract', 'DPWH contracts')} in the Visayas, Mindanao and parts of Luzon`,
     },
     data.dilgProjects !== null && {
       value: data.dilgProjects,
@@ -652,9 +652,9 @@ function Coverage({ data }: { data: LandingData }) {
           </h2>
           <div data-reveal style={delay(70)} className="lg:col-span-6 space-y-3 max-w-[60ch] text-ink">
             <p className="text-[length:var(--step-lead)] leading-snug">
-              DPWH contracts from ten regions of the Visayas and Mindanao, including Northern Mindanao, home to Iligan City.
+              DPWH contracts from the Visayas, Mindanao and parts of Luzon, including Northern Mindanao, home to Iligan City.
             </p>
-            <p className="text-subtle">Luzon and Metro Manila contracts are not included. DILG projects cover every region, on the map&rsquo;s LGU layer.</p>
+            <p className="text-subtle">Luzon coverage so far is Metro Manila, Central Luzon and CALABARZON; the other Luzon regions are not included yet. DILG projects cover every region, on the map&rsquo;s LGU layer.</p>
           </div>
         </div>
 
@@ -685,7 +685,7 @@ function AboutData({ data }: { data: LandingData }) {
     {
       name: 'DPWH contracts',
       by: 'DPWH Transparency Portal via BetterGov.ph · CC0',
-      text: `${data.totalContracts !== null ? `${formatCount(data.totalContracts)} contracts` : 'Contracts'} in the Visayas and Mindanao, plus FY 2027 NEP proposals nationwide.`,
+      text: `${data.totalContracts !== null ? `${formatCount(data.totalContracts)} contracts` : 'Contracts'} in the Visayas, Mindanao and parts of Luzon, plus FY 2027 NEP proposals nationwide.`,
       href: 'https://bettergov.ph',
     },
     {

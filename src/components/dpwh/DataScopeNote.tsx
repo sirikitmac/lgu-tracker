@@ -24,7 +24,7 @@ export function DataScopeNote({ className = '' }: { className?: string }) {
         <div>
           <p className="font-semibold text-ink">{PROJECT_SOURCES.dpwh_contracts.label}</p>
           <p>
-            Visayas and Mindanao contracts from the DPWH Transparency Portal, via BetterGov.ph (CC0). Placed by the reported
+            Contracts from the Visayas, Mindanao and Metro Manila, Central Luzon and CALABARZON, from the DPWH Transparency Portal, via BetterGov.ph (CC0). Placed by the reported
             project location, not the implementing office.
           </p>
         </div>

@@ -5,6 +5,9 @@
 
 /** Common names of the project regions the DPWH sync stores (see nationwide/scope.ts). */
 export const REGION_NAMES: Record<string, string> = {
+  'National Capital Region': 'Metro Manila',
+  'Region III': 'Central Luzon',
+  'Region IV-A': 'CALABARZON',
   'Region VI': 'Western Visayas',
   'Region VII': 'Central Visayas',
   'Region VIII': 'Eastern Visayas',
@@ -19,6 +22,7 @@ export const REGION_NAMES: Record<string, string> = {
 
 /** Short code shown beside the common name; BARMM's code is already in its name. */
 export function regionCode(region: string): string | null {
+  if (region === 'National Capital Region') return 'NCR';
   if (region === 'Negros Island Region') return 'NIR';
   if (region.startsWith('Bangsamoro')) return null;
   return region;

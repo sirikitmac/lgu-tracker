@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { formatCount } from '@/components/dpwh/format';
+import { LUZON_REGIONS } from '@/lib/integrations/dpwh/nationwide/scope';
 import { regionColor } from '@/lib/regionPalette';
 import { regionCode, regionName } from './content';
 
@@ -13,16 +14,17 @@ interface RegionRow {
   points: [number, number][];
 }
 
-/** Map frame in degrees: the Visayas and Mindanao, Sulu and Tawi-Tawi included. */
+/** Map frame in degrees: Metro Manila down through Mindanao, Sulu and Tawi-Tawi included. */
 const WEST = 119.3;
 const EAST = 126.9;
-const NORTH = 12.7;
+const NORTH = 16.9;
 const SOUTH = 4.4;
 const SCALE = 100;
 const WIDTH = (EAST - WEST) * SCALE;
 const HEIGHT = (NORTH - SOUTH) * SCALE;
 
 const VISAYAS = new Set(['Region VI', 'Region VII', 'Region VIII', 'Negros Island Region']);
+const LUZON = new Set<string>(LUZON_REGIONS);
 
 function directoryHref(region: string) {
   return `/projects?${new URLSearchParams({ region, source: 'dpwh_contracts' })}`;
@@ -44,8 +46,9 @@ export function CoverageExplorer({
   const active = regions.find((r) => r.region === selected) ?? null;
 
   const groups = [
+    { name: 'Luzon', rows: regions.filter((r) => LUZON.has(r.region)) },
     { name: 'Visayas', rows: regions.filter((r) => VISAYAS.has(r.region)) },
-    { name: 'Mindanao', rows: regions.filter((r) => !VISAYAS.has(r.region)) },
+    { name: 'Mindanao', rows: regions.filter((r) => !VISAYAS.has(r.region) && !LUZON.has(r.region)) },
   ];
 
   return (
@@ -103,8 +106,8 @@ export function CoverageExplorer({
               role="img"
               aria-label={
                 active
-                  ? `Map of the Visayas and Mindanao with the largest mapped contracts in ${regionName(active.region)} highlighted`
-                  : 'Map of the Visayas and Mindanao drawn from the locations of the largest mapped contracts in each region'
+                  ? `Map of contract locations with the largest mapped contracts in ${regionName(active.region)} highlighted`
+                  : 'Map drawn from the locations of the largest mapped contracts in each region'
               }
             >
               {regions.map((row) => {
@@ -130,7 +133,7 @@ export function CoverageExplorer({
               })}
             </svg>
           ) : (
-            <div className="aspect-[76/83] rounded-2xl bg-sunken flex items-center justify-center p-8 text-center text-[15px] text-subtle">
+            <div className="aspect-[76/124] rounded-2xl bg-sunken flex items-center justify-center p-8 text-center text-[15px] text-subtle">
               Contract locations could not be loaded.
             </div>
           )}
@@ -165,7 +168,7 @@ export function CoverageExplorer({
                 {totalContracts !== null ? formatCount(totalContracts) : ''}
               </p>
               <p className="mt-2 text-[15px] text-subtle max-w-lg">
-                DPWH contracts across ten regions. Choose one to see its share.
+                DPWH contracts across {regions.filter((r) => (r.contracts ?? 0) > 0).length} regions. Choose one to see its share.
               </p>
             </>
           ) : (

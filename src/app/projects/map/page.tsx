@@ -124,7 +124,7 @@ export default async function MapAndDashboardPage({ searchParams }: PageProps<'/
         <div className="min-w-0">
           <p className="inline-flex items-center gap-2 text-[13px] font-semibold text-subtle">
             <span className="w-2 h-2 rounded-full bg-accent" aria-hidden="true" />
-            {dpwh ? 'DPWH contracts · Visayas and Mindanao' : 'DILG SubayBAYAN · LGU projects nationwide'}
+            {dpwh ? 'DPWH contracts · Visayas, Mindanao and parts of Luzon' : 'DILG SubayBAYAN · LGU projects nationwide'}
           </p>
           <h1 className="mt-2 page-title text-[30px] sm:text-[40px] text-ink">Map &amp; Dashboard</h1>
           <p className="mt-2 max-w-[60ch] text-[15px] leading-relaxed text-subtle">

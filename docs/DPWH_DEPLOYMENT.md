@@ -4,7 +4,7 @@
 
 | `source` | Dataset (Hugging Face) | Records | Stored in | Weekly sync |
 | --- | --- | --- | --- | --- |
-| `dpwh_contracts` | `bettergovph/dpwh-transparency-data`, `dpwh_transparency_data_all_details.parquet` (CC0) | 248,421 contracts (snapshot 2026-01-16); **Visayas + Mindanao project locations stored by default** (108,486), see Storage | `dpwh_contracts` | `/api/cron/dpwh-sync`, Mon 02:00 PHT |
+| `dpwh_contracts` | `bettergovph/dpwh-transparency-data`, `dpwh_transparency_data_all_details.parquet` (CC0) | 248,421 contracts (snapshot 2026-01-16); **Visayas + Mindanao + a Luzon slice (NCR, Region III, Region IV-A) stored by default** (Visayas + Mindanao alone: 108,486), see Storage | `dpwh_contracts` | `/api/cron/dpwh-sync`, Mon 02:00 PHT |
 | `dpwh_nep_2027` | `bettergovph/dpwh-nep-2027`, `dpwh-nep-projects-2027.csv` (license not stated; NEP is a public government document) | 11,372 proposed DPWH projects, nationwide | `infrastructure_projects` | `/api/cron/bettergov-sync`, Mon 02:30 PHT |
 
 Both snapshots are static between BetterGov.ph publishes; the app shows the
@@ -68,7 +68,8 @@ The DPWH sync therefore stores a **region scope** (`src/lib/integrations/dpwh/na
 
 | Scope (project location) | Contracts (2026-01-16) | Estimated size |
 | --- | --- | --- |
-| Visayas + Mindanao (**default**) | 108,486 | ~230 MB |
+| Visayas + Mindanao + NCR, Region III, Region IV-A (**default**) | not measured yet (108,486 + the Luzon slice) | ~230 MB + the slice; measure with a dry run and the Supabase database size before the real run |
+| Visayas + Mindanao only | 108,486 | ~230 MB |
 | Mindanao only | 57,303 | ~120 MB |
 | Nationwide (`all`, needs a paid plan) | 248,421 | ~490 MB |
 
@@ -106,7 +107,7 @@ only the newly in-scope contracts.
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | all | `sb_publishable_...` |
 | `SUPABASE_SECRET_KEY` | Production, server only | Used only by the `/api/cron/*` sync routes. Never `NEXT_PUBLIC_`. |
 | `CRON_SECRET` | Production | Random, at least 16 characters (`openssl rand -hex 32`). Vercel Cron sends it as a bearer token. |
-| `DPWH_SYNC_REGIONS` | Production, optional | Unset = Visayas + Mindanao; `all` = nationwide; or a comma-separated list of project regions. Must match what was imported, or the weekly run re-imports to the new scope. |
+| `DPWH_SYNC_REGIONS` | Production, optional | Unset = Visayas + Mindanao + NCR, Region III, Region IV-A; `all` = nationwide; or a comma-separated list of project regions. Must match what was imported, or the weekly run re-imports to the new scope. |
 | `SYNC_STORAGE_BUDGET_MB` | Production, optional | Database size at which the DPWH sync stops (default 400; `off` disables). |
 
 ## 4. Weekly sync

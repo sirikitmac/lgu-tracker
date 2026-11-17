@@ -89,13 +89,13 @@ export function previewOverviewAnswer(overview: DirectoryOverview, focus: Extrac
     case 'amount':
       return `The sum of **reported contract amounts** is **${peso(c.reported_contract_amount_sum_php)}** across ${count(c.contracts_with_reported_amount)} of ${count(c.total_contracts)} DPWH contracts that report an amount.\n\nThese are award amounts as published, not disbursements or audited spending.`;
     case 'region':
-      return `DPWH contracts by project-location region:\n${top(c.by_region, (r, i) => `${i + 1}. ${r.region}: ${count(r.contracts)}`)}\n\nCoverage is limited to Visayas and Mindanao project locations.`;
+      return `DPWH contracts by project-location region:\n${top(c.by_region, (r, i) => `${i + 1}. ${r.region}: ${count(r.contracts)}`)}\n\nCoverage is limited to Visayas, Mindanao, Metro Manila, Central Luzon and CALABARZON project locations.`;
     case 'category':
       return `DPWH contracts by category:\n${top(c.by_category, (r) => `- ${r.category}: ${count(r.contracts)}`)}`;
     case 'status':
       return `DPWH contracts by reported status:\n${top(c.by_status, (r) => `- ${r.status}: ${count(r.contracts)}`)}`;
     default:
-      return `The directory lists **${count(c.total_contracts)} DPWH contracts** (Visayas and Mindanao project locations).\n\nIt also lists:\n${others}`;
+      return `The directory lists **${count(c.total_contracts)} DPWH contracts** (Visayas, Mindanao, Metro Manila, Central Luzon and CALABARZON project locations).\n\nIt also lists:\n${others}`;
   }
 }
 
