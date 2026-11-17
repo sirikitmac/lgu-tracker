@@ -8,6 +8,8 @@ import { DpwhContractDetails } from '@/components/dpwh/DpwhContractDetails';
 import { contractMapHref, formatPeso, formatProgress } from '@/components/dpwh/format';
 import { StatusPill } from '@/components/dpwh/StatusPill';
 import { ProgressBar } from '@/components/dpwh/DpwhProjectCard';
+import { SourceCitation } from '@/components/sources/SourceCitation';
+import { dpwhCitation } from '@/lib/sources/citation';
 
 export async function generateMetadata({ params }: PageProps<'/projects/[contractId]'>): Promise<Metadata> {
   const { contractId } = await params;
@@ -47,6 +49,7 @@ export default async function PublicContractPage({ params }: PageProps<'/project
     <>
       {back}
       <header className="space-y-4">
+        <SourceCitation citation={dpwhCitation(c, detail.lastSuccessfulSyncAt)} className="max-w-4xl" />
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="font-semibold tabular-nums text-subtle">DPWH contract {c.contract_id}</span>
           <StatusPill status={c.status} />

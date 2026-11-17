@@ -42,6 +42,7 @@ function SourceLink({ href, children }: { href: string | null; children: React.R
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-accent-ink hover:underline">
       {children} <ExternalLink className="w-3 h-3" aria-hidden="true" />
+      <span className="sr-only"> (external, opens in a new tab)</span>
     </a>
   );
 }
@@ -129,6 +130,11 @@ export function DpwhContractDetails({ detail }: { detail: DpwhContractDetail }) 
                 <SourceLink href={c.link_notice_to_proceed}>Notice to proceed</SourceLink>
               </span>
             ) : null
+          }
+          note={
+            [c.link_advertisement, c.link_notice_of_award, c.link_contract_agreement, c.link_notice_to_proceed].some(Boolean)
+              ? 'These links open the original documents on the source site (external), not copies kept by LGU Tracker.'
+              : undefined
           }
         />
       </Section>
