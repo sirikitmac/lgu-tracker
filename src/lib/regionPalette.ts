@@ -7,8 +7,8 @@
  * a few spelling aliases), never by rank or position, so filtering or
  * re-sorting never repaints a region.
  *
- * The ten colours cover the regions in the DPWH contracts dataset (Visayas
- * and Mindanao). They were checked with the dataviz palette validator against
+ * The first ten colours cover the Visayas and Mindanao regions of the DPWH
+ * contracts dataset. They were checked with the dataviz palette validator against
  * both theme surfaces (white and #161618): every slot sits in the lightness
  * band, clears the chroma floor and 3:1 contrast, and neighbours in this
  * geographic order are at least ΔE 10.8 apart under colour-vision
@@ -17,7 +17,9 @@
  * always printed beside it, and region swatches are squares where status
  * dots are round.
  *
- * Regions outside that set (Luzon regions appear only in nationwide NEP
+ * The three Luzon colours (Metro Manila, Central Luzon, CALABARZON) were picked
+ * to differ from the ten and from the status colours, but were not run through
+ * that validator. Other Luzon regions (they appear in nationwide NEP
  * proposals) and missing regions get the neutral swatch rather than a
  * borrowed colour.
  */
@@ -34,6 +36,9 @@ export interface RegionInfo {
 export const REGION_NEUTRAL = '#8E8E93';
 
 const REGIONS: readonly (Omit<RegionInfo, 'name'> & { key: string; aliases?: string[] })[] = [
+  { key: 'National Capital Region', area: 'Metro Manila', islandGroup: 'Luzon', color: '#D14B4B', aliases: ['NCR'] },
+  { key: 'Region III', area: 'Central Luzon', islandGroup: 'Luzon', color: '#4A4E69' },
+  { key: 'Region IV-A', area: 'CALABARZON', islandGroup: 'Luzon', color: '#8C5A2B' },
   { key: 'Region VI', area: 'Western Visayas', islandGroup: 'Visayas', color: '#3F842E' },
   { key: 'Negros Island Region', area: null, islandGroup: 'Visayas', color: '#CE6489', aliases: ['NIR'] },
   { key: 'Region VII', area: 'Central Visayas', islandGroup: 'Visayas', color: '#3E6FC2' },
@@ -53,14 +58,10 @@ const REGIONS: readonly (Omit<RegionInfo, 'name'> & { key: string; aliases?: str
 ];
 
 const LUZON = new Map<string, string | null>([
-  ['National Capital Region', 'Metro Manila'],
-  ['NCR', 'Metro Manila'],
   ['Cordillera Administrative Region', null],
   ['CAR', null],
   ['Region I', 'Ilocos Region'],
   ['Region II', 'Cagayan Valley'],
-  ['Region III', 'Central Luzon'],
-  ['Region IV-A', 'CALABARZON'],
   ['Region IV-B', 'MIMAROPA'],
   ['MIMAROPA', null],
   ['Region V', 'Bicol Region'],

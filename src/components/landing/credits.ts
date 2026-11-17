@@ -20,7 +20,7 @@ export interface DataCredit {
 export const DATA_CREDITS: DataCredit[] = [
   {
     name: 'DPWH Transparency Portal, via BetterGov.ph',
-    what: 'DPWH contracts in the Visayas and Mindanao.',
+    what: 'DPWH contracts in the Visayas, Mindanao and parts of Luzon.',
     license: 'CC0 1.0',
     licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/',
     sourceUrl: PROJECT_SOURCES.dpwh_contracts.datasetUrl,

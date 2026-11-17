@@ -21,11 +21,11 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'LGU Tracker — Bantay Proyekto, Gabay sa Progreso',
   description:
-    'A public directory and map of DPWH infrastructure contracts in the Visayas and Mindanao: what was built, where, by whom, for how much, and how far along.',
+    'A public directory and map of DPWH infrastructure contracts in the Visayas, Mindanao and parts of Luzon: what was built, where, by whom, for how much, and how far along.',
   openGraph: {
     title: 'LGU Tracker — Bantay Proyekto, Gabay sa Progreso',
     description:
-      'A public directory and map of DPWH infrastructure contracts in the Visayas and Mindanao: what was built, where, by whom, for how much, and how far along.',
+      'A public directory and map of DPWH infrastructure contracts in the Visayas, Mindanao and parts of Luzon: what was built, where, by whom, for how much, and how far along.',
     type: 'website',
   },
 };

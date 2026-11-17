@@ -4,7 +4,8 @@
  * The full snapshot (248,421 contracts) needs about 490 MB, which exceeds a
  * Supabase Free plan database (500 MB, read-only when exceeded). By default
  * the sync stores contracts whose project location is in the Visayas or
- * Mindanao (Iligan City is in Region X), about 108,500 contracts or ~230 MB.
+ * Mindanao (Iligan City is in Region X), about 108,500 contracts or ~230 MB,
+ * plus the Luzon slice in LUZON_REGIONS (measure the database before widening it).
  * Contracts outside the scope are counted per run, never stored, and never
  * deleted if an earlier, wider run stored them.
  *
@@ -25,7 +26,14 @@ export const MINDANAO_REGIONS = [
 
 export const VISAYAS_REGIONS = ['Region VI', 'Region VII', 'Region VIII', 'Negros Island Region'] as const;
 
-export const DEFAULT_SCOPE_REGIONS: readonly string[] = [...VISAYAS_REGIONS, ...MINDANAO_REGIONS];
+/**
+ * A first slice of Luzon: Metro Manila, Central Luzon and CALABARZON, where most
+ * of the Luzon contracts are. The other Luzon regions can be added with
+ * DPWH_SYNC_REGIONS once the database size allows it.
+ */
+export const LUZON_REGIONS = ['National Capital Region', 'Region III', 'Region IV-A'] as const;
+
+export const DEFAULT_SCOPE_REGIONS: readonly string[] = [...LUZON_REGIONS, ...VISAYAS_REGIONS, ...MINDANAO_REGIONS];
 
 /** Default guard: leaves ~100 MB of a 500 MB Free plan database for everything else. */
 export const DEFAULT_STORAGE_BUDGET_MB = 400;
