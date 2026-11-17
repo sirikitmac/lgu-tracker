@@ -181,6 +181,15 @@
   max-width: 100rem;
 }
 
+/* Signed-in pages keep the sidebar at the left edge of the window and centre the page content
+   in the room beside it, so a wide screen has no empty strip between the sidebar and the content. */
+.content-frame {
+  max-width: 80rem;
+}
+:root:has([data-frame="wide"]) .content-frame {
+  max-width: 100rem;
+}
+
 /* Page titles on internal screens: the sans, semibold and tightly tracked. */
 .page-title {
   font-family: var(--font-display);

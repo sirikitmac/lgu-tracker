@@ -15,7 +15,7 @@ export default async function SignedInLayout({ children }: { children: React.Rea
   return (
     <div className="flex min-h-screen flex-col bg-ground text-ink">
       <Navbar />
-      <div className="site-frame mx-auto w-full max-w-7xl flex-1 px-4 py-5 sm:px-6 sm:py-8 lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-8">
+      <div className="w-full flex-1 px-4 py-5 sm:px-6 sm:py-8 lg:grid lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-8">
         {profile && (
           <WorkspaceSidebar
             role={profile.role}
@@ -25,7 +25,7 @@ export default async function SignedInLayout({ children }: { children: React.Rea
             avatarPreset={profile.avatarPreset}
           />
         )}
-        <main className="mt-5 min-w-0 lg:mt-0">{children}</main>
+        <main className="content-frame mx-auto mt-5 w-full min-w-0 lg:mt-0">{children}</main>
       </div>
       <Footer />
     </div>
