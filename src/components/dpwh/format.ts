@@ -162,8 +162,15 @@ export const statusTextColor = (value: string | null) => STATUS_TONES[toneOf(val
 export const statusBadgeClass = (value: string | null) => STATUS_TONES[toneOf(value)].badge;
 
 /**
- * Statuses the contract map can show. The map reads DPWH contracts only;
- * NEP proposals have no coordinates in the source, so 'proposed' would only
- * ever be an empty legend entry and an always-empty filter.
+ * Statuses offered as filter choices. 'unknown' is left out so every listed
+ * label is a real reported status; contracts with an unknown status are still
+ * shown, listed and counted under "All statuses", with their gray marker.
  */
-export const MAP_STATUSES = DPWH_STATUSES.filter((s) => s !== 'proposed');
+export const FILTER_STATUSES = DPWH_STATUSES.filter((s) => s !== 'unknown');
+
+/**
+ * Statuses the contract map lists in its legend and filter. The map reads DPWH
+ * contracts only; NEP proposals have no coordinates in the source, so
+ * 'proposed' would only ever be an empty legend entry and an always-empty filter.
+ */
+export const MAP_STATUSES = FILTER_STATUSES.filter((s) => s !== 'proposed');

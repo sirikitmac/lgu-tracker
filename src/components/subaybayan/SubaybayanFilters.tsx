@@ -190,7 +190,7 @@ export function SubaybayanFilterBar({
           </Segment>
           <Segment label="Status" value={filters.status} onChange={(v) => set({ status: v as SubaybayanStatus | '' })}>
             <option value="">All statuses</option>
-            {options(facets?.statuses, filters.status, (v) => SUBAYBAYAN_STATUS_LABELS[v as SubaybayanStatus] ?? v)}
+            {options(facets?.statuses?.filter((v) => v.value !== 'unknown'), filters.status, (v) => SUBAYBAYAN_STATUS_LABELS[v as SubaybayanStatus] ?? v)}
           </Segment>
           <label className={`flex items-center gap-3 min-w-0 h-14 px-4 rounded-2xl cursor-pointer transition-colors hover:bg-sunken has-[:focus-visible]:outline-2 has-[:focus-visible]:-outline-offset-2 has-[:focus-visible]:outline-accent-ink`}>
             <input
