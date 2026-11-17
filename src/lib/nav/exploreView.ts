@@ -1,6 +1,6 @@
 /**
  * The public Map & Dashboard page (/projects/map) shows the map and the
- * dashboard together. ?view=dashboard (an older link, and the "Dashboard" link
+ * dashboard together. ?view=map scrolls to the map; ?view=dashboard (an older link, and the "Dashboard" link
  * in the menus) opens the page scrolled to the dashboard; the map is the default.
  */
 export type ExploreView = 'map' | 'dashboard';

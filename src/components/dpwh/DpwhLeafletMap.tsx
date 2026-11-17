@@ -8,6 +8,9 @@ import type { MapBounds } from '@/lib/integrations/dpwh/nationwide/query';
 import { regionColor } from '@/lib/regionPalette';
 import { statusColor, formatPeso, formatProgress, readableTitle, statusLabel } from './format';
 
+/** The Philippines with a little margin: [[south, west], [north, east]]. */
+export const PH_MAX_BOUNDS: [[number, number], [number, number]] = [[3, 114], [22.5, 129.5]];
+
 export type MarkerColorMode = 'status' | 'region';
 
 const markerFill = (p: DpwhMapPoint, mode: MarkerColorMode) => (mode === 'region' ? regionColor(p.region) : statusColor(p.status));
@@ -132,12 +135,21 @@ export default function DpwhLeafletMap({ points, focus, selection, onBoundsChang
     const container = containerRef.current;
     if (!container || mapRef.current) return;
 
-    const map = L.map(container, { preferCanvas: true, scrollWheelZoom: true });
+    // The map stays on the Philippines: no panning out to the world, and no zooming out past the whole country.
+    const map = L.map(container, {
+      preferCanvas: true,
+      scrollWheelZoom: true,
+      minZoom: 5,
+      maxBounds: PH_MAX_BOUNDS,
+      maxBoundsViscosity: 1,
+      worldCopyJump: false,
+    });
     if (focus) map.setView([focus.lat, focus.lng], FOCUS_ZOOM);
     // Fitting needs a laid-out container; a hidden one falls back to the whole country.
     else if (container.clientWidth > 0 && container.clientHeight > 0) map.fitBounds(DATA_BOUNDS, { padding: [12, 12] });
     else map.setView(PH_CENTER, PH_ZOOM);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      noWrap: true,
       maxZoom: 19,
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors · DPWH data via BetterGov.ph',
