@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
+  MAP_PAGE_SIZE,
   MAP_POINT_LIMIT,
   applyDirectoryQuery,
   applyMapQuery,
@@ -96,8 +97,10 @@ test('map query: filters, coordinates required, viewport, largest first, capped'
     ['lte', 'longitude', 125.25],
     ['order', 'contract_amount', false, false],
     ['order', 'contract_id', true, false],
-    ['limit', MAP_POINT_LIMIT],
+    ['range', 0, MAP_PAGE_SIZE - 1],
   ]);
+  assert.deepEqual(applyMapQuery(new Recorder(), r.query, bounds.bounds, 1).calls.at(-1), ['range', MAP_PAGE_SIZE, 2 * MAP_PAGE_SIZE - 1]);
+  assert.equal(MAP_POINT_LIMIT, 2 * MAP_PAGE_SIZE);
 });
 
 test('bbox validation', () => {
