@@ -205,10 +205,12 @@ export function applyDirectoryQuery<T extends FilterBuilder<T>>(
 
 /**
  * Most markers one map request returns; the largest contracts win when more
- * match. Must not exceed PostgREST's max_rows (1000, supabase/config.toml),
- * which silently truncates larger responses.
+ * match. PostgREST caps one response at max_rows (1000, supabase/config.toml)
+ * and silently truncates larger ones, so the route reads the markers in pages
+ * of MAP_PAGE_SIZE, up to MAP_POINT_LIMIT in total.
  */
-export const MAP_POINT_LIMIT = 1000;
+export const MAP_PAGE_SIZE = 1000;
+export const MAP_POINT_LIMIT = 2000;
 
 export interface MapBounds {
   west: number;
@@ -236,6 +238,7 @@ export interface MapBuilder<T> extends FilterBuilder<T> {
   lte(column: string, value: number): T;
   not(column: string, operator: string, value: null): T;
   limit(count: number): T;
+  range(from: number, to: number): T;
 }
 
 /** WHERE clauses of the map: directory filters, mapped contracts only, inside the viewport. */
@@ -248,9 +251,10 @@ export function applyMapFilters<T extends MapBuilder<T>>(builder: T, query: Dire
   return b;
 }
 
-export function applyMapQuery<T extends MapBuilder<T>>(builder: T, query: DirectoryQuery, bounds: MapBounds | null): T {
+/** One page (0-based, MAP_PAGE_SIZE markers) of the map query, largest contracts first. */
+export function applyMapQuery<T extends MapBuilder<T>>(builder: T, query: DirectoryQuery, bounds: MapBounds | null, page = 0): T {
   return applyMapFilters(builder, query, bounds)
     .order('contract_amount', { ascending: false, nullsFirst: false })
     .order('contract_id', { ascending: true, nullsFirst: false })
-    .limit(MAP_POINT_LIMIT);
+    .range(page * MAP_PAGE_SIZE, (page + 1) * MAP_PAGE_SIZE - 1);
 }

@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import {
+  MAP_PAGE_SIZE,
   MAP_POINT_LIMIT,
   applyMapFilters,
   applyMapQuery,
@@ -32,9 +33,16 @@ export async function GET(request: NextRequest) {
 
   type PointBuilder = MapBuilder<PointBuilder> &
     PromiseLike<{ data: unknown[] | null; error: { message: string } | null; count: number | null }>;
-  const builder = supabase
-    .from('dpwh_contracts_directory')
-    .select(DPWH_MAP_COLUMNS.join(',')) as unknown as PointBuilder;
+  const pointBuilder = () =>
+    supabase.from('dpwh_contracts_directory').select(DPWH_MAP_COLUMNS.join(',')) as unknown as PointBuilder;
+  // One response holds at most MAP_PAGE_SIZE rows (PostgREST max_rows), so a busy viewport reads a second page.
+  const readPoints = async () => {
+    const first = await applyMapQuery(pointBuilder(), parsed.query, bounds.bounds, 0);
+    const rows = (first.data ?? []) as unknown[];
+    if (first.error || rows.length < MAP_PAGE_SIZE || MAP_POINT_LIMIT <= MAP_PAGE_SIZE) return first;
+    const second = await applyMapQuery(pointBuilder(), parsed.query, bounds.bounds, 1);
+    return second.error ? second : { data: [...rows, ...((second.data ?? []) as unknown[])], error: null, count: null };
+  };
   // Counted in a separate request: PostgREST's combined count + ordered page
   // plans far worse than either alone and hits the anon statement timeout.
   const countBuilder = supabase
@@ -43,7 +51,7 @@ export async function GET(request: NextRequest) {
   // ?count=only skips the marker page (the heavy, ordered query) when the caller only needs the total.
   const countOnly = params.get('count') === 'only';
   const [{ data, error }, { count, error: countError }] = await Promise.all([
-    countOnly ? Promise.resolve({ data: [] as unknown[], error: null }) : applyMapQuery(builder, parsed.query, bounds.bounds),
+    countOnly ? Promise.resolve({ data: [] as unknown[], error: null }) : readPoints(),
     applyMapFilters(countBuilder, parsed.query, bounds.bounds),
   ]);
   if (error || countError) {
