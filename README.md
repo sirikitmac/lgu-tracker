@@ -5,108 +5,123 @@
   </picture>
 </p>
 
-# 🏗️ LGU Tracker
+<h1 align="center">LGU Tracker</h1>
 
-### *Bantay Proyekto, Gabay sa Progreso.* 🇵🇭
+<p align="center"><em>Bantay Proyekto, Gabay sa Progreso.</em> 🇵🇭</p>
 
-> 🚧 **Under active development.** Features and data are changing; see [Project status](#-project-status).
+<p align="center">
+  A free public directory and map of Philippine infrastructure projects, with a community and a reporting desk
+  built around them.
+</p>
 
-**LGU Tracker** is a free public directory and map of Philippine infrastructure projects: DPWH contracts and
-DILG-reported local government projects. For each project it shows what was built, where, by whom and for how
-much, and links back to where the record was published. Signed-in people can also discuss projects in a public
-community, send concerns to LGU staff and follow what happens to them.
+<p align="center">
+  <a href="https://bantayproyekta.vercel.app/"><strong>🌐 Open the live site</strong></a>
+  &nbsp;·&nbsp;
+  <a href="#-features">Features</a>
+  &nbsp;·&nbsp;
+  <a href="#-getting-started">Run it locally</a>
+  &nbsp;·&nbsp;
+  <a href="#-project-status">Status</a>
+</p>
+
+<p align="center">
+  <img alt="Next.js 16" src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white">
+  <img alt="React 19" src="https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white">
+  <img alt="Tailwind CSS 4" src="https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white">
+  <img alt="Supabase" src="https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white">
+  <img alt="Status: under development" src="https://img.shields.io/badge/status-under%20development-F59E0B">
+</p>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/landing-dark.webp">
-  <img src="docs/images/landing-light.webp" width="1280" alt="LGU Tracker landing page: the headline &quot;Track every peso. See every project.&quot; over a wall of project photos, with live counts of 92,581 DPWH contracts and 41,194 DILG projects">
+  <img src="docs/images/landing-light.webp" width="1280" alt="LGU Tracker landing page: the headline &quot;Track every peso. See every project.&quot; over a wall of project photos, with live counts of DPWH contracts and DILG projects">
 </picture>
+
+> 🚧 **Under active development.** Features and data are changing. The data is a snapshot, not a live feed, and LGU
+> Tracker is a student project, not an official government website. See [Project status](#-project-status).
+
+---
+
+## 🧭 What it does
+
+| | |
+|---|---|
+| 🔎 **Find** | Search more than 175,000 DPWH and DILG project records, with filters, sorting, grid and table views. |
+| 🗺️ **See** | A map and a dashboard on one page, sharing the same filters. |
+| 💬 **Discuss** | A live public community: discussions, replies, votes, anonymous posting and role pills. |
+| 📣 **Report** | Send a concern about a project, then follow it from *Sent* to *Resolved*. |
+| 🤖 **Ask** | Ask BP, an assistant that answers from the database and never writes SQL. |
+
+**CCC181 Final Project by Team BB (BeyondBoard).**
 
 ---
 
 ## ✨ Features
 
-### Landing page with live stats
-Record counts, a region breakdown and a dot map of contract locations, read live from cached aggregates in the
-database.
-On a first visit, an intro animation counts up from 0 to 100%.
-
-<img src="docs/images/landing-coverage.webp" width="640" alt="&quot;Where the records are&quot; section: contract counts per Visayas and Mindanao region beside a dot map of contract locations">
-
 ### Project directory
-One searchable list of more than 175,000 records with an **All / DPWH / DILG** agency switch, DILG categories, filters, sort,
-and grid or table views.
+One searchable list with an **All / DPWH / DILG** agency switch, DILG categories, filters, sort, and grid or table
+views. Every DPWH contract, NEP item and DILG project has its own page with the reported fields and a link to its
+source (for BetterGov.ph data, the exact dataset file and revision).
 
 <img src="docs/images/directory.webp" width="1280" alt="Projects page with a search bar, the All/DPWH/DILG agency switch, the record count, and project cards showing status, contractor and contract amount">
 
-### Project map
-- **Map and dashboard on one page**: the dashboard sits above the map, and both share one set of region, status and
-  category filters. Choosing a region on the dashboard zooms the map to it; filtering the map updates the charts.
-  Marker colours follow the dashboard (by region, status or category), and the map stays within the Philippines.
-- **DPWH layer**: contracts at the coordinates DPWH reports. In view, it shows up to the 2,000 largest contracts.
-  Responses are cached, so panning and filtering stay quick.
-- **LGU layer (DILG SubayBAYAN)**: 41,194 projects in clustered markers (supercluster), with category chips and
+### Map and dashboard, together
+- **One page, one set of filters.** The dashboard sits above the map. Pick a region on the dashboard and the map
+  zooms to it; filter the map and the charts follow. Marker colours follow the dashboard (by region, status or
+  category), and the map stays within the Philippines.
+- **DPWH layer:** contracts at the coordinates DPWH reports, up to the 2,000 largest in view. Responses are cached,
+  so panning and filtering stay quick.
+- **LGU layer (DILG SubayBAYAN):** 41,194 projects in clustered markers (supercluster), with category chips and
   source, region, province, city, year and status filters.
-- **Approximate locations**: SubayBAYAN has no coordinates, so each project sits at the centre of its barangay,
-  city or province. The panel says which one. An *Approximate locations* toggle shows or hides projects placed at a
-  city or province centre.
-- **Street View cat**: drag it onto the map to see the street there.
-
-<img src="docs/images/map-dpwh.webp" width="1280" alt="Project map, DPWH layer: status-coloured markers across the Visayas and Mindanao beside a list of contracts in view">
-
-<img src="docs/images/map-lgu.webp" width="1280" alt="Project map, LGU layer: the layer switch, SubayBAYAN category chips with counts, and source, location, year and status filters">
-
-### Jump to a project by SubayBAYAN code
-`/projects/map?code=FALGU-26-10-13-01-000-1` opens the LGU layer and zooms to that project. If several projects
-share a code, it lists them all.
-
-<img src="docs/images/map-code-jump.webp" width="1280" alt="Map opened from a ?code= link: the search box holds the project code, and the map and panel show the single matching project">
-
-### Project detail pages
-Every DPWH contract, NEP item and DILG project has its own page with the reported fields and a link to its source
-(for BetterGov.ph data, the exact dataset file and revision).
-
-### Dashboard
-DPWH contracts by region, status, category and year, with a region filter. It is part of the Map & Dashboard page
-(above), so the numbers and the map always describe the same selection. FY 2027 NEP proposals are counted
-separately.
+- **Approximate locations:** SubayBAYAN has no coordinates, so each project sits at the centre of its barangay, city
+  or province. The panel says which one, and a toggle shows or hides the approximate ones.
+- **Street View cat:** drag it onto the map to see the street there.
+- **Share a project:** `/projects/map?code=FALGU-26-10-13-01-000-1` opens the LGU layer and zooms to it.
 
 <img src="docs/images/dashboard.webp" width="1280" alt="Dashboard: contract totals, reported contract value, completed and on-going counts, contracts by region and a status donut">
 
+<img src="docs/images/map-dpwh.webp" width="1280" alt="Project map, DPWH layer: status-coloured markers across the country beside a list of contracts in view">
+
+<img src="docs/images/map-lgu.webp" width="1280" alt="Project map, LGU layer: the layer switch, SubayBAYAN category chips with counts, and source, location, year and status filters">
+
 ### Community
-A public discussion board about projects, at `/community`. Anyone can read; an account is needed to post, comment
-and vote.
-- **Discussions, replies and votes** that update live for everyone on the page.
-- **Link a discussion to a project**, with suggestions as you type.
-- **Post or comment anonymously.** An anonymous item stores no name, photo or role in the public row. Only the
-  author and administrators can see who wrote it.
-- **Role pills.** A small coloured tag beside a name: **Super Admin** (purple), **Admin** (red), **LGU** (green) for
-  government staff. Citizens, contractors and anonymous items have none. Admins can recolour or rename these, and
-  give themselves a custom pill from their profile. A change shows everywhere at once.
-- Rate limits on posting and commenting, and each person can delete their own items.
+A public discussion board at `/community`. Anyone can read; an account is needed to post, comment and vote.
+- **Live discussions, replies and votes** that update for everyone on the page, optionally linked to a project.
+- **Anonymous posting.** An anonymous item stores no name, photo or role in the public row; only its author and
+  administrators can see who wrote it.
+- **Role pills.** A small coloured tag beside a name: **Super Admin** (purple), **Admin** (red), **LGU** (green).
+  Citizens, contractors and anonymous items have none. Admins can rename and recolour them, and give themselves a
+  custom pill from their profile; a change shows everywhere at once.
+- Rate limits on posting and commenting, and everyone can delete their own items.
+
+<img src="docs/images/community.webp" width="1280" alt="Bantay Community: discussions with author pictures, role pills, vote counts and comment counts">
 
 ### Report a concern
-Anyone signed in can send a concern about a project at `/report`, with photos. Each report gets a short number
+Signed-in people can send a concern about a project at `/report`, with photos. Each report gets a short number
 (like `RPT-00042`) and a status the sender can follow: **Sent → Received → In review → Resolved / Closed**.
-- **My reports**: your own reports and their timeline. Only you and LGU staff can see them.
+- **My reports:** your reports and their timeline. Only you and LGU staff can see them.
 - **Report queue** (staff): open a report, change its status and write back to the sender.
-- **Inbox**: a notification when your report moves, when your role changes, or when something needs your attention.
+- **Inbox:** a notification when your report moves, your role changes, or something needs your attention.
 
 ### Accounts, profiles and roles
-- **Sign-up and sign-in**, with a sign-in dialog available from any page.
-- **Four roles people see**: Super Admin, Admin, Government Employee and Citizen. Everyone starts as a citizen;
+- **Four roles people see:** Super Admin, Admin, Government Employee and Citizen. Everyone starts as a citizen;
   asking for a role at sign-up puts the account in a queue until an administrator decides. Access is enforced in the
   database (Row Level Security), not only in the interface.
-- **Users and roles** (administrators): approve or change roles. Only a Super Admin can manage administrator accounts.
-- **Profile**: your name, job title and a picture: upload a photo (cropped to a square first) or pick a free avatar.
-  Administrators also manage role pills here.
+- **Users and roles** (administrators): approve or change roles. Only a Super Admin manages administrator accounts.
+- **Profile:** your name, job title and a picture. Upload a photo (cropped to a square first) or pick a free avatar.
 - **Monitoring workspace** (`/dashboard`) with a sidebar for staff tools, pinned to the left of every signed-in page.
+- **Ratings:** one 1–5 star review per person, shown live on the landing page.
 
-### Ratings on the landing page
-Signed-in people can leave one 1–5 star rating with a short review (optionally first name only). Reviews show on the landing page and update live; administrators can hide one.
+### Landing page
+Live record counts, a region breakdown and a dot map of contract locations, read from cached aggregates. On a first
+visit, an intro animation counts up from 0 to 100%.
+
+<img src="docs/images/landing-coverage.webp" width="640" alt="&quot;Where the records are&quot; section: contract counts per region beside a dot map of contract locations">
 
 ### Ask BP assistant
-A chat assistant for questions about the directory, built on Groq tool calling (free tier). The model never writes SQL.
-It can only call two read-only tools, and the counts in its answers come from the database. See
+A chat assistant for questions about the directory, built on Groq tool calling (free tier). The model never writes
+SQL. It can only call two read-only tools, and the counts in its answers come from the database. See
 [`docs/BP_ASSISTANT.md`](docs/BP_ASSISTANT.md).
 
 <img src="docs/images/ask-bp.webp" width="1280" alt="Ask BP chat panel open over the landing page with a greeting and suggested questions">
@@ -122,7 +137,7 @@ Light, dark or system theme, with layouts down to 360 px wide.
 
 | Data | Source | Retrieved | License / terms |
 |---|---|---|---|
-| DPWH contracts (Visayas, Mindanao, Metro Manila, Central Luzon, CALABARZON) | DPWH Transparency Portal via [BetterGov.ph](https://huggingface.co/datasets/bettergovph/dpwh-transparency-data) | Oct 26, 2026 (import incomplete) | CC0 1.0 |
+| DPWH contracts (Visayas, Mindanao, and part of Luzon: Metro Manila, Central Luzon, CALABARZON) | DPWH Transparency Portal via [BetterGov.ph](https://huggingface.co/datasets/bettergovph/dpwh-transparency-data) | Oct 26, 2026 (import incomplete) | CC0 1.0 |
 | DPWH FY 2027 NEP proposals (nationwide, directory only, no coordinates) | [BetterGov.ph](https://huggingface.co/datasets/bettergovph/dpwh-nep-2027) | with the DPWH data | Not stated; the NEP is a public government document |
 | LGU projects: Locally Funded Projects (LGSF) | [DILG SubayBAYAN (RBME)](https://subaybayan.dilg.gov.ph/rbme/projects/index?type=lgsf) | Oct 31, 2026 (Excel export snapshot) | Public government records (DILG) |
 | LGU projects: LIME 20% Development Fund (RLIP) | [DILG SubayBAYAN (RBME)](https://subaybayan.dilg.gov.ph/rbme/projects/index?type=rlip) | Oct 31, 2026 (Excel export snapshot) | Public government records (DILG) |
@@ -180,6 +195,10 @@ npm run test:db   # database tests against an in-memory Postgres (PGlite): the m
 npm run lint      # TypeScript type check (tsc --noEmit)
 npm run build     # production build
 ```
+
+**Refreshing the README pictures:** `npm i --no-save playwright && npx playwright install chromium`, then
+`SHOT_BASE_URL=https://bantayproyekta.vercel.app npm run docs:screenshots` rewrites the public-page images in
+`docs/images`. Look at each one before committing.
 
 ### Data pipelines
 
