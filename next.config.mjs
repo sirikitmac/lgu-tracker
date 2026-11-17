@@ -6,6 +6,14 @@ const nextConfig = {
     // 90 keeps the sign-in photo crisp.
     qualities: [50, 75, 90],
   },
+  async redirects() {
+    return [
+      // The public dashboard is now the Dashboard view of Map & Dashboard. The query
+      // string (?region=) is passed through, so /projects/dashboard?region=X lands on
+      // /projects/map?view=dashboard&region=X.
+      { source: '/projects/dashboard', destination: '/projects/map?view=dashboard', permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -43,19 +43,18 @@ export function workspaceNav(role: AppRole): WorkspaceNavGroup[] {
     label: 'Explore',
     items: [
       { id: 'projects', label: 'Projects', href: '/projects', icon: 'projects' },
-      { id: 'map', label: 'Map', href: '/projects/map', icon: 'map' },
-      { id: 'insights', label: 'Public dashboard', href: '/projects/dashboard', icon: 'insights' },
+      { id: 'map', label: 'Map & Dashboard', href: '/projects/map', icon: 'map' },
     ],
   });
 
   return groups;
 }
 
-/** Whether a tab is the current page. Projects does not light up on its map or dashboard. */
+/** Whether a tab is the current page. Projects does not light up on Map & Dashboard (/projects/map, both views). */
 export function isActiveNavItem(item: WorkspaceNavItem, pathname: string): boolean {
   const under = (base: string) => pathname === base || pathname.startsWith(`${base}/`);
   if (item.id === 'projects') {
-    return under('/projects') && !under('/projects/map') && !under('/projects/dashboard');
+    return under('/projects') && !under('/projects/map');
   }
   return under(item.href);
 }
