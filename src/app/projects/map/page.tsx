@@ -1,30 +1,30 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { BarChart3, List, Map as MapIcon } from 'lucide-react';
+import { ArrowDown, ArrowUp, List } from 'lucide-react';
 import { secondaryButtonClass } from '@/components/dpwh/ui';
 import { CONTRACT_ID_PATTERN } from '@/lib/integrations/dpwh/nationwide/detail';
 import { DpwhPublicMap, type MapFocus } from '@/components/dpwh/DpwhPublicMap';
 import { DpwhDashboard } from '@/components/dpwh/DpwhDashboard';
 import { DashboardSkeleton } from '@/components/dpwh/DashboardSkeleton';
+import { DpwhViewProvider } from '@/components/dpwh/DpwhViewContext';
+import { ScrollToDashboard } from '@/components/dpwh/ScrollToDashboard';
+import { EMPTY_VIEW_FILTERS, parseViewFilters } from '@/lib/dpwh/viewFilters';
 import { SubaybayanMap } from '@/components/subaybayan/SubaybayanMap';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { asCode } from '@/lib/subaybayan/code';
 import { EMPTY_FILTERS, ID_PATTERN, parseSubaybayanQuery } from '@/lib/subaybayan/query';
-import { exploreViewHref, parseExploreView, type ExploreView } from '@/lib/nav/exploreView';
+import { parseExploreView } from '@/lib/nav/exploreView';
 import type { DpwhSummary } from '@/types/dpwh';
 
 type Params = Record<string, string | string[] | undefined>;
 
 const TITLE = 'Map & Dashboard · LGU Tracker';
-const DESCRIPTION: Record<ExploreView, string> = {
-  map: 'Public map of DPWH infrastructure contracts and DILG SubayBAYAN LGU projects.',
-  dashboard: 'DPWH infrastructure contracts in the Visayas and Mindanao by region, status, category and year, with FY 2027 NEP proposals counted separately.',
-};
+const DESCRIPTION =
+  'Public map of DPWH infrastructure contracts and DILG SubayBAYAN LGU projects, with the DPWH dashboard beside it: click a region, status or category on either and the other follows.';
 
-export async function generateMetadata({ searchParams }: PageProps<'/projects/map'>): Promise<Metadata> {
-  const view = parseExploreView((await searchParams).view);
-  return { title: TITLE, description: DESCRIPTION[view] };
+export function generateMetadata(): Metadata {
+  return { title: TITLE, description: DESCRIPTION };
 }
 
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
@@ -43,12 +43,6 @@ const layerTab = (active: boolean) =>
   `inline-flex items-center justify-center h-9 px-4 rounded-full text-[13px] font-semibold whitespace-nowrap transition-colors ${focusRing} ${
     active ? 'bg-ink text-on-ink shadow-raise' : 'text-subtle hover:text-ink'
   }`;
-// The view switcher: larger than the layer pills (44px), and full width on phones so either tab is under the thumb.
-const viewTab = (active: boolean) =>
-  `inline-flex flex-1 sm:flex-none items-center justify-center gap-2 h-11 px-5 rounded-full text-sm font-semibold whitespace-nowrap transition-colors ${focusRing} ${
-    active ? 'bg-ink text-on-ink shadow-raise' : 'text-subtle hover:text-ink'
-  }`;
-
 /** Which map layer the URL asks for, and its initial SubayBAYAN filters and focus. */
 function parseMapParams(params: Params) {
   // ?code=<SubayBAYAN project code> (shared links) always opens the LGU layer and looks the code up.
@@ -81,7 +75,7 @@ function parseMapParams(params: Params) {
  * (dpwh_directory_stats, refreshed by the database after each sync) plus one
  * head-only count of NEP proposals; no project rows are sent to the browser.
  */
-async function DashboardView({ region }: { region: string }) {
+async function DashboardView() {
   const supabase = await createSupabaseServerClient();
 
   let summary: DpwhSummary | null = null;
@@ -107,78 +101,86 @@ async function DashboardView({ region }: { region: string }) {
     else nepCount = nep.count;
   }
 
-  return <DpwhDashboard summary={summary} nepCount={nepCount} error={error} initialRegion={region} />;
+  return <DpwhDashboard summary={summary} nepCount={nepCount} error={error} />;
 }
 
 /**
  * Map & Dashboard: the public map and the public DPWH dashboard on one page,
- * switched with ?view=map (default) or ?view=dashboard. Only the active view
- * renders and queries on the server.
+ * both visible. Region, status and category are shared: a click on the map
+ * reaches the dashboard and a click on the dashboard reaches the map.
+ * ?view=dashboard (older links) scrolls down to the dashboard.
  */
 export default async function MapAndDashboardPage({ searchParams }: PageProps<'/projects/map'>) {
   const params = await searchParams;
   const view = parseExploreView(params.view);
-  const map = view === 'map' ? parseMapParams(params) : null;
+  const map = parseMapParams(params);
+  const dpwh = map.layer === 'dpwh';
+  // The shared filters belong to the DPWH layer; the SubayBAYAN layer uses the same parameter names for its own filters.
+  const initial = dpwh ? parseViewFilters((k) => first(params[k])) : EMPTY_VIEW_FILTERS;
 
   return (
-    <div data-frame={view === 'map' ? 'wide' : undefined} className="space-y-6">
+    <div id="top-of-map" data-frame="wide" className="space-y-6">
       <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="min-w-0">
           <p className="inline-flex items-center gap-2 text-[13px] font-semibold text-subtle">
             <span className="w-2 h-2 rounded-full bg-accent" aria-hidden="true" />
-            {map?.layer === 'subaybayan' ? 'DILG SubayBAYAN · LGU projects nationwide' : 'DPWH contracts · Visayas and Mindanao'}
+            {dpwh ? 'DPWH contracts · Visayas and Mindanao' : 'DILG SubayBAYAN · LGU projects nationwide'}
           </p>
           <h1 className="mt-2 page-title text-[30px] sm:text-[40px] text-ink">Map &amp; Dashboard</h1>
           <p className="mt-2 max-w-[60ch] text-[15px] leading-relaxed text-subtle">
-            {!map
-              ? 'Every DPWH contract figure, by region, status and category, from the published summary.'
-              : map.layer === 'dpwh'
-                ? 'Contracts at the coordinates DPWH reports. The list follows the map; select a contract or marker to see it on both.'
-                : 'Locally funded and 20% Development Fund projects from DILG SubayBAYAN, placed at the centre of their barangay, town or province, not the project site.'}
+            {dpwh
+              ? 'Contracts at the coordinates DPWH reports, and the summary below the map. Click a region, status or category on either one and the other follows.'
+              : 'Locally funded and 20% Development Fund projects from DILG SubayBAYAN, placed at the centre of their barangay, town or province, not the project site.'}
           </p>
         </div>
-        <nav aria-label="Other views" className="flex flex-wrap items-center gap-2 md:shrink-0">
+        <nav aria-label="On this page" className="flex flex-wrap items-center gap-2 md:shrink-0">
+          {dpwh && (
+            <a href="#dashboard" className={secondaryButtonClass}>
+              <ArrowDown className="w-4 h-4" aria-hidden="true" /> Dashboard
+            </a>
+          )}
           <Link href="/projects" className={secondaryButtonClass}>
             <List className="w-4 h-4" aria-hidden="true" /> Directory
           </Link>
         </nav>
       </header>
 
-      <nav aria-label="Map or dashboard" className="flex">
-        <div className="flex w-full sm:w-auto sm:inline-flex max-w-full overflow-x-auto gap-0.5 p-1 rounded-full bg-surface border border-line shadow-raise">
-          <Link href={exploreViewHref('map')} aria-current={view === 'map' ? 'page' : undefined} className={viewTab(view === 'map')}>
-            <MapIcon className="w-4 h-4" aria-hidden="true" /> Map
+      <nav aria-label="Map layer" className="flex">
+        <div className="inline-flex max-w-full overflow-x-auto gap-0.5 p-1 rounded-full bg-surface border border-line shadow-raise">
+          <Link href="/projects/map" aria-current={dpwh ? 'page' : undefined} className={layerTab(dpwh)}>
+            DPWH contracts
           </Link>
-          <Link href={exploreViewHref('dashboard')} aria-current={view === 'dashboard' ? 'page' : undefined} className={viewTab(view === 'dashboard')}>
-            <BarChart3 className="w-4 h-4" aria-hidden="true" /> Dashboard
+          <Link href="/projects/map?layer=subaybayan" aria-current={!dpwh ? 'page' : undefined} className={layerTab(!dpwh)}>
+            LGU projects<span className="hidden sm:inline">&nbsp;(DILG SubayBAYAN)</span>
           </Link>
         </div>
       </nav>
 
-      {map ? (
-        <>
-          <nav aria-label="Map layer" className="flex">
-            <div className="inline-flex max-w-full overflow-x-auto gap-0.5 p-1 rounded-full bg-surface border border-line shadow-raise">
-              <Link href="/projects/map" aria-current={map.layer === 'dpwh' ? 'page' : undefined} className={layerTab(map.layer === 'dpwh')}>
-                DPWH contracts
-              </Link>
-              <Link href="/projects/map?layer=subaybayan" aria-current={map.layer === 'subaybayan' ? 'page' : undefined} className={layerTab(map.layer === 'subaybayan')}>
-                LGU projects<span className="hidden sm:inline">&nbsp;(DILG SubayBAYAN)</span>
-              </Link>
-            </div>
-          </nav>
-
-          {map.layer === 'dpwh' ? (
+      <DpwhViewProvider initial={initial} mirror={dpwh}>
+        {dpwh ? (
+          <>
             <DpwhPublicMap focus={parseFocus(params)} />
-          ) : (
+            <section id="dashboard" aria-label="DPWH dashboard" className="scroll-mt-20 space-y-4 border-t border-line pt-6">
+              <div className="flex justify-end">
+                <a href="#top-of-map" className={secondaryButtonClass}>
+                  <ArrowUp className="w-4 h-4" aria-hidden="true" /> Back to the map
+                </a>
+              </div>
+              <Suspense fallback={<DashboardSkeleton />}>
+                <DashboardView />
+              </Suspense>
+            </section>
+            <ScrollToDashboard active={view === 'dashboard'} />
+          </>
+        ) : (
+          <>
             <SubaybayanMap initialFilters={map.initialFilters} focusId={map.focusId} />
-          )}
-        </>
-      ) : (
-        <Suspense fallback={<DashboardSkeleton />}>
-          <DashboardView region={first(params.region) ?? ''} />
-        </Suspense>
-      )}
+            <p className="rounded-card bg-sunken px-4 py-3.5 text-[13px] leading-relaxed text-subtle">
+              The dashboard summarizes DPWH contracts. Switch to <Link href="/projects/map" className="font-semibold text-ink underline underline-offset-2">DPWH contracts</Link> to see it beside the map and link the two.
+            </p>
+          </>
+        )}
+      </DpwhViewProvider>
     </div>
   );
 }

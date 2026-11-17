@@ -21,9 +21,8 @@ test('view links: the map keeps the short address, the dashboard adds ?view=', (
 });
 
 test('the sidebar hides only on the map view', () => {
-  assert.equal(showsProjectsSidebar('/projects/map', null), false);
-  assert.equal(showsProjectsSidebar('/projects/map', 'map'), false);
-  assert.equal(showsProjectsSidebar('/projects/map', 'bogus'), false);
+  assert.equal(showsProjectsSidebar('/projects/map', null), true, 'the sidebar starts collapsed, so the wide page keeps it');
+  assert.equal(showsProjectsSidebar('/projects/map', 'map'), true);
   assert.equal(showsProjectsSidebar('/projects/map', 'dashboard'), true);
   assert.equal(showsProjectsSidebar('/projects', null), true);
   assert.equal(showsProjectsSidebar('/projects/25KA0001', null), true);

@@ -3,7 +3,7 @@
 import React, { useEffect, useId, useMemo, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, BarChart3, CalendarX, Info, MapPinned, PieChart, X } from 'lucide-react';
+import { ArrowRight, BarChart3, CalendarX, Info, MapPin, MapPinned, PieChart, X } from 'lucide-react';
 import type { DpwhCount, DpwhStatus, DpwhSummary } from '@/types/dpwh';
 import { regionColor, regionDisplayName } from '@/lib/regionPalette';
 import { DataScopeNote } from './DataScopeNote';
@@ -12,6 +12,8 @@ import { EmptyState, ErrorState } from '@/components/ui/StateViews';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { categoryLabel, formatCount, formatPeso, formatPesoCompact, formatShare, statusColor, statusLabel } from './format';
 import { controlBaseClass, panelClass, secondaryButtonClass, secondaryButtonSmClass } from './ui';
+import { useDpwhView } from './DpwhViewContext';
+import { hasViewFilters } from '@/lib/dpwh/viewFilters';
 
 /**
  * The public dashboard. Contract figures come from the cached summary only;
@@ -79,6 +81,7 @@ function RankedBars<T extends string | null>({
   onSelect,
   swatchShape = 'square',
   unit = 'contracts',
+  focusWord = 'the region',
 }: {
   rows: DpwhCount<T>[];
   total: number;
@@ -88,6 +91,8 @@ function RankedBars<T extends string | null>({
   onSelect?: (value: T | null) => void;
   swatchShape?: 'square' | 'round';
   unit?: string;
+  /** What a click on a bar focuses, for its hover text. */
+  focusWord?: string;
 }) {
   const max = Math.max(1, ...rows.map((r) => r.count));
   const [drawn, setDrawn] = useState(false);
@@ -136,7 +141,7 @@ function RankedBars<T extends string | null>({
                 type="button"
                 aria-pressed={isSelected}
                 onClick={() => onSelect(isSelected ? null : row.value)}
-                title={`${name}: ${formatCount(row.count)} ${unit} (${share}). ${isSelected ? 'Select again to show all regions.' : 'Select to focus the dashboard on this region.'}`}
+                title={`${name}: ${formatCount(row.count)} ${unit} (${share}). ${isSelected ? 'Select again to clear it.' : `Select to focus the dashboard and the map on ${focusWord}.`}`}
                 className={`${rowClass} hover:bg-sunken focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-accent-ink ${isSelected ? 'bg-sunken' : ''}`}
               >
                 {content}
@@ -157,7 +162,7 @@ function RankedBars<T extends string | null>({
  * screen readers. Hovering or focusing a legend row (or hovering a segment)
  * puts that status in the centre; otherwise the centre shows the total.
  */
-function StatusDonut({ rows, total }: { rows: DpwhCount<DpwhStatus>[]; total: number }) {
+function StatusDonut({ rows, total, selected, onSelect }: { rows: DpwhCount<DpwhStatus>[]; total: number; selected?: string; onSelect?: (value: DpwhStatus | null) => void }) {
   const [active, setActive] = useState<DpwhStatus | null>(null);
   const ordered = useMemo(
     () => [...rows].filter((r) => r.count > 0).sort((a, b) => ALL_STATUSES_ORDER.indexOf(a.value) - ALL_STATUSES_ORDER.indexOf(b.value)),
@@ -219,11 +224,14 @@ function StatusDonut({ rows, total }: { rows: DpwhCount<DpwhStatus>[]; total: nu
           <li key={row.value}>
             <button
               type="button"
+              aria-pressed={onSelect ? selected === row.value : undefined}
+              onClick={onSelect ? () => onSelect(row.value) : undefined}
+              title={onSelect ? (selected === row.value ? 'Select again to clear it.' : 'Select to focus the dashboard and the map on this status.') : undefined}
               onPointerEnter={() => setActive(row.value)}
               onPointerLeave={() => setActive(null)}
               onFocus={() => setActive(row.value)}
               onBlur={() => setActive(null)}
-              className={`w-full grid grid-cols-[minmax(0,1fr)_auto_3.5rem] items-center gap-x-3 px-2 py-1.5 rounded-lg text-left text-[13px] text-ink focus-visible:outline-2 focus-visible:outline-accent-ink ${active === row.value ? 'bg-sunken' : ''}`}
+              className={`w-full grid grid-cols-[minmax(0,1fr)_auto_3.5rem] items-center gap-x-3 px-2 py-1.5 rounded-lg text-left text-[13px] text-ink focus-visible:outline-2 focus-visible:outline-accent-ink ${active === row.value || selected === row.value ? 'bg-sunken' : ''} ${selected && selected !== row.value ? 'opacity-55 hover:opacity-100' : ''}`}
             >
               <span className="flex items-center gap-2 min-w-0">
                 <span className="w-2.5 h-2.5 shrink-0 rounded-full" style={{ backgroundColor: statusColor(row.value) }} aria-hidden="true" />
@@ -282,26 +290,19 @@ export function DpwhDashboard({
   summary,
   nepCount,
   error,
-  initialRegion,
 }: {
   summary: DpwhSummary | null;
   nepCount: number | null;
   error: string | null;
-  initialRegion: string;
 }) {
   const stats = summary?.stats;
   const regions = useMemo(() => stats?.by_region ?? [], [stats]);
-  const [region, setRegion] = useState<string | null>(() => (regions.some((r) => r.value === initialRegion) ? initialRegion : null));
+  // The filters are shared with the map on this page: a click here reaches the map, and the map's filters show here.
+  const view = useDpwhView();
+  const region = regions.some((r) => r.value === view.filters.region) ? view.filters.region : null;
+  const setRegion = (value: string | null) => view.toggle('region', value, 'dashboard');
   const router = useRouter();
   const [retrying, startRetry] = useTransition();
-
-  // Mirror the region into the address bar so the view can be shared.
-  useEffect(() => {
-    const url = new URL(window.location.href);
-    if (region) url.searchParams.set('region', region);
-    else url.searchParams.delete('region');
-    if (url.href !== window.location.href) window.history.replaceState(window.history.state, '', url);
-  }, [region]);
 
   // A failed query and a database with nothing imported look different: only the first offers a retry.
   if (!stats || !summary) {
@@ -371,7 +372,52 @@ export function DpwhDashboard({
             {region} <X className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         )}
+        {view.filters.status && (
+          <button type="button" onClick={() => view.toggle('status', null, 'dashboard')} className={secondaryButtonSmClass} aria-label={`Clear status ${statusLabel(view.filters.status)}`}>
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: statusColor(view.filters.status) }} aria-hidden="true" />
+            {statusLabel(view.filters.status)} <X className="w-3.5 h-3.5" aria-hidden="true" />
+          </button>
+        )}
+        {view.filters.category && (
+          <button type="button" onClick={() => view.toggle('category', null, 'dashboard')} className={secondaryButtonSmClass} aria-label={`Clear category ${categoryLabel(view.filters.category)}`}>
+            {categoryLabel(view.filters.category)} <X className="w-3.5 h-3.5" aria-hidden="true" />
+          </button>
+        )}
+        {hasViewFilters(view.filters) && (
+          <button type="button" onClick={() => view.clear('dashboard')} className={secondaryButtonSmClass}>
+            Clear all
+          </button>
+        )}
       </DashboardHeader>
+
+      {(hasViewFilters(view.filters) || view.selected) && (
+        <div role="status" aria-live="polite" className="flex flex-col gap-2 rounded-card bg-sunken px-4 py-3 text-[13px] text-subtle sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6">
+          {hasViewFilters(view.filters) && (
+            <p>
+              <span className="font-semibold text-ink">Matching the map filters: </span>
+              {view.matching.state === 'ready' && view.matching.total !== null ? (
+                <span className="tabular-nums font-semibold text-ink">{formatCount(view.matching.total)} contracts</span>
+              ) : view.matching.state === 'error' ? (
+                'count unavailable right now'
+              ) : (
+                'counting…'
+              )}
+              {view.filters.status || view.filters.category ? ' · the charts below show the whole region' : ''}
+            </p>
+          )}
+          {view.selected && (
+            <p className="inline-flex min-w-0 items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="min-w-0 truncate">
+                <span className="font-semibold text-ink">Selected on the map: </span>
+                {view.selected.title ?? view.selected.contract_id} · {statusLabel(view.selected.status)}
+                {view.selected.region ? ` · ${view.selected.region}` : ''}
+                {view.selected.province ? `, ${view.selected.province}` : ''}
+              </span>
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="space-y-2">
         <DataFreshness summary={summary} className="px-1" />
@@ -419,7 +465,7 @@ export function DpwhDashboard({
       <div className="grid gap-5 lg:grid-cols-3">
         <Panel
           title="Contracts by region"
-          note={`By component location; select one to focus the dashboard. ${formatCount(regions.length)} regions, ${formatCount(total)} contracts.`}
+          note={`By component location; select one to focus the dashboard and the map. ${formatCount(regions.length)} regions, ${formatCount(total)} contracts.`}
           className="lg:col-span-2"
         >
           <RankedBars
@@ -433,13 +479,21 @@ export function DpwhDashboard({
         </Panel>
 
         <Panel title="Contracts by status" note={allRegionsNote ?? `${scopeWord}. Status as reported by DPWH.`}>
-          <StatusDonut rows={statusRows} total={breakdownTotal} />
+          <StatusDonut rows={statusRows} total={breakdownTotal} selected={view.filters.status} onSelect={(v) => view.toggle('status', v, 'dashboard')} />
         </Panel>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Panel title="Contracts by category" note={allRegionsNote ?? `${scopeWord}. Category assigned from the DPWH record.`}>
-          <RankedBars rows={categoryRows} total={breakdownTotal} label={categoryLabel} color={() => 'var(--color-subtle)'} />
+          <RankedBars
+            rows={categoryRows}
+            total={breakdownTotal}
+            label={categoryLabel}
+            color={() => 'var(--color-subtle)'}
+            selected={view.filters.category || null}
+            onSelect={(v) => view.toggle('category', v, 'dashboard')}
+            focusWord="this category"
+          />
         </Panel>
 
         {region ? (

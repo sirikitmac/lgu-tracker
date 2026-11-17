@@ -1,7 +1,7 @@
 /**
- * The public Map & Dashboard page (/projects/map) shows one of two views,
- * kept in the address bar as ?view= so links are shareable and Back works.
- * The map is the default, so every older /projects/map link still opens it.
+ * The public Map & Dashboard page (/projects/map) shows the map and the
+ * dashboard together. ?view=dashboard (an older link, and the "Dashboard" link
+ * in the menus) opens the page scrolled to the dashboard; the map is the default.
  */
 export type ExploreView = 'map' | 'dashboard';
 
@@ -22,14 +22,12 @@ export function exploreViewHref(view: ExploreView, params?: Record<string, strin
   return qs ? `${EXPLORE_PATH}?${qs}` : EXPLORE_PATH;
 }
 
-const under = (pathname: string, base: string) => pathname === base || pathname.startsWith(`${base}/`);
-
 /**
- * Whether the signed-in sidebar is drawn on a /projects page. The map view
- * keeps the whole width; the dashboard view and every other page keep the sidebar.
+ * Whether the signed-in sidebar is drawn on a /projects page. Always: it starts
+ * collapsed to a narrow strip, so even the wide Map & Dashboard page keeps it.
  */
-export function showsProjectsSidebar(pathname: string, view: string | null | undefined): boolean {
-  return !(under(pathname, EXPLORE_PATH) && parseExploreView(view) === 'map');
+export function showsProjectsSidebar(_pathname: string, _view: string | null | undefined): boolean {
+  return true;
 }
 
 /**
