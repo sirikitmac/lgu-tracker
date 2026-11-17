@@ -192,7 +192,8 @@ export function AuthorLine({
           {yours && <span className="ml-1.5 rounded-full bg-sunken px-1.5 py-0.5 text-[11px] font-semibold text-subtle">You</span>}
           {revealed && (
             <span className="ml-1.5 rounded-full bg-warn-soft px-1.5 py-0.5 text-[11px] font-semibold text-warn-ink" title="Only administrators see this">
-              Anonymous · posted by {revealed}
+              posted by {revealed}
+              <span className="sr-only"> (only administrators see this)</span>
             </span>
           )}
           <span className="block sm:inline">
