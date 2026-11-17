@@ -2,6 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { DpwhMapPoint } from '@/types/dpwh';
+import type { MarkerColorMode } from './DpwhLeafletMap';
 import {
   EMPTY_VIEW_FILTERS,
   sameViewFilters,
@@ -29,6 +30,9 @@ interface DpwhView {
   /** The contract selected on the map (a marker or a list card), shown on the dashboard. */
   selected: DpwhMapPoint | null;
   setSelected: (point: DpwhMapPoint | null) => void;
+  /** What the map colours its dots by. The dashboard drives it: region bars colour by region, the status donut by status. */
+  colorMode: MarkerColorMode;
+  setColorMode: (mode: MarkerColorMode) => void;
   matching: MatchingCount;
   setMatching: (m: MatchingCount) => void;
 }
@@ -45,6 +49,7 @@ export function DpwhViewProvider({ initial, mirror, children }: { initial: ViewF
   const [filters, setFiltersState] = useState<ViewFilters>(initial);
   const [fitRequest, setFitRequest] = useState(0);
   const [selected, setSelected] = useState<DpwhMapPoint | null>(null);
+  const [colorMode, setColorMode] = useState<MarkerColorMode>('region');
   const [matching, setMatching] = useState<MatchingCount>({ total: null, state: 'loading' });
   const current = useRef(filters);
   current.current = filters;
@@ -52,7 +57,12 @@ export function DpwhViewProvider({ initial, mirror, children }: { initial: ViewF
   const setFilters = useCallback((next: ViewFilters, origin: FilterOrigin) => {
     if (sameViewFilters(next, current.current)) return;
     setFiltersState(next);
-    if (origin === 'dashboard') setFitRequest((n) => n + 1);
+    if (origin === 'dashboard') {
+      setFitRequest((n) => n + 1);
+      // A status picked on the dashboard shows the map in status colours; clearing it goes back to region colours.
+      if (next.status !== current.current.status) setColorMode(next.status ? 'status' : 'region');
+      else if (next.region !== current.current.region && next.region) setColorMode('region');
+    }
   }, []);
 
   const toggle = useCallback(
@@ -70,8 +80,8 @@ export function DpwhViewProvider({ initial, mirror, children }: { initial: ViewF
   }, [filters, mirror]);
 
   const value = useMemo<DpwhView>(
-    () => ({ filters, setFilters, toggle, clear, fitRequest, selected, setSelected, matching, setMatching }),
-    [filters, setFilters, toggle, clear, fitRequest, selected, matching]
+    () => ({ filters, setFilters, toggle, clear, fitRequest, selected, setSelected, colorMode, setColorMode, matching, setMatching }),
+    [filters, setFilters, toggle, clear, fitRequest, selected, colorMode, matching]
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

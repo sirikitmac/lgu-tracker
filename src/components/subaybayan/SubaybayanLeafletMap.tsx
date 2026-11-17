@@ -104,7 +104,7 @@ export default function SubaybayanLeafletMap({ points, selectedId, stackIds, onS
   useEffect(() => {
     const container = containerRef.current;
     if (!container || mapRef.current) return;
-    const map = L.map(container, { preferCanvas: true, maxZoom: MAX_ZOOM, minZoom: 5, scrollWheelZoom: true });
+    const map = L.map(container, { preferCanvas: true, maxZoom: MAX_ZOOM, minZoom: 5, scrollWheelZoom: true, maxBounds: [[3, 114], [22.5, 129.5]], maxBoundsViscosity: 1 });
     if (container.clientWidth > 0 && container.clientHeight > 0) map.fitBounds(PH_BOUNDS, { padding: [8, 8] });
     else map.setView([12.3, 122.5], 6);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: SUBAYBAYAN_MAP_ATTRIBUTION }).addTo(map);

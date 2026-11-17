@@ -91,7 +91,7 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
   const [summary, setSummary] = useState<DpwhSummary | null>(null);
   const [summaryState, setSummaryState] = useState<'loading' | 'ready' | 'empty' | 'error'>('loading');
   const [reload, setReload] = useState(0);
-  const [colorMode, setColorMode] = useState<MarkerColorMode>('status');
+  const { colorMode, setColorMode } = view;
   const [visibleCount, setVisibleCount] = useState(LIST_PAGE);
   // Below the lg breakpoint the map and the list share one slot; on wide screens both show.
   const [smallView, setSmallView] = useState<'map' | 'list'>('map');

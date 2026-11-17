@@ -2,12 +2,12 @@
 
 import { useEffect } from 'react';
 
-/** For ?view=dashboard links: once the page has drawn, bring the dashboard into view. */
-export function ScrollToDashboard({ active }: { active: boolean }) {
+/** For ?view=map and ?focus= links: once the page has drawn, bring the map into view. */
+export function ScrollToMap({ active }: { active: boolean }) {
   useEffect(() => {
     if (!active) return;
     const id = window.setTimeout(() => {
-      const el = document.getElementById('dashboard');
+      const el = document.getElementById('map');
       if (!el) return;
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });

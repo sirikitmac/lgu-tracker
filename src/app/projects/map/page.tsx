@@ -1,14 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { ArrowDown, ArrowUp, List } from 'lucide-react';
+import { ArrowDown, List } from 'lucide-react';
 import { secondaryButtonClass } from '@/components/dpwh/ui';
 import { CONTRACT_ID_PATTERN } from '@/lib/integrations/dpwh/nationwide/detail';
 import { DpwhPublicMap, type MapFocus } from '@/components/dpwh/DpwhPublicMap';
 import { DpwhDashboard } from '@/components/dpwh/DpwhDashboard';
 import { DashboardSkeleton } from '@/components/dpwh/DashboardSkeleton';
 import { DpwhViewProvider } from '@/components/dpwh/DpwhViewContext';
-import { ScrollToDashboard } from '@/components/dpwh/ScrollToDashboard';
+import { ScrollToMap } from '@/components/dpwh/ScrollToMap';
 import { EMPTY_VIEW_FILTERS, parseViewFilters } from '@/lib/dpwh/viewFilters';
 import { SubaybayanMap } from '@/components/subaybayan/SubaybayanMap';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -108,7 +108,7 @@ async function DashboardView() {
  * Map & Dashboard: the public map and the public DPWH dashboard on one page,
  * both visible. Region, status and category are shared: a click on the map
  * reaches the dashboard and a click on the dashboard reaches the map.
- * ?view=dashboard (older links) scrolls down to the dashboard.
+ * The dashboard comes first and drives the map below it; ?view=map or a ?focus= link scrolls down to the map.
  */
 export default async function MapAndDashboardPage({ searchParams }: PageProps<'/projects/map'>) {
   const params = await searchParams;
@@ -129,14 +129,14 @@ export default async function MapAndDashboardPage({ searchParams }: PageProps<'/
           <h1 className="mt-2 page-title text-[30px] sm:text-[40px] text-ink">Map &amp; Dashboard</h1>
           <p className="mt-2 max-w-[60ch] text-[15px] leading-relaxed text-subtle">
             {dpwh
-              ? 'Contracts at the coordinates DPWH reports, and the summary below the map. Click a region, status or category on either one and the other follows.'
+              ? 'The dashboard drives the map below it: click a region to show only its contracts, or a status to colour the map by status. Filters you set on the map show on the dashboard too.'
               : 'Locally funded and 20% Development Fund projects from DILG SubayBAYAN, placed at the centre of their barangay, town or province, not the project site.'}
           </p>
         </div>
         <nav aria-label="On this page" className="flex flex-wrap items-center gap-2 md:shrink-0">
           {dpwh && (
-            <a href="#dashboard" className={secondaryButtonClass}>
-              <ArrowDown className="w-4 h-4" aria-hidden="true" /> Dashboard
+            <a href="#map" className={secondaryButtonClass}>
+              <ArrowDown className="w-4 h-4" aria-hidden="true" /> Map
             </a>
           )}
           <Link href="/projects" className={secondaryButtonClass}>
@@ -159,18 +159,15 @@ export default async function MapAndDashboardPage({ searchParams }: PageProps<'/
       <DpwhViewProvider initial={initial} mirror={dpwh}>
         {dpwh ? (
           <>
-            <DpwhPublicMap focus={parseFocus(params)} />
-            <section id="dashboard" aria-label="DPWH dashboard" className="scroll-mt-20 space-y-4 border-t border-line pt-6">
-              <div className="flex justify-end">
-                <a href="#top-of-map" className={secondaryButtonClass}>
-                  <ArrowUp className="w-4 h-4" aria-hidden="true" /> Back to the map
-                </a>
-              </div>
+            <section id="dashboard" aria-label="DPWH dashboard" className="scroll-mt-20">
               <Suspense fallback={<DashboardSkeleton />}>
                 <DashboardView />
               </Suspense>
             </section>
-            <ScrollToDashboard active={view === 'dashboard'} />
+            <section id="map" aria-label="DPWH map" className="scroll-mt-20 space-y-4 border-t border-line pt-6">
+              <DpwhPublicMap focus={parseFocus(params)} />
+            </section>
+            <ScrollToMap active={view === 'map' || Boolean(parseFocus(params))} />
           </>
         ) : (
           <>
