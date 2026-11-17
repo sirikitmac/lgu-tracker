@@ -1,3 +1,5 @@
+import type { BadgeTier } from '@/lib/badges/badges';
+
 /** Mock community data. Everything here is fictional sample content, not real people. */
 
 export interface Profile {
@@ -46,6 +48,10 @@ export interface Post {
   authorTitle?: string | null;
   authorAvatarPath?: string | null;
   authorAvatarPreset?: string | null;
+  /** The author's pill kind (Super Admin, Admin, Government Employee) and their own custom pill, if any. */
+  authorBadgeTier?: BadgeTier | null;
+  authorBadgeLabel?: string | null;
+  authorBadgeColor?: string | null;
   /** True for the made-up preview discussions; their `authorId` is a sample profile key. */
   sample?: boolean;
   /** Written anonymously: shown to everyone as "Anonymous", with no job or picture. */
@@ -77,6 +83,10 @@ export interface Comment {
   authorTitle?: string | null;
   authorAvatarPath?: string | null;
   authorAvatarPreset?: string | null;
+  /** The author's pill kind (Super Admin, Admin, Government Employee) and their own custom pill, if any. */
+  authorBadgeTier?: BadgeTier | null;
+  authorBadgeLabel?: string | null;
+  authorBadgeColor?: string | null;
   sample?: boolean;
   /** Written anonymously: shown to everyone as "Anonymous", with no job or picture. */
   anonymous?: boolean;

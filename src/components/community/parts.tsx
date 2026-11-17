@@ -4,10 +4,12 @@ import React, { useEffect, useId, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ArrowBigDown, ArrowBigUp, Building2, LogIn, Trash2, UserRound, VenetianMask } from 'lucide-react';
+import { RoleBadge } from '@/components/badges/RoleBadge';
 import { Avatar } from '@/components/community/Avatar';
 import { UserAvatar } from '@/components/profile/UserAvatar';
 import { primaryButtonClass, secondaryButtonClass } from '@/components/dpwh/ui';
 import { useSessionRole } from '@/lib/auth/useSessionRole';
+import { badgeTierOf, type BadgeTier } from '@/lib/badges/badges';
 import { castVote, removeItem } from '@/lib/community/live';
 import { toggleVote } from '@/lib/community/logic';
 import { profileById, resolveAuthor } from '@/lib/community/profiles';
@@ -23,6 +25,10 @@ export interface Member {
   title?: string | null;
   avatarPath?: string | null;
   avatarPreset?: string | null;
+  /** Their pill kind and, for an administrator, their own custom pill. */
+  badgeTier?: BadgeTier | null;
+  badgeLabel?: string | null;
+  badgeColor?: string | null;
   /** Administrators can remove any discussion or comment. */
   isAdmin?: boolean;
 }
@@ -40,6 +46,9 @@ export function useMember(): { loading: boolean; member: Member | null } {
       title: session.title,
       avatarPath: session.avatarPath,
       avatarPreset: session.avatarPreset,
+      badgeTier: badgeTierOf(session.role),
+      badgeLabel: session.badgeLabel,
+      badgeColor: session.badgeColor,
       isAdmin: session.role === 'lgu_admin' || session.role === 'super_admin',
     },
   };
@@ -93,6 +102,9 @@ export interface AuthorSnapshot {
   authorTitle?: string | null;
   authorAvatarPath?: string | null;
   authorAvatarPreset?: string | null;
+  authorBadgeTier?: BadgeTier | null;
+  authorBadgeLabel?: string | null;
+  authorBadgeColor?: string | null;
   sample?: boolean;
   anonymous?: boolean;
   /** Anonymous items only, and only for their author or an administrator. */
@@ -211,6 +223,12 @@ export function AuthorLine({
   const shownTag = mine ? mine.title?.trim() || 'Member' : sample ? sample.tag : snapshot?.authorTitle?.trim() || 'Member';
   const avatarPath = mine ? mine.avatarPath : snapshot?.authorAvatarPath;
   const avatarPreset = mine ? mine.avatarPreset : snapshot?.authorAvatarPreset;
+  // Sample people and anonymous items have no pill; your own comes from your profile, others' from what was saved with the item.
+  const badge = sample
+    ? { tier: null, label: null, color: null }
+    : mine
+      ? { tier: mine.badgeTier ?? null, label: mine.badgeLabel ?? null, color: mine.badgeColor ?? null }
+      : { tier: snapshot?.authorBadgeTier ?? null, label: snapshot?.authorBadgeLabel ?? null, color: snapshot?.authorBadgeColor ?? null };
   return (
     <div className="flex min-w-0 items-center gap-2.5">
       {avatarPath || avatarPreset ? (
@@ -220,6 +238,7 @@ export function AuthorLine({
       )}
       <p className="min-w-0 text-[13px] leading-tight text-subtle">
         <span className="font-semibold text-ink">{shownName}</span>
+        <RoleBadge tier={badge.tier} customLabel={badge.label} customColor={badge.color} className="ml-1.5 align-[1px]" />
         {shownTag !== 'Member' && <span className="hidden sm:inline"> · {shownTag}</span>}
         <span className="block sm:inline">
           <span className="hidden sm:inline"> · </span>

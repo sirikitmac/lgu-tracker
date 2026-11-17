@@ -4,10 +4,12 @@ import React, { useEffect, useId, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Camera, Check, Trash2 } from 'lucide-react';
 import { controlClass, primaryButtonClass, secondaryButtonClass, secondaryButtonSmClass } from '@/components/dpwh/ui';
+import { RoleBadge } from '@/components/badges/RoleBadge';
 import { PhotoCropper } from '@/components/profile/PhotoCropper';
 import { UserAvatar } from '@/components/profile/UserAvatar';
 import { useToast } from '@/components/ui/Toast';
 import { updateProfile } from '@/lib/actions/profile';
+import type { BadgeStyles, BadgeTier } from '@/lib/badges/badges';
 import { isImageFile } from '@/lib/reports/photos';
 import {
   AVATAR_ACCEPT,
@@ -46,11 +48,14 @@ export function ProfileEditor({
   userId,
   email,
   roleLabel,
+  badge,
   initial,
 }: {
   userId: string;
   email: string | null;
   roleLabel: string;
+  /** Your pill, as others see it (none for citizens and contractors). */
+  badge?: { tier: BadgeTier | null; customLabel: string | null; customColor: string | null; styles: BadgeStyles };
   initial: SavedProfile;
 }) {
   const router = useRouter();
@@ -334,7 +339,9 @@ export function ProfileEditor({
           <div>
             <dt className="text-xs font-semibold text-muted">Access role</dt>
             <dd className="mt-0.5 text-ink">
-              {roleLabel} <span className="text-subtle">· set by an administrator</span>
+              {roleLabel}
+              {badge && <RoleBadge tier={badge.tier} customLabel={badge.customLabel} customColor={badge.customColor} styles={badge.styles} className="ml-2 align-[1px]" />}{' '}
+              <span className="text-subtle">· set by an administrator</span>
             </dd>
           </div>
         </dl>

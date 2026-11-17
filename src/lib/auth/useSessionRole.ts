@@ -16,6 +16,9 @@ export type SessionRole =
       title: string | null;
       avatarPath: string | null;
       avatarPreset: string | null;
+      /** An administrator's own pill, if they set one. */
+      badgeLabel: string | null;
+      badgeColor: string | null;
     };
 
 /**
@@ -27,7 +30,7 @@ export type SessionRole =
  */
 export function useSessionRole(): SessionRole {
   const [userId, setUserId] = useState<string | null | undefined>(undefined);
-  const [profile, setProfile] = useState<{ role: AppRole; name: string; title: string | null; avatarPath: string | null; avatarPreset: string | null } | null>(null);
+  const [profile, setProfile] = useState<{ role: AppRole; name: string; title: string | null; avatarPath: string | null; avatarPreset: string | null; badgeLabel: string | null; badgeColor: string | null } | null>(null);
 
   useEffect(() => {
     const client = getSupabaseBrowserClient();
@@ -53,7 +56,7 @@ export function useSessionRole(): SessionRole {
     let active = true;
     void client
       .from('profiles')
-      .select('role, full_name, is_active, position_title, avatar_path, avatar_preset')
+      .select('role, full_name, is_active, position_title, avatar_path, avatar_preset, badge_label, badge_color')
       .eq('id', userId)
       .maybeSingle()
       .then(({ data }) => {
@@ -66,6 +69,8 @@ export function useSessionRole(): SessionRole {
                 title: (data.position_title as string | null) ?? null,
                 avatarPath: (data.avatar_path as string | null) ?? null,
                 avatarPreset: (data.avatar_preset as string | null) ?? null,
+                badgeLabel: (data.badge_label as string | null) ?? null,
+                badgeColor: (data.badge_color as string | null) ?? null,
               }
             : null,
         );
