@@ -2,13 +2,13 @@
 
 import React, { useId, useRef, useState } from 'react';
 import { controlClass, primaryButtonClass, secondaryButtonClass } from '@/components/dpwh/ui';
-import { ProjectCodeFinder } from '@/components/reports/ProjectCodeFinder';
 import { createPost } from '@/lib/community/live';
 import { validatePost } from '@/lib/community/logic';
 import { POST_LIMITS, type Post } from '@/lib/community/types';
 import { recordHref } from '@/lib/reports/workflow';
 import type { ReportTarget } from '@/types/report';
 import type { Member } from './parts';
+import { ProjectSuggestField } from './ProjectSuggestField';
 
 /** Start a discussion: a title, what you want to say, and optionally the project it is about. */
 export function NewPostForm({ member, onDone }: { member: Member; onDone: (post: Post | null) => void }) {
@@ -93,9 +93,9 @@ export function NewPostForm({ member, onDone }: { member: Member; onDone: (post:
         <p className="text-sm font-semibold text-ink">
           About a project? <span className="font-normal text-subtle">(optional)</span>
         </p>
-        <p className="mt-0.5 text-xs text-subtle">Enter the project code shown under a project&apos;s title to link it.</p>
+        <p className="mt-0.5 text-xs text-subtle">Search by project code, title or place, then pick the project to link it.</p>
         <div className="mt-2">
-          <ProjectCodeFinder id={`${id}-code`} selected={target} onSelect={setTarget} onClear={() => setTarget(null)} inputClassName={`${controlClass} h-11`} />
+          <ProjectSuggestField selected={target} onSelect={setTarget} onClear={() => setTarget(null)} inputClassName={`${controlClass} h-11`} />
         </div>
       </div>
 
