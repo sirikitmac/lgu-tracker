@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Suspense } from 'react';
+import { Suspense, cache } from 'react';
 import { ArrowDown, List } from 'lucide-react';
 import { secondaryButtonClass } from '@/components/dpwh/ui';
 import { CONTRACT_ID_PATTERN } from '@/lib/integrations/dpwh/nationwide/detail';
@@ -75,7 +75,7 @@ function parseMapParams(params: Params) {
  * (dpwh_directory_stats, refreshed by the database after each sync) plus one
  * head-only count of NEP proposals; no project rows are sent to the browser.
  */
-async function DashboardView() {
+const loadDashboardData = cache(async () => {
   const supabase = await createSupabaseServerClient();
 
   let summary: DpwhSummary | null = null;
@@ -101,14 +101,20 @@ async function DashboardView() {
     else nepCount = nep.count;
   }
 
-  return <DpwhDashboard summary={summary} nepCount={nepCount} error={error} />;
+  return { summary, nepCount, error };
+});
+
+async function DashboardView({ part }: { part: 'main' | 'details' }) {
+  const { summary, nepCount, error } = await loadDashboardData();
+  return <DpwhDashboard summary={summary} nepCount={nepCount} error={error} part={part} />;
 }
 
 /**
  * Map & Dashboard: the public map and the public DPWH dashboard on one page,
  * both visible. Region, status and category are shared: a click on the map
  * reaches the dashboard and a click on the dashboard reaches the map.
- * The dashboard comes first and drives the map below it; ?view=map or a ?focus= link scrolls down to the map.
+ * On wide screens the dashboard and the map sit side by side, with the category and year charts under both; narrower screens stack them.
+ * ?view=map and ?focus= links scroll to the map.
  */
 export default async function MapAndDashboardPage({ searchParams }: PageProps<'/projects/map'>) {
   const params = await searchParams;
@@ -129,7 +135,7 @@ export default async function MapAndDashboardPage({ searchParams }: PageProps<'/
           <h1 className="mt-2 page-title text-[30px] sm:text-[40px] text-ink">Map &amp; Dashboard</h1>
           <p className="mt-2 max-w-[60ch] text-[15px] leading-relaxed text-subtle">
             {dpwh
-              ? 'The dashboard drives the map below it: click a region to show only its contracts, or a status to colour the map by status. Filters you set on the map show on the dashboard too.'
+              ? 'The dashboard sits beside the map and drives it: click a region to show only its contracts, or a status to colour the map by status. Filters you set on the map show on the dashboard too.'
               : 'Locally funded and 20% Development Fund projects from DILG SubayBAYAN, placed at the centre of their barangay, town or province, not the project site.'}
           </p>
         </div>
@@ -159,13 +165,20 @@ export default async function MapAndDashboardPage({ searchParams }: PageProps<'/
       <DpwhViewProvider initial={initial} mirror={dpwh}>
         {dpwh ? (
           <>
-            <section id="dashboard" aria-label="DPWH dashboard" className="scroll-mt-20">
-              <Suspense fallback={<DashboardSkeleton />}>
-                <DashboardView />
+            <div className="grid gap-6 xl:grid-cols-2 xl:items-start">
+              <section id="dashboard" aria-label="DPWH dashboard" className="min-w-0 scroll-mt-20">
+                <Suspense fallback={<DashboardSkeleton />}>
+                  <DashboardView part="main" />
+                </Suspense>
+              </section>
+              <section id="map" aria-label="DPWH map" className="min-w-0 scroll-mt-20">
+                <DpwhPublicMap focus={parseFocus(params)} compact />
+              </section>
+            </div>
+            <section id="dashboard-details" aria-label="DPWH dashboard details" className="scroll-mt-20 border-t border-line pt-6">
+              <Suspense fallback={<div className="h-64 rounded-card bg-sunken" aria-hidden="true" />}>
+                <DashboardView part="details" />
               </Suspense>
-            </section>
-            <section id="map" aria-label="DPWH map" className="scroll-mt-20 space-y-4 border-t border-line pt-6">
-              <DpwhPublicMap focus={parseFocus(params)} />
             </section>
             <ScrollToMap active={view === 'map' || Boolean(parseFocus(params))} />
           </>
