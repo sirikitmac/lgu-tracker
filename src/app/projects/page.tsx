@@ -40,7 +40,7 @@ export default async function PublicProjectsPage({ searchParams }: PageProps<'/p
           </p>
         </div>
         <nav aria-label="Other views" className="flex flex-wrap items-center gap-2 sm:shrink-0">
-          <Link href="/projects/dashboard" className={secondaryButtonClass}>
+          <Link href="/projects/map?view=dashboard" className={secondaryButtonClass}>
             <BarChart3 className="w-4 h-4" aria-hidden="true" /> Dashboard
           </Link>
           <Link href="/projects/map" className={secondaryButtonClass}>

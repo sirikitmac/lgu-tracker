@@ -172,7 +172,7 @@ npm run subaybayan:import -- --dry-run   # preview; then --limit 100; then no fl
 
 ```
 src/
-  app/            routes: / (landing), /projects, /projects/map, /projects/dashboard,
+  app/            routes: / (landing), /projects, /projects/map (Map & Dashboard, ?view=map|dashboard),
                   /projects/[contractId], /credits, /login, /register, /dashboard, api/
   components/     landing/, dpwh/, subaybayan/, map/, bp/, layout/, dashboard/, ui/
   lib/            supabase/, integrations/ (dpwh, bettergov), subaybayan/, bp/, auth/, actions/
