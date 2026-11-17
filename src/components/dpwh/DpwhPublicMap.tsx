@@ -71,8 +71,7 @@ export interface MapFocus {
  * centers its marker; clicking a marker selects (and if needed pins) its
  * card; hovering a card rings its marker.
  */
-/** `compact` draws the map with the project list under it (for a half-width column) instead of beside it. */
-export function DpwhPublicMap({ focus, compact = false }: { focus: MapFocus | null; compact?: boolean }) {
+export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
   // Region, status and category are shared with the dashboard (a click on either reaches the other); the text search stays here.
   const view = useDpwhView();
   const [search, setSearch] = useState('');
@@ -270,7 +269,7 @@ export function DpwhPublicMap({ focus, compact = false }: { focus: MapFocus | nu
 
       {/* Small screens: one slot, switched here; the switch stays reachable under the navigation bar.
           Both panes stay mounted so the map keeps its view. */}
-      <div className={`${compact ? 'hidden' : 'lg:hidden'} sticky top-[3.75rem] z-30 flex justify-center`}>
+      <div className="lg:hidden sticky top-[3.75rem] z-30 flex justify-center">
         <div role="group" aria-label="Show" className={`grid grid-cols-2 gap-0.5 p-1 rounded-full ${floatClass}`}>
           <button type="button" aria-pressed={smallView === 'map'} onClick={() => setSmallView('map')} className={`${segmentClass(smallView === 'map')} min-w-28`}>
             <MapIcon className="w-4 h-4" aria-hidden="true" /> Map
@@ -281,10 +280,10 @@ export function DpwhPublicMap({ focus, compact = false }: { focus: MapFocus | nu
         </div>
       </div>
 
-      <div className={`grid grid-cols-1 gap-5 ${compact ? '' : 'lg:grid-cols-[minmax(0,1fr)_minmax(22rem,34%)] lg:h-[clamp(36rem,calc(100dvh-6.5rem),60rem)]'}`}>
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,34%)] lg:h-[clamp(36rem,calc(100dvh-6.5rem),60rem)]">
         <div
-          className={`map-frame relative h-[min(72dvh,38rem)] min-h-[24rem] ${compact ? '' : 'lg:h-full lg:min-h-0'} rounded-card overflow-hidden border border-line bg-sunken shadow-raise ${
-            !compact && smallView === 'list' ? 'hidden lg:block' : ''
+          className={`map-frame relative h-[min(72dvh,38rem)] min-h-[24rem] lg:h-full lg:min-h-0 rounded-card overflow-hidden border border-line bg-sunken shadow-raise ${
+            smallView === 'list' ? 'hidden lg:block' : ''
           }`}
         >
           <DpwhLeafletMap
@@ -393,7 +392,7 @@ export function DpwhPublicMap({ focus, compact = false }: { focus: MapFocus | nu
           onHover={setHoveredId}
           onRetry={retry}
           onClearFilters={isFiltered ? clearFilters : undefined}
-          className={compact ? 'flex max-h-[30rem]' : smallView === 'map' ? 'hidden lg:flex' : 'flex'}
+          className={smallView === 'map' ? 'hidden lg:flex' : 'flex'}
         />
       </div>
 
@@ -406,8 +405,6 @@ export function DpwhPublicMap({ focus, compact = false }: { focus: MapFocus | nu
             <Link href="/projects" className={textLinkClass}>directory</Link>.
           </p>
         </div>
-        {!compact && <DataFreshness summary={summary} className="px-1" />}
-        {!compact && <DataScopeNote />}
       </div>
     </div>
   );

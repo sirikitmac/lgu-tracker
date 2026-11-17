@@ -439,7 +439,7 @@ export function DpwhDashboard({
       </div>
 
       <section aria-label={`Summary: ${scopeWord}`} className={`${panelClass} overflow-hidden`}>
-        <dl className="grid grid-cols-2 gap-px bg-line [&>*]:bg-surface">
+        <dl className="grid grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_minmax(0,1.2fr)] gap-px bg-line [&>*]:bg-surface">
           <Figure label="Contracts" value={formatCount(regionCount)} detail={region ? `${formatShare(regionCount, total)} of ${formatCount(total)} contracts` : 'Unique DPWH contract IDs'} />
           <Figure
             label="Reported contract value"
@@ -466,7 +466,7 @@ export function DpwhDashboard({
             value={formatCount(ongoing)}
             detail={scoped ? `${formatShare(ongoing, breakdownTotal)} of contracts` : `All regions (${formatShare(ongoing, breakdownTotal)})`}
           />
-          <div className="col-span-2 !bg-sunken">
+          <div className="col-span-2 lg:col-span-1 !bg-sunken">
             <Figure
               label="FY 2027 budget proposals"
               value={nepCount === null ? '—' : formatCount(nepCount)}
@@ -476,10 +476,11 @@ export function DpwhDashboard({
         </dl>
       </section>
 
-      <div className="grid gap-5">
+      <div className="grid gap-5 lg:grid-cols-3">
         <Panel
           title="Contracts by region"
           note={`By component location; select one to focus the dashboard and the map. ${formatCount(regions.length)} regions, ${formatCount(total)} contracts.`}
+          className="lg:col-span-2"
         >
           <RankedBars
             rows={regions}
@@ -548,12 +549,12 @@ export function DpwhDashboard({
 
 function DashboardHeader({ children }: { children?: React.ReactNode }) {
   return (
-    <header className="flex flex-col gap-4">
+    <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         <h2 className="page-title text-[22px] sm:text-[26px] text-ink">DPWH contracts summary</h2>
         <p className="mt-1.5 text-[15px] text-subtle">What the published DPWH contracts show, by region, status and category.</p>
       </div>
-      {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
+      {children && <div className="flex flex-wrap items-center gap-2 sm:shrink-0">{children}</div>}
     </header>
   );
 }
