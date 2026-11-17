@@ -23,12 +23,16 @@ function PanelSkeleton({ rows, className = '' }: { rows: number; className?: str
   );
 }
 
-/** The dashboard's layout (header, figures row, chart panels) while the summary query runs. */
-export default function DashboardLoading() {
+/**
+ * The dashboard view's layout (heading, figures row, chart panels) while the
+ * summary query runs. The Map & Dashboard page shows it as the Suspense
+ * fallback of the dashboard view, so the page header and tabs never wait.
+ */
+export function DashboardSkeleton() {
   return (
     <div className="space-y-6" aria-busy="true">
       <header className="min-w-0">
-        <h1 className="page-title text-[30px] sm:text-[36px] text-ink">Dashboard</h1>
+        <h2 className="page-title text-[22px] sm:text-[26px] text-ink">DPWH contracts summary</h2>
         <p className="mt-1.5 text-[15px] text-subtle">What the published DPWH contracts show, by region, status and category.</p>
         <p role="status" className="sr-only">Loading dashboard figures…</p>
       </header>

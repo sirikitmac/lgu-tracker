@@ -29,7 +29,7 @@ function Panel({ title, note, children, className = '', action }: { title: strin
     <section aria-labelledby={id} className={`${panelClass} flex flex-col p-5 sm:p-6 min-w-0 ${className}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 id={id} className="text-[15px] font-semibold text-ink">{title}</h2>
+          <h3 id={id} className="text-[15px] font-semibold text-ink">{title}</h3>
           {note && <p className="mt-0.5 text-xs text-muted leading-relaxed">{note}</p>}
         </div>
         {action}
@@ -476,7 +476,7 @@ function DashboardHeader({ children }: { children?: React.ReactNode }) {
   return (
     <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        <h1 className="page-title text-[30px] sm:text-[36px] text-ink">Dashboard</h1>
+        <h2 className="page-title text-[22px] sm:text-[26px] text-ink">DPWH contracts summary</h2>
         <p className="mt-1.5 text-[15px] text-subtle">What the published DPWH contracts show, by region, status and category.</p>
       </div>
       {children && <div className="flex flex-wrap items-center gap-2 sm:shrink-0">{children}</div>}
