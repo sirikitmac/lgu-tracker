@@ -13,7 +13,8 @@
 
 **LGU Tracker** is a free public directory and map of Philippine infrastructure projects: DPWH contracts and
 DILG-reported local government projects. For each project it shows what was built, where, by whom and for how
-much, and links back to where the record was published.
+much, and links back to where the record was published. Signed-in people can also discuss projects in a public
+community, send concerns to LGU staff and follow what happens to them.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/landing-dark.webp">
@@ -32,14 +33,17 @@ On a first visit, an intro animation counts up from 0 to 100%.
 <img src="docs/images/landing-coverage.webp" width="640" alt="&quot;Where the records are&quot; section: contract counts per Visayas and Mindanao region beside a dot map of contract locations">
 
 ### Project directory
-One searchable list of about 145,000 records with an **All / DPWH / DILG** agency switch, DILG categories, filters, sort,
+One searchable list of more than 175,000 records with an **All / DPWH / DILG** agency switch, DILG categories, filters, sort,
 and grid or table views.
 
 <img src="docs/images/directory.webp" width="1280" alt="Projects page with a search bar, the All/DPWH/DILG agency switch, the record count, and project cards showing status, contractor and contract amount">
 
 ### Project map
-- **DPWH layer**: contracts at the coordinates DPWH reports. Filter by region, category and status. In view, it
-  shows the largest 1,000 contracts.
+- **Map and dashboard on one page**: the dashboard sits above the map, and both share one set of region, status and
+  category filters. Choosing a region on the dashboard zooms the map to it; filtering the map updates the charts.
+  Marker colours follow the dashboard (by region, status or category), and the map stays within the Philippines.
+- **DPWH layer**: contracts at the coordinates DPWH reports. In view, it shows up to the 2,000 largest contracts.
+  Responses are cached, so panning and filtering stay quick.
 - **LGU layer (DILG SubayBAYAN)**: 41,194 projects in clustered markers (supercluster), with category chips and
   source, region, province, city, year and status filters.
 - **Approximate locations**: SubayBAYAN has no coordinates, so each project sits at the centre of its barangay,
@@ -62,10 +66,43 @@ Every DPWH contract, NEP item and DILG project has its own page with the reporte
 (for BetterGov.ph data, the exact dataset file and revision).
 
 ### Dashboard
-DPWH contracts by region, status, category and year, with a region filter. FY 2027 NEP proposals are counted
+DPWH contracts by region, status, category and year, with a region filter. It is part of the Map & Dashboard page
+(above), so the numbers and the map always describe the same selection. FY 2027 NEP proposals are counted
 separately.
 
 <img src="docs/images/dashboard.webp" width="1280" alt="Dashboard: contract totals, reported contract value, completed and on-going counts, contracts by region and a status donut">
+
+### Community
+A public discussion board about projects, at `/community`. Anyone can read; an account is needed to post, comment
+and vote.
+- **Discussions, replies and votes** that update live for everyone on the page.
+- **Link a discussion to a project**, with suggestions as you type.
+- **Post or comment anonymously.** An anonymous item stores no name, photo or role in the public row. Only the
+  author and administrators can see who wrote it.
+- **Role pills.** A small coloured tag beside a name: **Super Admin** (purple), **Admin** (red), **LGU** (green) for
+  government staff. Citizens, contractors and anonymous items have none. Admins can recolour or rename these, and
+  give themselves a custom pill from their profile. A change shows everywhere at once.
+- Rate limits on posting and commenting, and each person can delete their own items.
+
+### Report a concern
+Anyone signed in can send a concern about a project at `/report`, with photos. Each report gets a short number
+(like `RPT-00042`) and a status the sender can follow: **Sent → Received → In review → Resolved / Closed**.
+- **My reports**: your own reports and their timeline. Only you and LGU staff can see them.
+- **Report queue** (staff): open a report, change its status and write back to the sender.
+- **Inbox**: a notification when your report moves, when your role changes, or when something needs your attention.
+
+### Accounts, profiles and roles
+- **Sign-up and sign-in**, with a sign-in dialog available from any page.
+- **Four roles people see**: Super Admin, Admin, Government Employee and Citizen. Everyone starts as a citizen;
+  asking for a role at sign-up puts the account in a queue until an administrator decides. Access is enforced in the
+  database (Row Level Security), not only in the interface.
+- **Users and roles** (administrators): approve or change roles. Only a Super Admin can manage administrator accounts.
+- **Profile**: your name, job title and a picture: upload a photo (cropped to a square first) or pick a free avatar.
+  Administrators also manage role pills here.
+- **Monitoring workspace** (`/dashboard`) with a sidebar for staff tools, pinned to the left of every signed-in page.
+
+### Ratings on the landing page
+Signed-in people can leave one 1–5 star rating with a short review (optionally first name only). Reviews show on the landing page and update live; administrators can hide one.
 
 ### Ask BP assistant
 A chat assistant for questions about the directory, built on Groq tool calling (free tier). The model never writes SQL.
@@ -103,7 +140,7 @@ are on the app's `/credits` page ([source](src/app/credits/page.tsx)).
 |---|---|
 | Next.js 16 (App Router) · React 19 · TypeScript | Web app |
 | Tailwind CSS v4 | Styling, light and dark themes |
-| Supabase (Postgres + Row Level Security) | Database, auth, public read access |
+| Supabase (Postgres, Auth, Storage, Realtime, Row Level Security) | Database, accounts, profile photos and report photos, live community, public read access |
 | Leaflet + supercluster | Maps and marker clustering |
 | motion | Landing page animation |
 | Groq API (plain `fetch`, no SDK) | Ask BP assistant |
@@ -137,8 +174,9 @@ npm run dev                  # http://localhost:3000
 Never commit `.env.local` or put a secret key in a `NEXT_PUBLIC_` variable.
 
 ```bash
-npm test          # unit tests (DPWH, BetterGov, BP, SubayBAYAN)
-npm run test:db   # database tests against an in-memory Postgres (PGlite)
+npm test          # unit tests (DPWH, BetterGov, BP, SubayBAYAN, reports, auth, community, reviews)
+npm run test:db   # database tests against an in-memory Postgres (PGlite): the migrations, row-level
+                  # security, roles, reports, community, anonymous posts and role pills
 npm run lint      # TypeScript type check (tsc --noEmit)
 npm run build     # production build
 ```
@@ -146,6 +184,9 @@ npm run build     # production build
 ### Data pipelines
 
 - **DPWH:** `npm run dpwh:sync`. Setup and the Vercel cron are in [`docs/DPWH_DEPLOYMENT.md`](docs/DPWH_DEPLOYMENT.md).
+  The sync stops before the database passes `SYNC_STORAGE_BUDGET_MB` (default 400), which is why the Luzon import
+  is partial on the free Supabase plan.
+- **Sample reports:** [`docs/mock-reports.md`](docs/mock-reports.md) loads sample reports to try My reports, the queue and the inbox.
 - **DILG SubayBAYAN:** a one-time Excel export, since the portal needs a sign-in. The app never contacts the portal.
 
 ```bash
@@ -172,14 +213,18 @@ npm run subaybayan:import -- --dry-run   # preview; then --limit 100; then no fl
 
 ```
 src/
-  app/            routes: / (landing), /projects, /projects/map (Map & Dashboard, ?view=map|dashboard),
-                  /projects/[contractId], /credits, /login, /register, /dashboard, api/
-  components/     landing/, dpwh/, subaybayan/, map/, bp/, layout/, dashboard/, ui/
-  lib/            supabase/, integrations/ (dpwh, bettergov), subaybayan/, bp/, auth/, actions/
-scripts/          dpwh-sync, bettergov-sync, subaybayan/ (build, dedupe, import)
-supabase/         migrations/, seed.sql
-tests/            dpwh/, bettergov/, bp/, subaybayan/, db/
-docs/             BP_ASSISTANT.md, DPWH_DEPLOYMENT.md, subaybayan/, images/
+  app/            routes: / (landing), /projects, /projects/map (Map & Dashboard), /projects/[contractId],
+                  /projects/source/..., /community, /report, /credits, /login, /register, /dashboard,
+                  (app)/ inbox, my-reports, reports, users, profile; api/
+  components/     landing/, dpwh/, subaybayan/, map/, bp/, community/, reports/, reviews/, notifications/,
+                  profile/, badges/, users/, workspace/, auth/, layout/, dashboard/, ui/
+  lib/            supabase/, integrations/ (dpwh, bettergov), dpwh/, subaybayan/, bp/, auth/, actions/,
+                  community/, reports/, reviews/, notifications/, badges/, profile/
+scripts/          dpwh-sync, bettergov-sync, subaybayan/ (build, dedupe, import), reports-import
+supabase/         migrations/ (28), seed.sql
+tests/            dpwh/, bettergov/, bp/, subaybayan/, reports/, auth/, community/, reviews/, notifications/,
+                  sources/, db/
+docs/             BP_ASSISTANT.md, DPWH_DEPLOYMENT.md, mock-reports.md, subaybayan/, images/
 ```
 
 ---
@@ -188,12 +233,12 @@ docs/             BP_ASSISTANT.md, DPWH_DEPLOYMENT.md, subaybayan/, images/
 
 Planned, or partly built but not working end to end yet:
 
-- 🔄 **Automated weekly DPWH sync.** The cron route and schedule are written, but it has not run in production yet,
-  and the first import is still incomplete.
-- 💬 **Public feedback on projects.** The database table and server action exist; there is no form yet.
-- 📝 **Project reporting by registered members.**
-- 👥 **Role-based member dashboards.** Sign-in, sign-up and roles exist, but the `/dashboard` workspace has no
-  live project data yet.
+- 🌏 **Complete Luzon coverage.** Metro Manila, Central Luzon and CALABARZON are in, but the import stopped at the
+  free-plan storage budget, so those three regions are partial. Finishing it needs more database space.
+- 🗺️ **Every dot on the map by default.** Wide views show a sample of up to 2,000 projects (largest first). Showing
+  everything needs server-side clustering.
+- 🔄 **Automated weekly DPWH sync.** The cron route and schedule are written, but it has not run in production yet.
+- 💬 **Public feedback on a project page.** Discussions and reports exist; comments directly on a project do not.
 - 🔍 **Review tool for possible DPWH–DILG duplicates.** The flags are stored; there is no review screen.
 - 📍 **Exact barangay-level locations** from geotagged photos, with the owners' permission.
 - ⚡ **Faster directory sorts.** Some non-default sorts time out on the full dataset.
@@ -205,6 +250,19 @@ Planned, or partly built but not working end to end yet:
 
 🚧 **Under development.** Features and data may change. The data is a snapshot from the dates above, not a live
 feed. LGU Tracker is a student project, not an official government website.
+
+| Area | Status |
+|---|---|
+| Public directory, project pages, search and filters | ✅ Working |
+| Map & Dashboard (shared filters, DPWH and LGU layers) | ✅ Working |
+| Ask BP assistant | ✅ Working (needs a Groq key) |
+| Accounts, roles, profiles, role pills | ✅ Working |
+| Community (live, anonymous posting, votes) | ✅ Working |
+| Reports, report queue and inbox | ✅ Working |
+| DPWH data: Visayas, Mindanao | ✅ Imported |
+| DPWH data: Metro Manila, Central Luzon, CALABARZON | 🟡 Partial (storage limit) |
+| Scheduled data refresh | 🟡 Written, not yet running in production |
+| Duplicate review, exact locations | ⏳ Planned |
 
 ---
 
