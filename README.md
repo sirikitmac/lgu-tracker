@@ -47,7 +47,7 @@
 
 | | |
 |---|---|
-| 🔎 **Find** | Search more than 175,000 DPWH and DILG project records, with filters, sorting, grid and table views. |
+| 🔎 **Find** | Search more than 185,000 DPWH and DILG project records, with filters, sorting, grid and table views. |
 | 🗺️ **See** | A map and a dashboard on one page, sharing the same filters. |
 | 💬 **Discuss** | A live public community: discussions, replies, votes, anonymous posting and role pills. |
 | 📣 **Report** | Send a concern about a project, then follow it from *Sent* to *Resolved*. |
@@ -117,7 +117,7 @@ Signed-in people can send a concern about a project at `/report`, with photos. E
 Live record counts, a region breakdown and a dot map of contract locations, read from cached aggregates. On a first
 visit, an intro animation counts up from 0 to 100%.
 
-<img src="docs/images/landing-coverage.webp" width="640" alt="&quot;Where the records are&quot; section: contract counts per region beside a dot map of contract locations">
+<img src="docs/images/landing-coverage.webp" width="640" alt="&quot;Where the records are&quot; section: contract counts for the Luzon, Visayas and Mindanao regions beside a dot map of contract locations">
 
 ### Ask BP assistant
 A chat assistant for questions about the directory, built on Groq tool calling (free tier). The model never writes
