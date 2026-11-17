@@ -282,7 +282,7 @@ export function WorkspaceSidebar(person: Person) {
           <span className={open ? '' : 'sr-only'}>{open ? 'Hide sidebar' : 'Show sidebar'}</span>
         </button>
 
-        <div id={railId}>
+        <div id={railId} className="lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto lg:p-1 lg:-m-1">
           {open ? (
             <>
               <ProfileCard person={person} />
