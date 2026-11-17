@@ -79,9 +79,9 @@ source (for BetterGov.ph data, the exact dataset file and revision).
 - **Street View cat:** drag it onto the map to see the street there.
 - **Share a project:** `/projects/map?code=FALGU-26-10-13-01-000-1` opens the LGU layer and zooms to it.
 
-<img src="docs/images/dashboard.webp" width="1280" alt="Dashboard: contract totals, reported contract value, completed and on-going counts, contracts by region and a status donut">
+<img src="docs/images/dashboard.webp" width="1280" alt="Dashboard: 135,939 DPWH contracts, reported contract value, completed and on-going counts, contracts by region and a status donut">
 
-<img src="docs/images/map-dpwh.webp" width="1280" alt="Project map, DPWH layer: status-coloured markers across the country beside a list of contracts in view">
+<img src="docs/images/map-dpwh.webp" width="1280" alt="Project map, DPWH layer: the 2,000 largest of 130,273 mapped contracts, coloured by region, with filters above and the list of contracts in view on the right">
 
 <img src="docs/images/map-lgu.webp" width="1280" alt="Project map, LGU layer: the layer switch, SubayBAYAN category chips with counts, and source, location, year and status filters">
 
