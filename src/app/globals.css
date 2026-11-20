@@ -305,8 +305,8 @@
   inset: 0;
   z-index: 100;
   pointer-events: none;
-  /* Failsafe: gone by 2.5 s even if the script's timers never ran. */
-  animation: intro-failsafe 0s linear 2.5s forwards;
+  /* Failsafe: gone by 3.2 s even if the script's timers never ran. */
+  animation: intro-failsafe 0s linear 3.2s forwards;
 }
 [data-intro=""] .intro {
   pointer-events: auto;
@@ -345,6 +345,79 @@
 }
 @keyframes intro-failsafe {
   to { visibility: hidden; }
+}
+/* The brand: mark, name, then a highlighter sweep over "Proyekto" (transform and colour only). */
+.intro-brand {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.1rem;
+  pointer-events: none;
+}
+.intro-logo {
+  width: clamp(56px, 8vw, 84px);
+  height: auto;
+  opacity: 0;
+}
+.intro-word {
+  margin: 0;
+  font-size: clamp(2.25rem, 1.1rem + 5.2vw, 5rem);
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #fff;
+}
+.intro-w1,
+.intro-w2 {
+  display: inline-block;
+  opacity: 0;
+}
+.intro-hl {
+  position: relative;
+  isolation: isolate;
+  padding: 0 0.14em;
+}
+.intro-hl::before {
+  content: "";
+  position: absolute;
+  inset: 0.06em 0 0.02em;
+  z-index: -1;
+  background: var(--color-signal);
+  transform: scaleX(0) skewX(-8deg);
+  transform-origin: left center;
+}
+[data-intro] .intro-logo {
+  animation: intro-pop 0.55s var(--ease-out) 0.05s both;
+}
+[data-intro] .intro-w1 {
+  animation: intro-rise 0.5s var(--ease-out) 0.3s both;
+}
+[data-intro] .intro-w2 {
+  animation: intro-rise 0.5s var(--ease-out) 0.4s both, intro-ink 0.3s linear 0.95s both;
+}
+[data-intro] .intro-hl::before {
+  animation: intro-sweep 0.6s cubic-bezier(0.65, 0, 0.35, 1) 0.85s both;
+}
+@keyframes intro-pop {
+  from { opacity: 0; transform: scale(0.7); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes intro-rise {
+  from { opacity: 0; transform: translate3d(0, 40%, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes intro-sweep {
+  from { transform: scaleX(0) skewX(-8deg); }
+  to { transform: scaleX(1) skewX(-8deg); }
+}
+/* The letters turn dark as the highlight passes under them. */
+@keyframes intro-ink {
+  from { color: #fff; }
+  to { color: var(--color-night); }
 }
 /* The headline holds its first frame under the panel, and rises as it leaves. */
 [data-intro=""] .hl-word,

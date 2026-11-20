@@ -1,9 +1,11 @@
-import { LguMark } from '@/components/layout/Navbar';
+import Image from 'next/image';
 
 /** sessionStorage key: the intro has played in this tab. */
 export const INTRO_SEEN_KEY = 'lt-intro-seen';
 /** Reveal the page by this long after navigation started, finished or not. */
-const CAP_MS = 1500;
+const CAP_MS = 2000;
+/** The brand sequence (logo, name, highlight) needs this long on screen before the panel may leave. */
+const MIN_SHOW_MS = 1500;
 
 /**
  * The first-visit intro's driver, run inline right before the intro's markup
@@ -14,9 +16,11 @@ const CAP_MS = 1500;
  * 2 + `critical` tasks: the display face (Anton, via document.fonts.load on
  * the family next/font assigned), the headline parsed and painted, and each
  * `img[data-critical]` wall photo loaded (or failed). The figure eases toward
- * that share and never runs backwards. At 100% it leaves; at CAP_MS after
- * navigation start it leaves wherever it is. A CSS failsafe hides it at 2.5 s
- * should the main thread be too busy for the timer.
+ * that share and never runs backwards. Meanwhile the brand plays: the mark
+ * pops in, BANTAY PROYEKTO rises, and a highlighter sweeps over PROYEKTO. The
+ * panel leaves at 100% but never before the sequence has had MIN_SHOW_MS; at
+ * CAP_MS after navigation start it leaves wherever it is. A CSS failsafe hides
+ * it at 3.2 s should the main thread be too busy for the timer.
  *
  * If the script itself only runs within 400 ms of the cap (a slow
  * connection), the intro is skipped rather than flashed.
@@ -31,7 +35,7 @@ var d=document.documentElement;
 if(performance.now()>${CAP_MS - 400}||sessionStorage.getItem(${JSON.stringify(INTRO_SEEN_KEY)})||!matchMedia('(prefers-reduced-motion: no-preference)').matches)return;
 sessionStorage.setItem(${JSON.stringify(INTRO_SEEN_KEY)},'1');
 d.setAttribute('data-intro','');
-var total=2+${critical},done=0,shown=0,left=false,el=null;
+var total=2+${critical},done=0,shown=0,left=false,el=null,t0=performance.now();
 function tick(){done++;}
 function task(p){p.then(tick,tick);}
 var parsed=new Promise(function(r){document.readyState==='loading'?document.addEventListener('DOMContentLoaded',r):r();});
@@ -60,7 +64,7 @@ function frame(){
   if(target>shown)shown+=Math.max((target-shown)*0.14,0.6);
   if(shown>target)shown=target;
   if(el)el.textContent=String(Math.floor(shown));
-  if(done>=total&&shown>=99.5){if(el)el.textContent='100';setTimeout(leave,140);return;}
+  if(done>=total&&shown>=99.5){if(el)el.textContent='100';setTimeout(leave,Math.max(140,${MIN_SHOW_MS}-(performance.now()-t0)));return;}
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
@@ -69,8 +73,9 @@ setTimeout(leave,Math.max(0,${CAP_MS}-performance.now()));
 }
 
 /**
- * Full-screen intro on the first visit in a tab: the LGU Tracker mark and a
- * 0–100% counter of the first screen's real loading. Server-rendered but
+ * Full-screen intro on the first visit in a tab: the Bantay Proyekto mark and
+ * name with a highlighter sweep over "Proyekto", and a 0–100% counter of the
+ * first screen's real loading. Server-rendered but
  * hidden unless its script marks <html>; decorative, so hidden from
  * assistive technology (the page is fully there underneath).
  */
@@ -80,10 +85,14 @@ export function Intro({ critical }: { critical: number }) {
       <script dangerouslySetInnerHTML={{ __html: introScript(critical) }} />
       <div className="intro" aria-hidden="true">
         <div className="intro-panel">
-          <div className="flex items-center gap-2.5">
-            <LguMark className="w-8 h-8" />
-            <span className="text-[18px] font-bold tracking-[-0.02em] text-white">LGU Tracker</span>
+          <div className="intro-brand">
+            <Image src="/brand/icon-192.png" alt="" width={192} height={192} sizes="84px" priority className="intro-logo" />
+            <p className="intro-word display">
+              <span className="intro-w1">Bantay</span>{' '}
+              <span className="intro-w2 intro-hl">Proyekto</span>
+            </p>
           </div>
+          <div />
           <div className="intro-mask display">
             <span className="intro-count">
               {/* The script writes this figure before hydration; React never owns its text. */}
