@@ -305,8 +305,8 @@
   inset: 0;
   z-index: 100;
   pointer-events: none;
-  /* Failsafe: gone by 3.5 s even if the script's timers never ran. */
-  animation: intro-failsafe 0s linear 3.5s forwards;
+  /* Failsafe: gone by 3.2 s even if the script's timers never ran. */
+  animation: intro-failsafe 0s linear 3.2s forwards;
 }
 [data-intro=""] .intro {
   pointer-events: auto;
@@ -328,48 +328,32 @@
 .intro-logo {
   width: clamp(72px, 9vw, 96px);
   height: auto;
-  opacity: 0;
 }
 .intro-word {
   width: clamp(220px, 30vw, 360px);
-  -webkit-mask-image: linear-gradient(90deg, #000 0 42%, transparent 58%);
-  mask-image: linear-gradient(90deg, #000 0 42%, transparent 58%);
-  -webkit-mask-size: 260% 100%;
-  mask-size: 260% 100%;
-  -webkit-mask-position: 100% 0;
-  mask-position: 100% 0;
-  opacity: 0;
-}
-/* No display rule here: BrandWordmark's own classes pick the light or dark artwork. */
-.intro-word {
   line-height: 0;
 }
+/* No display rule on the image: BrandWordmark's own classes pick the light or dark artwork. */
 .intro-word img {
   width: 100%;
   height: auto;
 }
+/* The finished look is the plain style above; the animations only start from a hidden
+   state ("backwards"), so if one never runs, or ends early on a phone, the mark and the
+   wordmark are simply there rather than gone. Opacity, blur and a clip only; no filter
+   shadow and no mask, which some mobile browsers drop at the end of an animation. */
 [data-intro] .intro-logo {
-  animation: intro-focus 0.8s var(--ease-out) 0.05s both;
+  animation: intro-focus 0.75s var(--ease-out) 0.05s backwards;
 }
 [data-intro] .intro-word {
-  animation: intro-wipe 0.75s cubic-bezier(0.45, 0, 0.2, 1) 0.7s both;
+  animation: intro-wipe 0.7s cubic-bezier(0.45, 0, 0.2, 1) 0.55s backwards;
 }
 @keyframes intro-focus {
-  from {
-    opacity: 0;
-    transform: scale(0.86);
-    filter: blur(14px) drop-shadow(0 10px 18px rgb(0 0 0 / 0.16));
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-    filter: blur(0) drop-shadow(0 10px 18px rgb(0 0 0 / 0.16));
-  }
+  from { opacity: 0; transform: scale(0.88); filter: blur(12px); }
 }
 @keyframes intro-wipe {
-  from { opacity: 0; -webkit-mask-position: 100% 0; mask-position: 100% 0; filter: blur(6px); }
-  25% { opacity: 1; }
-  to { opacity: 1; -webkit-mask-position: 0 0; mask-position: 0 0; filter: blur(0); }
+  from { opacity: 0; clip-path: inset(0 100% 0 0); filter: blur(6px); }
+  30% { opacity: 1; }
 }
 @keyframes intro-failsafe {
   to { visibility: hidden; }

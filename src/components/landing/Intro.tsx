@@ -4,9 +4,9 @@ import { BrandWordmark } from '@/components/ui/BrandWordmark';
 /** sessionStorage key: the intro has played in this tab. */
 export const INTRO_SEEN_KEY = 'lt-intro-seen';
 /** Reveal the page by this long after navigation started, finished or not. */
-const CAP_MS = 2400;
+const CAP_MS = 2500;
 /** The brand sequence (logo, name, highlight) needs this long on screen before the panel may leave. */
-const MIN_SHOW_MS = 1900;
+const MIN_SHOW_MS = 2100;
 
 /**
  * The first-visit intro's driver, run inline right before the intro's markup
@@ -19,7 +19,7 @@ const MIN_SHOW_MS = 1900;
  * headline parsed and painted, and each `img[data-critical]` wall photo loaded
  * or failed), and never before MIN_SHOW_MS so the sequence can finish. At
  * CAP_MS after navigation start it leaves regardless. A CSS failsafe hides it
- * at 3.5 s should the main thread be too busy for the timer.
+ * at 3.2 s should the main thread be too busy for the timer.
  *
  * If the script itself only runs within 400 ms of the cap (a slow
  * connection), the intro is skipped rather than flashed.
