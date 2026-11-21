@@ -207,6 +207,18 @@ export const DPWH_MAP_COLUMNS = [
   'contract_id', 'title', 'contract_name', 'category', 'status', 'region', 'province',
   'implementing_office', 'contractor', 'contract_amount', 'progress', 'latitude', 'longitude',
 ] as const;
+/** One map bubble: the mapped contracts in one grid cell (public.dpwh_map_bubbles). */
+export interface DpwhBubble {
+  lat: number;
+  lng: number;
+  /** Contracts in the bubble. */
+  n: number;
+  /** Region with the most contracts in the bubble; null when none reports one. */
+  region: string | null;
+  /** Contracts per status key (a DpwhStatus). */
+  statuses: Record<string, number>;
+}
+
 export type DpwhMapPoint = Pick<DpwhContract, (typeof DPWH_MAP_COLUMNS)[number]> & {
   latitude: number;
   longitude: number;

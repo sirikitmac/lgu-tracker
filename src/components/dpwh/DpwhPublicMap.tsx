@@ -7,20 +7,20 @@ import { AlertTriangle, ChevronDown, List, Loader2, Map as MapIcon, MapPin, Zoom
 import { errorMessage, fetchJson } from '@/lib/http';
 import { ResponseCache } from '@/lib/dpwh/responseCache';
 import { useToast } from '@/components/ui/Toast';
-import { Tooltip } from '@/components/ui/Tooltip';
 import { Notice } from '@/components/ui/StateViews';
-import { DPWH_STATUS_LABELS, type DpwhMapPoint, type DpwhSummary } from '@/types/dpwh';
+import type { DpwhBubble, DpwhMapPoint, DpwhSummary } from '@/types/dpwh';
 import type { MapBounds } from '@/lib/integrations/dpwh/nationwide/query';
 import { textLinkClass } from './ui';
-import { MAP_STATUSES, STATUS_COLORS, formatCount } from './format';
+import { formatCount } from './format';
 import { DataScopeNote } from './DataScopeNote';
 import { DataFreshness } from './DataFreshness';
 import { DpwhMapFilters, EMPTY_MAP_FILTERS, type MapFilters } from './DpwhMapFilters';
 import { useDpwhView } from './DpwhViewContext';
 import { PH_BBOX } from '@/lib/dpwh/viewFilters';
 import { DpwhMapProjectPanel, LIST_PAGE } from './DpwhMapProjectPanel';
+import { DpwhMapAreaPanel } from './DpwhMapAreaPanel';
 import { regionColor, regionDisplayName } from '@/lib/regionPalette';
-import type { MapSelection, MarkerColorMode } from './DpwhLeafletMap';
+import type { MapSelection } from './DpwhLeafletMap';
 import { StreetViewCat } from './StreetViewCat';
 import type { Map as LeafletMap } from 'leaflet';
 import type { LatLng } from '@/lib/streetview';
@@ -39,11 +39,6 @@ const DpwhLeafletMap = dynamic(() => import('./DpwhLeafletMap'), {
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink';
 /** Floating controls over the map: the app's glass, a hairline and the raised shadow. */
 const floatClass = 'glass-strong border border-line/80 shadow-raise';
-
-const COLOR_MODE_HINTS: Record<MarkerColorMode, string> = {
-  status: 'Colour markers by the status DPWH reports (completed, on-going, and so on).',
-  region: 'Colour markers by the region each contract is located in.',
-};
 
 const segmentClass = (active: boolean) =>
   `inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-full text-[13px] font-semibold transition-[background-color,color,box-shadow] duration-200 ${focusRing} focus-visible:outline-offset-1 ${
@@ -74,7 +69,14 @@ export interface MapFocus {
  */
 // Answers for the markers and totals already asked for in this tab, reused for ten minutes.
 type MapBody = { points: DpwhMapPoint[]; total: number; limit: number; approximate?: boolean };
+type BubbleBody = { bubbles: DpwhBubble[]; total: number; approximate?: boolean };
 const mapCache = new ResponseCache<MapBody>();
+const bubbleCache = new ResponseCache<BubbleBody>();
+
+/** Zoom levels: bubbles (counted per area) up to here, individual markers from the next zoom in. */
+const BUBBLE_MAX_ZOOM = 10;
+/** Grid level of the bubbles at a zoom: 0 = 1 degree cells, 1 = 0.25, 2 = 0.05. */
+const bubbleLevel = (zoom: number) => (zoom <= 6 ? 0 : zoom <= 8 ? 1 : 2);
 
 /**
  * Rounds a viewport outward to a grid, so panning a little asks for the same URL again (browser and CDN
@@ -93,23 +95,25 @@ function snapBounds(b: MapBounds): MapBounds {
   };
 }
 
-async function fetchMapCached(url: string, signal: AbortSignal) {
-  const hit = mapCache.get(url);
+async function fetchCached<T extends { approximate?: boolean }>(cache: ResponseCache<T>, url: string, signal: AbortSignal): Promise<T> {
+  const hit = cache.get(url);
   if (hit) return hit;
-  let body: MapBody;
+  let body: T;
   try {
-    body = await fetchJson<MapBody>(url, { signal });
+    body = await fetchJson<T>(url, { signal });
   } catch (error) {
     if ((error as Error)?.name === 'AbortError') throw error;
     // One quiet retry: a slow first answer from the database is usually fine the second time.
     await new Promise((resolve) => setTimeout(resolve, 600));
     if (signal.aborted) throw error;
-    body = await fetchJson<MapBody>(url, { signal });
+    body = await fetchJson<T>(url, { signal });
   }
   // An answer without its exact total is not kept, so the next look can get the real one.
-  if (!body.approximate) mapCache.set(url, body);
+  if (!body.approximate) cache.set(url, body);
   return body;
 }
+const fetchMapCached = (url: string, signal: AbortSignal) => fetchCached(mapCache, url, signal);
+const fetchBubblesCached = (url: string, signal: AbortSignal) => fetchCached(bubbleCache, url, signal);
 
 export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
   // Region, status and category are shared with the dashboard (a click on either reaches the other); the text search stays here.
@@ -119,8 +123,11 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
     () => ({ q: search, region: view.filters.region, category: view.filters.category, status: view.filters.status }),
     [search, view.filters.region, view.filters.category, view.filters.status]
   );
-  const [bounds, setBounds] = useState<MapBounds | null>(null);
+  const [viewport, setViewport] = useState<{ bounds: MapBounds; zoom: number } | null>(null);
   const [points, setPoints] = useState<DpwhMapPoint[]>([]);
+  const [bubbles, setBubbles] = useState<DpwhBubble[]>([]);
+  // What the answer on screen is made of: bubbles (zoomed out) or individual markers (zoomed in, or while searching).
+  const [shown, setShown] = useState<'bubbles' | 'markers'>('bubbles');
   const [total, setTotal] = useState(0);
   const [limit, setLimit] = useState(0);
   const [approximate, setApproximate] = useState(false);
@@ -132,7 +139,7 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
   const [summary, setSummary] = useState<DpwhSummary | null>(null);
   const [summaryState, setSummaryState] = useState<'loading' | 'ready' | 'empty' | 'error'>('loading');
   const [reload, setReload] = useState(0);
-  const { colorMode, setColorMode } = view;
+  const { colorMode } = view;
   const [visibleCount, setVisibleCount] = useState(LIST_PAGE);
   // Below the lg breakpoint the map and the list share one slot; on wide screens both show.
   const [smallView, setSmallView] = useState<'map' | 'list'>('map');
@@ -148,7 +155,8 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
   }, []);
 
   const q = useDebounced(filters.q, 350);
-  const debouncedBounds = useDebounced(bounds, 250);
+  const debouncedView = useDebounced(viewport, 250);
+  const searching = q.trim() !== '';
 
   useEffect(() => {
     let active = true;
@@ -165,44 +173,69 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
   }, []);
 
   useEffect(() => {
-    if (!debouncedBounds) return;
-    const b = snapBounds(debouncedBounds);
-    const params = new URLSearchParams({ bbox: [b.west, b.south, b.east, b.north].map((n) => n.toFixed(5)).join(',') });
-    if (q.trim()) params.set('q', q.trim());
+    if (!debouncedView) return;
+    const b = snapBounds(debouncedView.bounds);
+    const bbox = [b.west, b.south, b.east, b.north].map((n) => n.toFixed(5)).join(',');
+    // Zoomed out the map shows bubbles counted per area; zoomed in, or with a text search (which only the
+    // contract rows can answer), it shows the individual markers.
+    const asBubbles = debouncedView.zoom <= BUBBLE_MAX_ZOOM && !searching;
+    const params = new URLSearchParams({ bbox });
+    if (asBubbles) params.set('level', String(bubbleLevel(debouncedView.zoom)));
+    if (!asBubbles && q.trim()) params.set('q', q.trim());
     if (filters.region) params.set('region', filters.region);
     if (filters.category) params.set('category', filters.category);
     if (filters.status) params.set('status', filters.status);
 
     const controller = new AbortController();
     setState('loading');
-    fetchMapCached(`/api/dpwh/map?${params}`, controller.signal)
-      .then((body) => {
-        setPoints(body.points);
-        setTotal(body.total);
-        setLimit(body.limit);
-        setApproximate(body.approximate === true);
-        setVisibleCount(LIST_PAGE);
-        setState('ready');
-      })
-      .catch((e: unknown) => {
-        if ((e as Error)?.name === 'AbortError') return;
-        setError(errorMessage(e, 'Could not load map markers. Please try again.'));
-        setState('error');
-      });
+    if (asBubbles) {
+      fetchBubblesCached(`/api/dpwh/bubbles?${params}`, controller.signal)
+        .then((body) => {
+          setBubbles(body.bubbles);
+          setPoints([]);
+          setTotal(body.total);
+          setApproximate(false);
+          setShown('bubbles');
+          setState('ready');
+        })
+        .catch((e: unknown) => {
+          if ((e as Error)?.name === 'AbortError') return;
+          setError(errorMessage(e, 'Could not load the map. Please try again.'));
+          setState('error');
+        });
+    } else {
+      fetchMapCached(`/api/dpwh/map?${params}`, controller.signal)
+        .then((body) => {
+          setPoints(body.points);
+          setBubbles([]);
+          setTotal(body.total);
+          setLimit(body.limit);
+          setApproximate(body.approximate === true);
+          setVisibleCount(LIST_PAGE);
+          setShown('markers');
+          setState('ready');
+        })
+        .catch((e: unknown) => {
+          if ((e as Error)?.name === 'AbortError') return;
+          setError(errorMessage(e, 'Could not load map markers. Please try again.'));
+          setState('error');
+        });
+    }
     return () => controller.abort();
-  }, [debouncedBounds, q, filters.region, filters.category, filters.status, reload]);
+  }, [debouncedView, q, searching, filters.region, filters.category, filters.status, reload]);
 
   const regionOptions = useMemo(
     () => (summary?.stats.by_region ?? []).filter((r) => r.value !== null).map((r) => r.value as string).sort(),
     [summary]
   );
-  const capped = state === 'ready' && total > points.length;
+  const capped = state === 'ready' && shown === 'markers' && total > points.length;
+  const nothingHere = state === 'ready' && (shown === 'bubbles' ? bubbles.length === 0 : points.length === 0);
   // Region legend lists only regions with markers in view, in the summary's order.
   const regionsInView = useMemo(() => {
-    const present = new Set(points.map((p) => p.region));
+    const present = new Set<string | null>([...points.map((p) => p.region), ...bubbles.map((b) => b.region)]);
     const ordered = (summary?.stats.by_region ?? []).map((r) => r.value).filter((r) => present.has(r));
     return present.has(null) ? [...ordered, null] : ordered;
-  }, [points, summary]);
+  }, [points, bubbles, summary]);
 
   const { setSelected, setMatching, fitRequest } = view;
   // The selected contract is shown on the dashboard too.
@@ -221,34 +254,47 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
   // after a click on the dashboard, frame the map on them.
   const lastFit = useRef(fitRequest);
   useEffect(() => {
+    const wantsFit = fitRequest !== lastFit.current;
+    lastFit.current = fitRequest;
     const params = new URLSearchParams({ bbox: PH_BBOX });
-    if (q.trim()) params.set('q', q.trim());
     if (filters.region) params.set('region', filters.region);
     if (filters.category) params.set('category', filters.category);
     if (filters.status) params.set('status', filters.status);
-    const wantsFit = fitRequest !== lastFit.current;
-    lastFit.current = fitRequest;
-    // Only the total is needed unless the map has to frame the result: skip the heavy marker query.
-    if (!wantsFit) params.set('count', 'only');
+    const fitTo = (lats: number[], lngs: number[]) => {
+      if (!wantsFit || !leafletMap || lats.length === 0) return;
+      leafletMap.fitBounds(
+        [
+          [Math.min(...lats), Math.min(...lngs)],
+          [Math.max(...lats), Math.max(...lngs)],
+        ],
+        { padding: [24, 24], maxZoom: 12 }
+      );
+    };
     const controller = new AbortController();
     setMatching({ total: null, state: 'loading' });
-    fetchMapCached(`/api/dpwh/map?${params}`, controller.signal)
-      .then((body) => {
-        setMatching({ total: body.total, state: 'ready' });
-        if (!wantsFit || !leafletMap || body.points.length === 0) return;
-        const lats = body.points.map((p) => p.latitude);
-        const lngs = body.points.map((p) => p.longitude);
-        leafletMap.fitBounds(
-          [
-            [Math.min(...lats), Math.min(...lngs)],
-            [Math.max(...lats), Math.max(...lngs)],
-          ],
-          { padding: [24, 24], maxZoom: 12 }
-        );
-      })
-      .catch((e: unknown) => {
-        if ((e as Error)?.name !== 'AbortError') setMatching({ total: null, state: 'error' });
-      });
+    const failed = (e: unknown) => {
+      if ((e as Error)?.name !== 'AbortError') setMatching({ total: null, state: 'error' });
+    };
+    if (!q.trim()) {
+      // No text search: the country-wide total and the frame both come from the small pre-counted bubble table.
+      params.set('level', '0');
+      fetchBubblesCached(`/api/dpwh/bubbles?${params}`, controller.signal)
+        .then((body) => {
+          setMatching({ total: body.total, state: 'ready' });
+          fitTo(body.bubbles.map((x) => x.lat), body.bubbles.map((x) => x.lng));
+        })
+        .catch(failed);
+    } else {
+      params.set('q', q.trim());
+      // Only the total is needed unless the map has to frame the result: skip the heavy marker query.
+      if (!wantsFit) params.set('count', 'only');
+      fetchMapCached(`/api/dpwh/map?${params}`, controller.signal)
+        .then((body) => {
+          setMatching({ total: body.total, state: 'ready' });
+          fitTo(body.points.map((x) => x.latitude), body.points.map((x) => x.longitude));
+        })
+        .catch(failed);
+    }
     return () => controller.abort();
     // The frame only follows a click on the dashboard (fitRequest), never the map's own filters or panning.
   }, [q, filters.region, filters.category, filters.status, fitRequest, leafletMap, setMatching]);
@@ -264,12 +310,25 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
     [isFiltered, toast, view]
   );
   const clearFilters = useCallback(() => changeFilters(EMPTY_MAP_FILTERS), [changeFilters]);
+  // Choosing an area in the list zooms the map to it (and back to the map on a small screen).
+  const zoomToBubble = useCallback(
+    (b: DpwhBubble) => {
+      setSmallView('map');
+      leafletMap?.invalidateSize();
+      leafletMap?.setView([b.lat, b.lng], Math.min((leafletMap?.getZoom() ?? 6) + 2, 19));
+    },
+    [leafletMap]
+  );
 
   const resultLine =
     state === 'loading' ? (
       <span className="inline-flex items-center gap-1.5">
         <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> Updating results…
       </span>
+    ) : state === 'ready' && shown === 'bubbles' ? (
+      <>
+        <strong className="font-semibold text-ink">{formatCount(total)}</strong> mapped contract{total === 1 ? '' : 's'} in this area · zoom in for individual projects
+      </>
     ) : state === 'ready' ? (
       approximate ? (
         <>
@@ -336,9 +395,10 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
         >
           <DpwhLeafletMap
             points={points}
+            bubbles={bubbles}
             focus={focus}
             selection={selection}
-            onBoundsChange={setBounds}
+            onBoundsChange={(bounds, zoom) => setViewport({ bounds, zoom })}
             onMarkerSelect={selectFromMarker}
             colorMode={colorMode}
             hoveredId={hoveredId}
@@ -349,21 +409,16 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
 
           <StreetViewCat map={leafletMap} onPlacingChange={setCatPlacing} onSpotChange={setCatSpot} />
 
-          <div role="group" aria-label="Colour markers by" className={`absolute right-3 top-3 z-[450] inline-flex items-center gap-0.5 p-1 rounded-full ${floatClass}`}>
-            {(['status', 'region'] as const).map((mode) => (
-              <Tooltip key={mode} content={COLOR_MODE_HINTS[mode]} side="bottom">
-                <button type="button" aria-pressed={colorMode === mode} onClick={() => setColorMode(mode)} className={`${segmentClass(colorMode === mode)} h-8 px-3`}>
-                  {mode === 'status' ? 'Status' : 'Region'}
-                </button>
-              </Tooltip>
-            ))}
-          </div>
-
           {/* Where the eye is: a quiet chip while markers load, or when the map holds only the largest contracts. */}
           <div aria-hidden="true" className="hidden sm:block pointer-events-none absolute left-1/2 -translate-x-1/2 top-[4.25rem] lg:top-3 z-[440] max-w-[calc(100%-1.5rem)] lg:max-w-[min(26rem,calc(100%-22rem))]">
             {state === 'loading' ? (
               <span className={`inline-flex items-center gap-2 h-9 px-3.5 rounded-full text-[13px] font-medium text-subtle ${floatClass}`}>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Updating markers…
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Updating map…
+              </span>
+            ) : shown === 'bubbles' && state === 'ready' && bubbles.length > 0 ? (
+              <span className={`inline-flex items-center gap-2 min-h-9 px-3.5 py-1.5 rounded-full text-[12.5px] leading-tight font-medium text-subtle ${floatClass}`}>
+                <ZoomIn className="w-3.5 h-3.5 shrink-0" />
+                <span>Bubble size = number of projects · click one to zoom in</span>
               </span>
             ) : capped ? (
               <span className={`inline-flex items-center gap-2 min-h-9 px-3.5 py-1.5 rounded-full text-[12.5px] leading-tight font-medium text-subtle ${floatClass}`}>
@@ -373,11 +428,11 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
             ) : null}
           </div>
 
-          {state === 'error' && points.length === 0 && (
+          {state === 'error' && points.length === 0 && bubbles.length === 0 && (
             <div className="absolute inset-0 z-[445] grid place-items-center p-6 pointer-events-none">
               <div role="alert" className={`pointer-events-auto max-w-xs rounded-card px-5 py-4 text-center ${floatClass}`}>
                 <AlertTriangle className="mx-auto w-5 h-5 text-danger-ink" aria-hidden="true" />
-                <p className="mt-2 text-sm font-semibold text-ink">Markers could not be loaded</p>
+                <p className="mt-2 text-sm font-semibold text-ink">The map data could not be loaded</p>
                 <p className="mt-1 text-xs text-subtle">The map tiles still work. Check the connection and try again.</p>
                 <button type="button" onClick={retry}
                   className={`mt-3 inline-flex items-center h-9 px-4 rounded-full bg-ink text-on-ink text-[13px] font-semibold hover:bg-ink-soft ${focusRing}`}>
@@ -386,7 +441,7 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
               </div>
             </div>
           )}
-          {state === 'ready' && points.length === 0 && (
+          {nothingHere && (
             <div className="absolute inset-0 z-[445] grid place-items-center p-6 pointer-events-none">
               <p className={`inline-flex items-center gap-2 h-10 px-4 rounded-full text-[13px] font-medium text-subtle ${floatClass}`}>
                 <MapPin className="w-4 h-4" aria-hidden="true" /> No mapped contracts match here
@@ -402,32 +457,37 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
           >
             <summary className={`flex items-center gap-2 h-9 pl-3.5 pr-3 cursor-pointer list-none rounded-2xl [&::-webkit-details-marker]:hidden ${focusRing} focus-visible:outline-offset-1`}>
               <span className="font-semibold">Legend</span>
-              <span className="text-muted">{colorMode === 'status' ? 'Reported status' : 'Region'}</span>
+              <span className="text-muted">Region</span>
               <ChevronDown className="ml-auto w-3.5 h-3.5 text-muted transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
             </summary>
             <ul
-              aria-label={colorMode === 'status' ? 'Marker colours: status' : 'Marker colours: region'}
+              aria-label="Colours: region"
               className="grid grid-cols-2 gap-x-4 gap-y-2 max-h-40 overflow-y-auto overscroll-contain px-3.5 pt-1 pb-3 border-t border-line/70 mx-0"
             >
-              {colorMode === 'status'
-                ? MAP_STATUSES.map((s) => (
-                    <li key={s} className="flex items-center gap-2 pt-2 first:pt-2 min-w-0">
-                      <span className="w-2.5 h-2.5 shrink-0 rounded-full ring-[1.5px] ring-white/90" style={{ backgroundColor: STATUS_COLORS[s] }} aria-hidden="true" />
-                      <span className="truncate">{DPWH_STATUS_LABELS[s]}</span>
+              {regionsInView.length === 0
+                ? <li className="col-span-2 pt-2 text-muted">Nothing in view</li>
+                : regionsInView.map((r) => (
+                    <li key={r ?? 'none'} className="flex items-center gap-2 pt-2 min-w-0" title={r ? regionDisplayName(r) : undefined}>
+                      <span className="w-2.5 h-2.5 shrink-0 rounded-[3px] ring-[1.5px] ring-white/90" style={{ backgroundColor: regionColor(r) }} aria-hidden="true" />
+                      <span className="truncate">{r ? regionDisplayName(r).split(' · ').pop() : 'Not reported'}</span>
                     </li>
-                  ))
-                : regionsInView.length === 0
-                  ? <li className="col-span-2 pt-2 text-muted">No markers in view</li>
-                  : regionsInView.map((r) => (
-                      <li key={r ?? 'none'} className="flex items-center gap-2 pt-2 min-w-0" title={r ? regionDisplayName(r) : undefined}>
-                        <span className="w-2.5 h-2.5 shrink-0 rounded-[3px] ring-[1.5px] ring-white/90" style={{ backgroundColor: regionColor(r) }} aria-hidden="true" />
-                        <span className="truncate">{r ? regionDisplayName(r).split(' · ').pop() : 'Not reported'}</span>
-                      </li>
-                    ))}
+                  ))}
             </ul>
+            <p className="px-3.5 pb-3 text-[11.5px] leading-snug text-muted">Hover or tap a bubble for its statuses.</p>
           </details>
         </div>
 
+        {shown === 'bubbles' ? (
+          <DpwhMapAreaPanel
+            bubbles={bubbles}
+            total={total}
+            state={state}
+            onZoomTo={zoomToBubble}
+            onRetry={retry}
+            onClearFilters={isFiltered ? clearFilters : undefined}
+            className={smallView === 'map' ? 'hidden lg:flex' : 'flex'}
+          />
+        ) : (
         <DpwhMapProjectPanel
           points={points}
           total={total}
@@ -442,6 +502,7 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
           onClearFilters={isFiltered ? clearFilters : undefined}
           className={smallView === 'map' ? 'hidden lg:flex' : 'flex'}
         />
+        )}
       </div>
 
       <div className="grid gap-3">

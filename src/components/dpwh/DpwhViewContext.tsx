@@ -59,9 +59,7 @@ export function DpwhViewProvider({ initial, mirror, children }: { initial: ViewF
     setFiltersState(next);
     if (origin === 'dashboard') {
       setFitRequest((n) => n + 1);
-      // A status picked on the dashboard shows the map in status colours; clearing it goes back to region colours.
-      if (next.status !== current.current.status) setColorMode(next.status ? 'status' : 'region');
-      else if (next.region !== current.current.region && next.region) setColorMode('region');
+      // The map is always coloured by region; a status picked on the dashboard filters the bubbles instead.
     }
   }, []);
 

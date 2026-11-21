@@ -3,10 +3,10 @@
 import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import type { DpwhMapPoint } from '@/types/dpwh';
+import type { DpwhBubble, DpwhMapPoint } from '@/types/dpwh';
 import type { MapBounds } from '@/lib/integrations/dpwh/nationwide/query';
-import { regionColor } from '@/lib/regionPalette';
-import { statusColor, formatPeso, formatProgress, readableTitle, statusLabel } from './format';
+import { regionColor, regionDisplayName } from '@/lib/regionPalette';
+import { statusColor, formatCount, formatPeso, formatProgress, readableTitle, statusLabel } from './format';
 
 /** The Philippines with a little margin: [[south, west], [north, east]]. */
 export const PH_MAX_BOUNDS: [[number, number], [number, number]] = [[3, 114], [22.5, 129.5]];
@@ -54,6 +54,30 @@ function escapeHtml(text: string): string {
     .replace(/'/g, '&#039;');
 }
 
+/** Hover / tap card of a bubble: how many projects, the region, and the status breakdown. */
+function bubbleHtml(b: DpwhBubble, withZoom: boolean): string {
+  const muted = 'color:var(--color-muted)';
+  const rows = Object.entries(b.statuses)
+    .sort((a, c) => c[1] - a[1])
+    .map(
+      ([status, count]) =>
+        `<div style="display:flex;align-items:center;gap:7px;font-size:12px;line-height:1.7"><span style="width:8px;height:8px;border-radius:9999px;flex:none;background:${statusColor(status)}"></span><span style="flex:1">${escapeHtml(statusLabel(status))}</span><strong style="font-variant-numeric:tabular-nums">${formatCount(count)}</strong></div>`
+    )
+    .join('');
+  return `
+    <div style="min-width:200px;max-width:250px;font-family:inherit;color:var(--color-ink)">
+      <div style="font-size:11.5px;${muted};display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="width:8px;height:8px;border-radius:2px;flex:none;background:${regionColor(b.region)}"></span>${escapeHtml(b.region ? regionDisplayName(b.region) : 'Region not reported')}</div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px;font-variant-numeric:tabular-nums">${formatCount(b.n)} project${b.n === 1 ? '' : 's'}</div>
+      ${rows}
+      ${withZoom ? `<button type="button" class="bubble-zoom" style="margin-top:8px;font:inherit;font-size:12px;font-weight:600;color:var(--color-accent-ink);background:none;border:0;padding:0;cursor:pointer">Zoom in →</button>` : ''}
+    </div>`;
+}
+
+/** Bubble size: area follows the number of projects, relative to the busiest bubble in view (never tiny groups at full size). */
+function bubbleRadius(n: number, max: number): number {
+  return 7 + 31 * Math.sqrt(n / Math.max(max, 25));
+}
+
 /** Popup markup; colours are theme tokens, so it reads in light and dark. */
 function popupHtml(p: DpwhMapPoint): string {
   const location = [p.province, p.region].filter(Boolean).join(', ') || 'Location not reported';
@@ -92,7 +116,9 @@ interface Props {
   /** Contract to center on and open once its marker is loaded. */
   focus: { id: string | null; lat: number; lng: number } | null;
   selection: MapSelection | null;
-  onBoundsChange: (bounds: MapBounds) => void;
+  onBoundsChange: (bounds: MapBounds, zoom: number) => void;
+  /** Bubbles to draw (one per area, sized by project count); empty or absent draws none. */
+  bubbles?: DpwhBubble[];
   /** Called when a marker is clicked, so the list can highlight the same contract. */
   onMarkerSelect?: (id: string) => void;
   colorMode?: MarkerColorMode;
@@ -110,10 +136,11 @@ interface Props {
   onMapReady?: (map: L.Map | null) => void;
 }
 
-export default function DpwhLeafletMap({ points, focus, selection, onBoundsChange, onMarkerSelect, colorMode = 'status', hoveredId = null, markersInteractive = true, streetViewSpot = null, onMapReady }: Props) {
+export default function DpwhLeafletMap({ points, bubbles, focus, selection, onBoundsChange, onMarkerSelect, colorMode = 'status', hoveredId = null, markersInteractive = true, streetViewSpot = null, onMapReady }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.LayerGroup | null>(null);
+  const bubbleLayerRef = useRef<L.LayerGroup | null>(null);
   const markersRef = useRef<Map<string, L.CircleMarker>>(new Map());
   const onBoundsChangeRef = useRef(onBoundsChange);
   onBoundsChangeRef.current = onBoundsChange;
@@ -154,6 +181,7 @@ export default function DpwhLeafletMap({ points, focus, selection, onBoundsChang
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors · DPWH data via BetterGov.ph',
     }).addTo(map);
+    bubbleLayerRef.current = L.layerGroup().addTo(map);
     layerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
     onMapReadyRef.current?.(map);
@@ -164,12 +192,15 @@ export default function DpwhLeafletMap({ points, focus, selection, onBoundsChang
       if (size.x === 0 || size.y === 0) return;
       const b = map.getBounds();
       // Clamp to valid ranges; the API rejects anything outside them.
-      onBoundsChangeRef.current({
-        west: Math.max(-180, b.getWest()),
-        south: Math.max(-90, b.getSouth()),
-        east: Math.min(180, b.getEast()),
-        north: Math.min(90, b.getNorth()),
-      });
+      onBoundsChangeRef.current(
+        {
+          west: Math.max(-180, b.getWest()),
+          south: Math.max(-90, b.getSouth()),
+          east: Math.min(180, b.getEast()),
+          north: Math.min(90, b.getNorth()),
+        },
+        map.getZoom()
+      );
     };
     map.on('moveend', report);
     report();
@@ -184,6 +215,7 @@ export default function DpwhLeafletMap({ points, focus, selection, onBoundsChang
       map.remove();
       mapRef.current = null;
       layerRef.current = null;
+      bubbleLayerRef.current = null;
       markersRef.current.clear();
     };
     // The initial view is set once; later focus changes go through selectedId.
@@ -224,6 +256,36 @@ export default function DpwhLeafletMap({ points, focus, selection, onBoundsChang
       pendingOpenRef.current = null;
     }
   }, [points]);
+
+  // Bubbles: rebuilt on every answer (a few hundred shapes at most). No numbers on them: the count is in the hover card. Biggest first, so small ones stay clickable on top.
+  useEffect(() => {
+    const layer = bubbleLayerRef.current;
+    const map = mapRef.current;
+    if (!layer || !map) return;
+    layer.clearLayers();
+    const list = bubbles ?? [];
+    if (list.length === 0) return;
+    const max = list.reduce((m, b) => Math.max(m, b.n), 0);
+    const touch = window.matchMedia('(hover: none)').matches;
+    for (const b of list) {
+      const r = bubbleRadius(b.n, max);
+      const color = regionColor(b.region);
+      const circle = L.circleMarker([b.lat, b.lng], { radius: r, color, weight: 2, opacity: 0.95, fillColor: color, fillOpacity: 0.5 });
+      if (touch) {
+        circle.bindPopup(bubbleHtml(b, true), { maxWidth: 260 });
+        circle.on('popupopen', (e) => {
+          e.popup.getElement()?.querySelector('.bubble-zoom')?.addEventListener('click', () => {
+            map.closePopup();
+            map.setView([b.lat, b.lng], Math.min(map.getZoom() + 2, 19));
+          });
+        });
+      } else {
+        circle.bindTooltip(bubbleHtml(b, false), { sticky: true, direction: 'auto', offset: [0, -4], opacity: 1, className: 'bubble-tip' });
+        circle.on('click', () => map.setView([b.lat, b.lng], Math.min(map.getZoom() + 2, 19)));
+      }
+      circle.addTo(layer);
+    }
+  }, [bubbles]);
 
   // Switching between status and region colours restyles the markers in place.
   useEffect(() => {

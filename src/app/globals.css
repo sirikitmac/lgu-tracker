@@ -794,6 +794,18 @@
 }
 
 /* BP opens with a short rise; reduced motion skips it (motion-safe:). */
+/* Map bubbles: the hover card. */
+.leaflet-tooltip.bubble-tip {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border: 1px solid var(--color-line-strong);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: var(--shadow-raise);
+  white-space: normal;
+}
+.leaflet-tooltip.bubble-tip::before { display: none; }
+
 /* Engie's hello: the owl hops and tilts twice while "Hoot hoot!" pops in word by word.
    The finished look is the base style; the animations start hidden ("backwards") and run
    only when motion is allowed. */
