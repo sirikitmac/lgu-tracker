@@ -73,13 +73,41 @@ export interface MapFocus {
  * card; hovering a card rings its marker.
  */
 // Answers for the markers and totals already asked for in this tab, reused for ten minutes.
-const mapCache = new ResponseCache<{ points: DpwhMapPoint[]; total: number; limit: number }>();
+type MapBody = { points: DpwhMapPoint[]; total: number; limit: number; approximate?: boolean };
+const mapCache = new ResponseCache<MapBody>();
+
+/**
+ * Rounds a viewport outward to a grid, so panning a little asks for the same URL again (browser and CDN
+ * cache hits instead of a new database query on every drag). The grid is finer when zoomed in.
+ */
+function snapBounds(b: MapBounds): MapBounds {
+  const span = Math.max(b.east - b.west, b.north - b.south);
+  const step = span > 8 ? 1 : span > 2 ? 0.25 : span > 0.5 ? 0.05 : 0.01;
+  const down = (n: number) => Math.floor(n / step) * step;
+  const up = (n: number) => Math.ceil(n / step) * step;
+  return {
+    west: Math.max(-180, down(b.west)),
+    south: Math.max(-90, down(b.south)),
+    east: Math.min(180, up(b.east)),
+    north: Math.min(90, up(b.north)),
+  };
+}
 
 async function fetchMapCached(url: string, signal: AbortSignal) {
   const hit = mapCache.get(url);
   if (hit) return hit;
-  const body = await fetchJson<{ points: DpwhMapPoint[]; total: number; limit: number }>(url, { signal });
-  mapCache.set(url, body);
+  let body: MapBody;
+  try {
+    body = await fetchJson<MapBody>(url, { signal });
+  } catch (error) {
+    if ((error as Error)?.name === 'AbortError') throw error;
+    // One quiet retry: a slow first answer from the database is usually fine the second time.
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    if (signal.aborted) throw error;
+    body = await fetchJson<MapBody>(url, { signal });
+  }
+  // An answer without its exact total is not kept, so the next look can get the real one.
+  if (!body.approximate) mapCache.set(url, body);
   return body;
 }
 
@@ -95,6 +123,7 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
   const [points, setPoints] = useState<DpwhMapPoint[]>([]);
   const [total, setTotal] = useState(0);
   const [limit, setLimit] = useState(0);
+  const [approximate, setApproximate] = useState(false);
   const [state, setState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
   // A ?focus= link opens on its contract already selected; the map centers on it itself, so no pan.
@@ -137,7 +166,7 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
 
   useEffect(() => {
     if (!debouncedBounds) return;
-    const b = debouncedBounds;
+    const b = snapBounds(debouncedBounds);
     const params = new URLSearchParams({ bbox: [b.west, b.south, b.east, b.north].map((n) => n.toFixed(5)).join(',') });
     if (q.trim()) params.set('q', q.trim());
     if (filters.region) params.set('region', filters.region);
@@ -151,6 +180,7 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
         setPoints(body.points);
         setTotal(body.total);
         setLimit(body.limit);
+        setApproximate(body.approximate === true);
         setVisibleCount(LIST_PAGE);
         setState('ready');
       })
@@ -241,7 +271,11 @@ export function DpwhPublicMap({ focus }: { focus: MapFocus | null }) {
         <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> Updating results…
       </span>
     ) : state === 'ready' ? (
-      capped ? (
+      approximate ? (
+        <>
+          Showing the <strong className="font-semibold text-ink">{formatCount(points.length)}</strong> largest mapped contracts in this area (the exact total is still counting)
+        </>
+      ) : capped ? (
         <>
           <strong className="font-semibold text-ink">{formatCount(total)}</strong> mapped contracts in this area · the map shows the{' '}
           <strong className="font-semibold text-ink">{formatCount(points.length)}</strong> largest (limit {formatCount(limit)})

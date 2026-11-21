@@ -50,22 +50,40 @@ export async function GET(request: NextRequest) {
     .select('contract_id', { count: 'exact', head: true }) as unknown as PointBuilder;
   // ?count=only skips the marker page (the heavy, ordered query) when the caller only needs the total.
   const countOnly = params.get('count') === 'only';
+  // A statement timeout on a cold or busy database often succeeds a moment later, so each query gets one retry.
+  const retried = async <R extends { error: unknown }>(run: () => PromiseLike<R>): Promise<R> => {
+    const first = await run();
+    if (!first.error) return first;
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    return run();
+  };
   const [{ data, error }, { count, error: countError }] = await Promise.all([
-    countOnly ? Promise.resolve({ data: [] as unknown[], error: null }) : readPoints(),
-    applyMapFilters(countBuilder, parsed.query, bounds.bounds),
+    countOnly ? Promise.resolve({ data: [] as unknown[], error: null }) : retried(readPoints),
+    retried(() => applyMapFilters(countBuilder, parsed.query, bounds.bounds)),
   ]);
-  if (error || countError) {
+  // The markers are what the map is for. If only the exact total failed (the slowest query), still show the markers.
+  if (error || (countOnly && countError)) {
     console.error('[LGU Tracker] DPWH map query failed:', error ?? countError);
     return Response.json({ error: 'Could not load DPWH map markers.' }, { status: 502 });
   }
+  if (countError) console.error('[LGU Tracker] DPWH map count failed, answering without the exact total:', countError);
   const points = (data ?? []) as unknown as DpwhMapPoint[];
+  const approximate = countError !== null && countError !== undefined;
   return Response.json(
     {
       points,
-      total: count ?? points.length,
+      total: approximate ? points.length : (count ?? points.length),
       limit: MAP_POINT_LIMIT,
+      ...(approximate ? { approximate: true } : {}),
     },
     // Public data that changes with the weekly sync: let the CDN and browsers reuse an answer for a while.
-    { headers: { 'Cache-Control': 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400' } }
+    {
+      headers: {
+        // An answer missing its exact total is not kept for long, so the next request can try for the real one.
+        'Cache-Control': approximate
+          ? 'public, max-age=30, s-maxage=60'
+          : 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400',
+      },
+    }
   );
 }
