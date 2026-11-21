@@ -298,7 +298,7 @@ function SixWaysIn({ data }: { data: LandingData }) {
       ui: <RegionBars data={data} />,
     },
     {
-      title: 'Ask BP',
+      title: 'Ask Engie',
       text: 'Questions in plain words, answers from the records.',
       bp: true,
       photo: WAY_PHOTOS.bp,
@@ -336,7 +336,7 @@ function SixWaysIn({ data }: { data: LandingData }) {
 /**
  * One card: the photograph fills it under a night gradient that rises from
  * the bottom; number top left, arrow top right, title and line bottom left.
- * The whole card is one link (or, for BP, one button). Hover and focus ease
+ * The whole card is one link (or, for Engie, one button). Hover and focus ease
  * the photograph in a little, lift the gradient and send the arrow off on
  * its diagonal (globals.css, .way); reduced motion keeps only the colours.
  */

@@ -1,6 +1,7 @@
-# BP — LGU Tracker AI Assistant
+# Engie — LGU Tracker AI Assistant
 
-"Talk to BP" on the Project Directory (`/projects`) opens a floating chat that answers questions from the
+(Engie was called BP before; the code and routes still use `bp`.)
+"Ask Engie" on the Project Directory (`/projects`) opens a floating chat that answers questions from the
 directory's Supabase data, with a model on **Groq** (free tier) writing the explanation.
 
 ## How it works
@@ -20,7 +21,7 @@ BpAssistant (client)  ──POST /api/bp/chat──▶  route.ts (server)
 - The record links under an answer are the rows the server retrieved, not text parsed from the answer.
 - No service-role key is used: queries run as the anonymous/signed-in visitor under the existing RLS policies.
 
-## How BP calls Groq
+## How Engie calls Groq
 
 `src/lib/bp/groq.ts` (server-only) sends `POST https://api.groq.com/openai/v1/chat/completions` (OpenAI-compatible)
 with `Authorization: Bearer <GROQ_API_KEY>`. Tool calls carry an `id`; each result goes back as
@@ -44,7 +45,7 @@ with `Authorization: Bearer <GROQ_API_KEY>`. Tool calls carry an `id`; each resu
 ## Tool loop
 
 - At most 3 tool rounds and 4 calls per round. The last round is sent without tools, so the model has to answer.
-- Each attempt on a model that has a fallback gets 8 s. On 429, 413, 5xx, a malformed tool call, or a timeout BP
+- Each attempt on a model that has a fallback gets 8 s. On 429, 413, 5xx, a malformed tool call, or a timeout Engie
   tries the fallback model and skips the failing one for 2 minutes (30 minutes after a daily limit), per server
   instance. A rejected key (401/403) is not retried.
 
@@ -76,7 +77,7 @@ Server logs record only the error kind and HTTP status, never questions, records
 - City / municipality is not reported for DPWH contracts; place questions use full-text search on titles, IDs,
   contractors, and offices, which can match records that only mention the place (for example a road name).
 - Overview statistics cover DPWH contracts and refresh after each successful sync (`dpwh_directory_stats`).
-- Some rare filters can hit the anonymous statement timeout on the count query; BP then reports the count as
+- Some rare filters can hit the anonymous statement timeout on the count query; Engie then reports the count as
   unavailable rather than guessing.
 
 ## Tests

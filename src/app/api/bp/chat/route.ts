@@ -8,7 +8,7 @@ import { createRateLimiter, validateChatRequest } from '@/lib/bp/validate';
 /**
  * POST /api/bp/chat  { question: string, history?: { role, content }[] }
  *
- * BP, the LGU Tracker assistant. Retrieves public directory data with the
+ * Engie, the LGU Tracker assistant. Retrieves public directory data with the
  * caller's Supabase client (publishable key, RLS applies) through predefined
  * read-only queries, and asks a Groq-hosted model to explain it.
  * GROQ_API_KEY is server-only. Without it, development serves a labelled
@@ -29,15 +29,15 @@ const fail = (status: number, code: string, error: string, headers?: HeadersInit
   Response.json({ error, code }, { status, headers });
 
 const AI_ERRORS: Record<AiFailure, [number, string]> = {
-  rate_limited: [503, 'BP is receiving too many requests right now. Please try again in a minute.'],
-  daily_limit: [503, 'BP has used up its free AI allowance for today. Please try again tomorrow.'],
-  too_large: [503, 'This conversation is too long for BP right now. Start a new chat or ask a narrower question.'],
+  rate_limited: [503, 'Engie is receiving too many requests right now. Please try again in a minute.'],
+  daily_limit: [503, 'Engie has used up its free AI allowance for today. Please try again tomorrow.'],
+  too_large: [503, 'This conversation is too long for Engie right now. Start a new chat or ask a narrower question.'],
   busy: [503, 'The AI service is busy right now (high demand). Please try again in a minute.'],
-  auth: [503, 'BP is not configured correctly on the server (the AI service rejected its API key).'],
-  timeout: [504, 'BP took too long to answer. Please try again or ask a narrower question.'],
-  upstream: [502, 'BP could not reach the AI service. Please try again shortly.'],
-  empty: [502, 'BP could not produce an answer. Please rephrase your question.'],
-  database: [502, 'BP could not read the project database right now. Please try again shortly.'],
+  auth: [503, 'Engie is not configured correctly on the server (the AI service rejected its API key).'],
+  timeout: [504, 'Engie took too long to answer. Please try again or ask a narrower question.'],
+  upstream: [502, 'Engie could not reach the AI service. Please try again shortly.'],
+  empty: [502, 'Engie could not produce an answer. Please rephrase your question.'],
+  database: [502, 'Engie could not read the project database right now. Please try again shortly.'],
 };
 
 function clientKey(request: NextRequest): string {
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
 
   const config = aiConfig();
   if (!config && process.env.NODE_ENV === 'production') {
-    return fail(503, 'ai_not_configured', 'BP is not available yet: the AI service API key has not been configured on the server.');
+    return fail(503, 'ai_not_configured', 'Engie is not available yet: the AI service API key has not been configured on the server.');
   }
 
   const overview = await getDirectoryOverview(supabase);
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const kind = classifyAiError(error);
     // Status and kind only: never the request, the records, or the key.
-    console.error('[LGU Tracker] BP chat failed:', kind, (error as { status?: number })?.status ?? '');
+    console.error('[LGU Tracker] Engie chat failed:', kind, (error as { status?: number })?.status ?? '');
     const [status, message] = AI_ERRORS[kind];
     return fail(status, `ai_${kind}`, message);
   }

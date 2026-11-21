@@ -51,7 +51,7 @@
 | 🗺️ **See** | A map and a dashboard on one page, sharing the same filters. |
 | 💬 **Discuss** | A live public community: discussions, replies, votes, anonymous posting and role pills. |
 | 📣 **Report** | Send a concern about a project, then follow it from *Sent* to *Resolved*. |
-| 🤖 **Ask** | Ask BP, an assistant that answers from the database and never writes SQL. |
+| 🦉 **Ask** | Engie, our owl assistant, answers from the database and never writes SQL. |
 
 **CCC181 Final Project by Team BB (BeyondBoard).**
 
@@ -122,12 +122,12 @@ visit, an intro animation counts up from 0 to 100%.
 
 <img src="docs/images/landing-coverage.webp" width="640" alt="&quot;Where the records are&quot; section: contract counts for the Luzon, Visayas and Mindanao regions beside a dot map of contract locations">
 
-### Ask BP assistant
-A chat assistant for questions about the directory, built on Groq tool calling (free tier). The model never writes
+### Ask Engie
+Engie 🦉 is a chat assistant for questions about the directory, built on Groq tool calling (free tier). The model never writes
 SQL. It can only call two read-only tools, and the counts in its answers come from the database. See
 [`docs/BP_ASSISTANT.md`](docs/BP_ASSISTANT.md).
 
-<img src="docs/images/ask-bp.webp" width="1280" alt="Ask BP chat panel open over the landing page with a greeting and suggested questions">
+<img src="docs/images/ask-bp.webp" width="1280" alt="The Ask Engie chat panel open over the landing page">
 
 ### Dark mode and mobile
 Light, dark or system theme, with layouts down to 360 px wide.
@@ -161,7 +161,7 @@ are on the app's `/credits` page ([source](src/app/credits/page.tsx)).
 | Supabase (Postgres, Auth, Storage, Realtime, Row Level Security) | Database, accounts, profile photos and report photos, live community, public read access |
 | Leaflet + supercluster | Maps and marker clustering |
 | motion | Landing page animation |
-| Groq API (plain `fetch`, no SDK) | Ask BP assistant |
+| Groq API (plain `fetch`, no SDK) | Ask Engie assistant |
 | Vercel | Hosting |
 
 ---
@@ -186,7 +186,7 @@ npm run dev                  # http://localhost:3000
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (or `..._ANON_KEY`) | Reading data |
 | `SUPABASE_SECRET_KEY` | Server-only: data sync and import scripts |
 | `CRON_SECRET` | Server-only: the scheduled sync route |
-| `GROQ_API_KEY` (optional `GROQ_MODEL`, `GROQ_FALLBACK_MODEL`) | Server-only: Ask BP (without it, dev shows a labelled non-AI preview) |
+| `GROQ_API_KEY` (optional `GROQ_MODEL`, `GROQ_FALLBACK_MODEL`) | Server-only: Ask Engie (without it, dev shows a labelled non-AI preview) |
 | `GOOGLE_MAPS_API_KEY`, `NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY` | Optional: in-map Street View |
 
 Never commit `.env.local` or put a secret key in a `NEXT_PUBLIC_` variable.
@@ -277,7 +277,7 @@ feed. LGU Tracker is a student project, not an official government website.
 |---|---|
 | Public directory, project pages, search and filters | ✅ Working |
 | Map & Dashboard (shared filters, DPWH and LGU layers) | ✅ Working |
-| Ask BP assistant | ✅ Working (needs a Groq key) |
+| Ask Engie assistant | ✅ Working (needs a Groq key) |
 | Accounts, roles, profiles, role pills | ✅ Working |
 | Community (live, anonymous posting, votes) | ✅ Working |
 | Reports, report queue and inbox | ✅ Working |
