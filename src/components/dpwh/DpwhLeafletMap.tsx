@@ -257,7 +257,7 @@ export default function DpwhLeafletMap({ points, bubbles, focus, selection, onBo
     }
   }, [points]);
 
-  // Bubbles: rebuilt on every answer (a few hundred shapes at most). Biggest first, so small ones stay clickable on top.
+  // Bubbles: rebuilt on every answer (a few hundred shapes at most). No numbers on them: the count is in the hover card. Biggest first, so small ones stay clickable on top.
   useEffect(() => {
     const layer = bubbleLayerRef.current;
     const map = mapRef.current;
@@ -267,8 +267,6 @@ export default function DpwhLeafletMap({ points, bubbles, focus, selection, onBo
     if (list.length === 0) return;
     const max = list.reduce((m, b) => Math.max(m, b.n), 0);
     const touch = window.matchMedia('(hover: none)').matches;
-    let labels = 0;
-    const labelled: { x: number; y: number; r: number }[] = [];
     for (const b of list) {
       const r = bubbleRadius(b.n, max);
       const color = regionColor(b.region);
@@ -282,22 +280,10 @@ export default function DpwhLeafletMap({ points, bubbles, focus, selection, onBo
           });
         });
       } else {
-        circle.bindTooltip(bubbleHtml(b, false), { sticky: true, direction: 'top', offset: [0, -4], opacity: 1, className: 'bubble-tip' });
+        circle.bindTooltip(bubbleHtml(b, false), { sticky: true, direction: 'auto', offset: [0, -4], opacity: 1, className: 'bubble-tip' });
         circle.on('click', () => map.setView([b.lat, b.lng], Math.min(map.getZoom() + 2, 19)));
       }
       circle.addTo(layer);
-      // Print the count only where it has room: skip a label that would sit on one already printed.
-      const at = map.latLngToLayerPoint([b.lat, b.lng]);
-      const crowded = labelled.some((l) => Math.hypot(l.x - at.x, l.y - at.y) < (l.r + r) * 0.75);
-      if (r >= 15 && labels < 150 && !crowded) {
-        labels += 1;
-        labelled.push({ x: at.x, y: at.y, r });
-        L.marker([b.lat, b.lng], {
-          interactive: false,
-          keyboard: false,
-          icon: L.divIcon({ className: 'bubble-count', html: `<span>${formatCount(b.n)}</span>`, iconSize: [0, 0] }),
-        }).addTo(layer);
-      }
     }
   }, [bubbles]);
 

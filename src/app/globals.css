@@ -794,7 +794,7 @@
 }
 
 /* BP opens with a short rise; reduced motion skips it (motion-safe:). */
-/* Map bubbles: the hover card, and the project count printed in the larger bubbles. */
+/* Map bubbles: the hover card. */
 .leaflet-tooltip.bubble-tip {
   background: var(--color-surface);
   color: var(--color-ink);
@@ -805,20 +805,6 @@
   white-space: normal;
 }
 .leaflet-tooltip.bubble-tip::before { display: none; }
-.bubble-count {
-  background: none;
-  border: 0;
-  pointer-events: none;
-}
-.bubble-count span {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  font-size: 12px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--color-ink);
-  text-shadow: 0 0 3px var(--color-surface), 0 0 3px var(--color-surface);
-}
 
 @keyframes bp-in {
   from { opacity: 0; transform: translate3d(0, 12px, 0) scale(0.98); }
