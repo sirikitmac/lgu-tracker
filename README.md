@@ -68,8 +68,11 @@ source (for BetterGov.ph data, the exact dataset file and revision).
 
 ### Map and dashboard, together
 - **One page, one set of filters.** The dashboard sits above the map. Pick a region on the dashboard and the map
-  zooms to it; filter the map and the charts follow. Marker colours follow the dashboard (by region, status or
-  category), and the map stays within the Philippines.
+  zooms to it; filter the map and the charts follow. The map stays within the Philippines.
+- **Bubbles, then projects.** Zoomed out, the map draws one bubble per area: its size is the number of projects,
+  its colour is the region, and hovering (or tapping, on a phone) shows the status breakdown. The side panel lists
+  the same areas, busiest first. Zoom in and the bubbles split, then become individual projects. The counts come
+  from a small pre-counted table that is rebuilt after every sync, so the map stays fast.
 - **DPWH layer:** contracts at the coordinates DPWH reports, up to the 2,000 largest in view. Responses are cached,
   so panning and filtering stay quick.
 - **LGU layer (DILG SubayBAYAN):** 41,194 projects in clustered markers (supercluster), with category chips and
