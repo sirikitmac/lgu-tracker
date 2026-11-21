@@ -3,7 +3,8 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { AlertTriangle, ArrowUpRight, Bot, Loader2, RotateCcw, Send, Sparkles, X } from 'lucide-react';
+import { AlertTriangle, ArrowUpRight, Loader2, RotateCcw, Send, X } from 'lucide-react';
+import { EngieMark } from '@/components/bp/Engie';
 import { formatPeso } from '@/components/dpwh/format';
 import { StatusPill } from '@/components/dpwh/StatusPill';
 import { secondaryButtonClass } from '@/components/dpwh/ui';
@@ -11,7 +12,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Tooltip } from '@/components/ui/Tooltip';
 
 /**
- * "Ask BP" button and the floating, non-modal chat panel. The page stays
+ * "Ask Engie" button and the floating, non-modal chat panel. The page stays
  * usable behind it. The panel is portalled to <body> so a translucent
  * navigation bar (backdrop-filter) never becomes its containing block. Answers come from POST /api/bp/chat; reference links are
  * the records the server actually retrieved, never parsed from the answer.
@@ -40,7 +41,7 @@ interface Message {
 }
 
 const WELCOME =
-  "Hi! I'm BP, LGU Tracker's assistant. 👋\n\nAsk me about project records: amounts, locations, categories and statuses.\n\nWhat would you like to know?";
+  "I'm Engie, LGU Tracker's curious owl. 🦉 I look through the project records for you: amounts, locations, categories and statuses.\n\nWhat would you like to know?";
 
 const SUGGESTIONS = [
   'How many contracts are listed in the directory?',
@@ -121,8 +122,8 @@ function ReferenceList({ references }: { references: Reference[] }) {
 }
 
 /**
- * Window event that opens BP from anywhere on the page (the landing page's
- * "Ask BP" card). Only the navigation's instance listens, so one panel opens;
+ * Window event that opens Engie from anywhere on the page (the landing page's
+ * "Ask Engie" card). Only the navigation's instance listens, so one panel opens;
  * `detail.from` gets the focus back when the panel closes.
  */
 export const BP_OPEN_EVENT = 'bp:open';
@@ -212,7 +213,7 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
       });
       const body = await res.json().catch(() => null);
       if (!res.ok || !body || typeof body.answer !== 'string') {
-        throw new Error(body?.error ?? 'BP could not answer right now. Please try again.');
+        throw new Error(body?.error ?? 'Engie could not answer right now. Please try again.');
       }
       setMessages((prev) => [
         ...prev,
@@ -249,15 +250,15 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
         }}
         aria-expanded={open}
         aria-controls={panelId}
-        aria-label={variant === 'nav' ? 'Ask BP, the AI assistant' : undefined}
+        aria-label={variant === 'nav' ? 'Ask Engie, the AI assistant' : undefined}
         className={
           variant === 'nav'
             ? 'inline-flex items-center justify-center gap-1.5 h-9 w-10 sm:w-auto sm:px-3.5 rounded-full border border-line-strong bg-surface text-[13px] font-semibold text-ink hover:bg-sunken transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-ink aria-expanded:bg-sunken'
             : secondaryButtonClass
         }
       >
-        <Sparkles className="w-4 h-4 text-accent-ink" aria-hidden="true" />
-        <span className={variant === 'nav' ? 'hidden sm:inline' : undefined}>Ask BP</span>
+        <EngieMark size={variant === 'nav' ? 24 : 22} className={variant === 'nav' ? 'h-6 w-6' : 'h-[22px] w-[22px]'} />
+        <span className={variant === 'nav' ? 'hidden sm:inline' : undefined}>Ask Engie</span>
       </button>
 
       {open && typeof document !== 'undefined' && createPortal(
@@ -270,12 +271,12 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
           className="fixed z-[900] inset-x-2 bottom-2 top-16 sm:inset-x-auto sm:top-auto sm:right-6 sm:bottom-6 sm:w-[400px] sm:h-[min(640px,calc(100dvh-7rem))] flex flex-col glass-strong border border-line rounded-[22px] shadow-float overflow-hidden motion-safe:animate-[bp-in_220ms_var(--ease-out)]"
         >
           <header className="flex items-start gap-3 px-4 py-3 border-b border-line/80">
-            <span className="mt-0.5 flex items-center justify-center w-9 h-9 shrink-0 rounded-full bg-accent text-ink" aria-hidden="true">
-              <Bot className="w-5 h-5" />
+            <span className="mt-0.5 flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-accent-soft" aria-hidden="true">
+              <EngieMark size={34} className="h-[34px] w-[34px]" />
             </span>
             <div className="min-w-0 flex-1">
               <h2 id={titleId} className="font-display text-base font-bold text-ink leading-tight">
-                BP <span className="font-sans text-xs font-medium text-muted">· LGU Tracker AI Assistant</span>
+                Engie <span className="font-sans text-xs font-medium text-muted">· LGU Tracker AI Assistant</span>
               </h2>
               <p className="text-xs text-muted">Your guide to public infrastructure data.</p>
             </div>
@@ -292,7 +293,7 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
               </button>
             </Tooltip>
             <Tooltip content="Close (Esc)" side="bottom">
-              <button type="button" onClick={close} className="p-2 rounded-lg text-subtle hover:bg-sunken focus-visible:outline-2 focus-visible:outline-accent-ink" aria-label="Close BP">
+              <button type="button" onClick={close} className="p-2 rounded-lg text-subtle hover:bg-sunken focus-visible:outline-2 focus-visible:outline-accent-ink" aria-label="Close Engie">
                 <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </Tooltip>
@@ -301,15 +302,23 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
             open={confirmReset}
             onOpenChange={setConfirmReset}
             title="Start a new conversation?"
-            description="This clears the questions and answers in this BP conversation. It cannot be undone."
+            description="This clears the questions and answers in this conversation with Engie. It cannot be undone."
             confirmLabel="Clear conversation"
             tone="danger"
             onConfirm={reset}
           />
 
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 text-sm" aria-live="polite" aria-busy={pending}>
-            <div className="max-w-[90%] rounded-2xl rounded-tl-sm bg-surface border border-line px-3.5 py-2.5 text-ink space-y-2 leading-relaxed">
-              <RichText text={WELCOME} />
+            <div className="flex items-end gap-2.5">
+              <span className="engie-owl shrink-0" aria-hidden="true">
+                <EngieMark size={64} className="h-16 w-16" priority />
+              </span>
+              <div className="relative max-w-[85%] rounded-2xl rounded-bl-sm bg-surface border border-line px-3.5 py-2.5 text-ink space-y-2 leading-relaxed">
+                <p className="font-display text-xl font-extrabold leading-none tracking-tight text-accent-ink">
+                  <span className="engie-hoot engie-hoot-1">Hoot</span> <span className="engie-hoot engie-hoot-2">hoot!</span>
+                </p>
+                <RichText text={WELCOME} />
+              </div>
             </div>
 
             {messages.length === 0 && (
@@ -358,7 +367,7 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
 
             {pending && (
               <div className="inline-flex items-center gap-2 rounded-2xl rounded-tl-sm bg-sunken px-3.5 py-2.5 text-xs text-subtle" role="status">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> BP is looking up the records…
+                <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> Engie is looking up the records…
               </div>
             )}
             {error && (
@@ -375,7 +384,7 @@ export function BpAssistant({ variant = 'button' }: { variant?: 'button' | 'nav'
             }}
             className="flex items-end gap-2 border-t border-line/80 p-3"
           >
-            <label htmlFor={`${panelId}-input`} className="sr-only">Ask BP a question</label>
+            <label htmlFor={`${panelId}-input`} className="sr-only">Ask Engie a question</label>
             <textarea
               id={`${panelId}-input`}
               ref={inputRef}
